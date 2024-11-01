@@ -66,7 +66,14 @@ class App(tk.Tk):
             # Running as a normal script
             base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        self.ico_path = os.path.join(base_dir, "icons8-home-30.ico")
+        """ ################################
+        if getattr(sys, 'frozen', False):
+            EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
+        else:
+            EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
+        ################################ """
+
+        self.ico_path = os.path.join(base_dir, "images", "icons8-home-30.ico")
 
         self.title("Home Reminders")
         ico = Image.open(self.ico_path)
