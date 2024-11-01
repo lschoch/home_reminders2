@@ -119,6 +119,7 @@ def get_date(date_last_entry, top):
     # 1. top2.wm_transient(top)
     # 2. top2.wm_attributes("-topmost", True)
     # 3. top2.lift()
+    top2.wm_transient(top)
 
     cal = Calendar(
         top2,
