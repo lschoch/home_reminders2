@@ -1,1 +1,0 @@
-pyinstaller --onefile --windowed --clean --log-level WARN --hidden-import tzdata --add-data "home_reminders.db;." --add-data "images\icons8-home-40.ico;." --add-data "images\icons8-home-30.png;." --icon "images\icons8-home-40.ico" home_reminders.py    
