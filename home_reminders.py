@@ -72,7 +72,7 @@ class App(tk.Tk):
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("1080x370+3+3")
+        self.geometry("1125x370+3+30")
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=120)
