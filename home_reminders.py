@@ -163,7 +163,8 @@ class App(tk.Tk):
         self.legend_frame = tk.Frame(
             self, highlightbackground="black", highlightthickness=1
         )
-        self.legend_frame.grid(row=1, column=3, padx=(20, 0), ipadx=5, ipady=5)
+        self.legend_frame.grid(
+            row=1, column=3, padx=(20, 0), pady=(20, 0), ipadx=5, ipady=5, sticky='n')
 
         tk.Label(
             self.legend_frame,
@@ -223,6 +224,10 @@ class App(tk.Tk):
         ).grid(row=3, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
         # end legend
         ####################################
+
+        # add delete all button
+        ttk.Button(self, text="Delete All").grid(
+            row=1, column=3, padx=(20, 0), pady=(0, 20), sticky='s')
 
         # create treeview to display data
         self.tree = create_tree_widget(self)
