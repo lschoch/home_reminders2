@@ -145,12 +145,12 @@ class App(tk.Tk):
         # insert images
         img_r = ImageTk.PhotoImage(
             Image.open(
-                "/Users/larry/python/reminders/images/icons8-home-40.ico"
+                "/Users/larry/python/reminders/images/icons8-home-80.png"
             )
         )
         img_l = ImageTk.PhotoImage(
             Image.open(
-                "/Users/larry/python/reminders/images/icons8-home-40.ico"
+                "/Users/larry/python/reminders/images/icons8-home-80.png"
             )
         )
         """ self.img_lbl_r = tk.Label(self, image=img_r)
@@ -158,7 +158,7 @@ class App(tk.Tk):
         self.img_lbl_r.grid(row=0, column=3, padx=(47,0), sticky='w') """
         self.img_lbl_l = tk.Label(self, image=img_l)
         self.img_lbl_l.image = img_l
-        self.img_lbl_l.grid(row=0, column=0, padx=(20, 0))
+        self.img_lbl_l.grid(row=0, column=0, sticky='ns')
 
         ####################################
         # create legend
