@@ -30,6 +30,7 @@ else:
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
 db_path = os.path.join(base_dir, "home_reminders.db")
+db_bak_path = os.path.join(base_dir, "home_reminders.bak")
 con = sqlite3.connect(db_path)
 cur = con.cursor()
 
@@ -397,14 +398,14 @@ class App(tk.Tk):
     def backup(self):
         answer = messagebox.askyesno("Backup", "The current backup will be overwritten. Are you sure?")
         if answer:
-            shutil.copy2("home_reminders.db", "home_reminders.bak")
+            shutil.copy2(db_path, db_bak_path)
         else:
             return
         
     def restore(self):
-        answer = messagebox.askyesno("Backup", "Any current data will be overwritten. Are you sure?")
+        answer = messagebox.askyesno("Restore", "Any current data will be overwritten. Are you sure?")
         if answer:
-            shutil.copy2("home_reminders.bak", "home_reminders.db")
+            shutil.copy2(db_bak_path, db_path)
             refresh(self)
             check_expired(self)
         else:
