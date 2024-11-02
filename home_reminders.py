@@ -1,6 +1,7 @@
 import sqlite3
 import tkinter as tk
 import os
+import shutil
 import sys
 from datetime import date
 from tkinter import messagebox, ttk
@@ -141,7 +142,7 @@ class App(tk.Tk):
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
         # insert images
-        img = ImageTk.PhotoImage(
+        img_r = ImageTk.PhotoImage(
             Image.open(
                 "/Users/larry/python/reminders/images/icons8-home-40.ico"
             )
@@ -151,9 +152,9 @@ class App(tk.Tk):
                 "/Users/larry/python/reminders/images/icons8-home-40.ico"
             )
         )
-        self.img_lbl_r = tk.Label(self, image=img)
-        self.img_lbl_r.image = img
-        self.img_lbl_r.grid(row=0, column=3, padx=(47,0), sticky='w')
+        """ self.img_lbl_r = tk.Label(self, image=img_r)
+        self.img_lbl_r.image = img_r
+        self.img_lbl_r.grid(row=0, column=3, padx=(47,0), sticky='w') """
         self.img_lbl_l = tk.Label(self, image=img_l)
         self.img_lbl_l.image = img_l
         self.img_lbl_l.grid(row=0, column=0, sticky="ew")
@@ -161,10 +162,11 @@ class App(tk.Tk):
         ####################################
         # create legend
         self.legend_frame = tk.Frame(
-            self, highlightbackground="black", highlightthickness=1
+            # self, highlightbackground="black", highlightthickness=1
+            self
         )
         self.legend_frame.grid(
-            row=1, column=3, padx=(20, 0), pady=(20, 0), ipadx=5, ipady=5, sticky='n')
+            row=0, column=3, padx=(20, 0), ipadx=5, ipady=5)
 
         tk.Label(
             self.legend_frame,
@@ -224,6 +226,14 @@ class App(tk.Tk):
         ).grid(row=3, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
         # end legend
         ####################################
+
+        # add right side buttons
+        ttk.Button(self, text="Backup", command=self.backup).grid(
+            row=1, column=3, padx=(20, 0), pady=(20, 0), sticky='n'
+        )
+        ttk.Button(self, text='Restore', command=self.restore).grid(
+            row=1, column=3, padx=(20, 0), pady=(70, 0), sticky='n'
+        )
 
         # add delete all button
         ttk.Button(self, text="Delete All").grid(
@@ -372,6 +382,22 @@ class App(tk.Tk):
 
     def quit_program(self):
         self.destroy()
+
+    def backup(self):
+        answer = messagebox.askyesno("Backup", "The current backup will be overwritten. Are you sure?")
+        if answer:
+            shutil.copy2("home_reminders.db", "home_reminders.bak")
+        else:
+            return
+        
+    def restore(self):
+        answer = messagebox.askyesno("Backup", "The current data will be overwritten. Are you sure?")
+        if answer:
+            shutil.copy2("home_reminders.bak", "home_reminders.db")
+            refresh(self)
+            check_expired(self)
+        else:
+            return
 
     # create toplevel to manage row selection
     def on_treeview_selection_changed(self, event):

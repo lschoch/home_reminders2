@@ -4,3 +4,4 @@ dist/
 venv/
 *.spec
 .DS_Store
+*.sav
