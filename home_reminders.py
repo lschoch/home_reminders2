@@ -80,7 +80,7 @@ class App(tk.Tk):
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("1125x370+3+30")
+        self.geometry("1120x400+3+30")
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=120)
@@ -166,7 +166,7 @@ class App(tk.Tk):
             self
         )
         self.legend_frame.grid(
-            row=0, column=3, )
+            row=0, column=3, pady=(0, 40), sticky='s')
 
         tk.Label(
             self.legend_frame,
@@ -230,13 +230,13 @@ class App(tk.Tk):
         ####################################
         # add right side buttons
         ttk.Button(self, text="Backup", command=self.backup).grid(
-            row=1, column=3, padx=(20, 0), pady=(20, 0), sticky='n'
+            row=1, column=3, padx=(20, 0), pady=(45, 0), sticky='n'
         )
         ttk.Button(self, text='Restore', command=self.restore).grid(
-            row=1, column=3, padx=(20, 0), pady=(70, 0), sticky='n'
+            row=1, column=3, padx=(20, 0), pady=(95, 0), sticky='n'
         )
         ttk.Button(self, text="Delete All", command=self.delete_all).grid(
-            row=1, column=3, padx=(20, 0), pady=(120, 0), sticky='n')
+            row=1, column=3, padx=(20, 0), pady=(145, 0), sticky='n')
         # end right side buttons
         ####################################
 
