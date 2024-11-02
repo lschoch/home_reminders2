@@ -272,7 +272,14 @@ class App(tk.Tk):
         def save_item():
             con = get_con()
             cur = con.cursor()
+
             # validate inputs
+            if not top.description_entry.get():
+                messagebox.showinfo(
+                    "Invalid Input", "Item cannot be blank."
+                )
+                return
+            
             if not valid_frequency(top.frequency_entry.get()):
                 messagebox.showinfo(
                     "Invalid Input", "Frequency requires a numeric input."
@@ -284,8 +291,9 @@ class App(tk.Tk):
                     "Invalid Input", "Please select a period and a date_last."
                 )
                 return
+            
 
-            # check for duplicate description
+            # check for duplicate item
             result = cur.execute("""SELECT * FROM reminders""")
             for item in result.fetchall():
                 if item[1] == top.description_entry.get():
@@ -459,6 +467,12 @@ class App(tk.Tk):
         # update database
         def update_item():
             # validate inputs
+            if not top.description_entry.get():
+                messagebox.showinfo(
+                    "Invalid Input", "Item cannot be blank."
+                )
+                return
+            
             if not valid_frequency(top.frequency_entry.get()):
                 messagebox.showinfo(
                     "Invalid Input", "Frequency requires a numeric input."
