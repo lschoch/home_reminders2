@@ -157,7 +157,7 @@ class App(tk.Tk):
         self.img_lbl_r.grid(row=0, column=3, padx=(47,0), sticky='w') """
         self.img_lbl_l = tk.Label(self, image=img_l)
         self.img_lbl_l.image = img_l
-        self.img_lbl_l.grid(row=0, column=0, sticky="ew")
+        self.img_lbl_l.grid(row=0, column=0, padx=(20, 0))
 
         ####################################
         # create legend
@@ -166,7 +166,7 @@ class App(tk.Tk):
             self
         )
         self.legend_frame.grid(
-            row=0, column=3, padx=(20, 0), ipadx=5, ipady=5)
+            row=0, column=3, )
 
         tk.Label(
             self.legend_frame,
@@ -227,6 +227,7 @@ class App(tk.Tk):
         # end legend
         ####################################
 
+        ####################################
         # add right side buttons
         ttk.Button(self, text="Backup", command=self.backup).grid(
             row=1, column=3, padx=(20, 0), pady=(20, 0), sticky='n'
@@ -234,10 +235,10 @@ class App(tk.Tk):
         ttk.Button(self, text='Restore', command=self.restore).grid(
             row=1, column=3, padx=(20, 0), pady=(70, 0), sticky='n'
         )
-
-        # add delete all button
-        ttk.Button(self, text="Delete All").grid(
-            row=1, column=3, padx=(20, 0), pady=(0, 20), sticky='s')
+        ttk.Button(self, text="Delete All", command=self.delete_all).grid(
+            row=1, column=3, padx=(20, 0), pady=(120, 0), sticky='n')
+        # end right side buttons
+        ####################################
 
         # create treeview to display data
         self.tree = create_tree_widget(self)
@@ -383,6 +384,8 @@ class App(tk.Tk):
     def quit_program(self):
         self.destroy()
 
+    ####################################
+    # functions for right side buttons
     def backup(self):
         answer = messagebox.askyesno("Backup", "The current backup will be overwritten. Are you sure?")
         if answer:
@@ -391,13 +394,24 @@ class App(tk.Tk):
             return
         
     def restore(self):
-        answer = messagebox.askyesno("Backup", "The current data will be overwritten. Are you sure?")
+        answer = messagebox.askyesno("Backup", "Any current data will be overwritten. Are you sure?")
         if answer:
             shutil.copy2("home_reminders.bak", "home_reminders.db")
             refresh(self)
             check_expired(self)
         else:
             return
+        
+    def delete_all(self):
+        answer = messagebox.askyesno("Delete All", "This will delete all data. Are you sure?")
+        if answer:
+            cur.execute("DELETE FROM reminders")
+            con.commit()
+            refresh(self)
+            check_expired(self)
+        else:
+            return
+    # end functions for right side buttons
 
     # create toplevel to manage row selection
     def on_treeview_selection_changed(self, event):
