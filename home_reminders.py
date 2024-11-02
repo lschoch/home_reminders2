@@ -74,7 +74,7 @@ class App(tk.Tk):
             EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
         ################################ """
 
-        self.ico_path = os.path.join(base_dir, "images", "icons8-home-30.ico")
+        self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
 
         self.title("Home Reminders")
         ico = Image.open(self.ico_path)
