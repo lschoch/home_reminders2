@@ -1,8 +1,8 @@
-import sqlite3
-import tkinter as tk
 import os
 import shutil
+import sqlite3
 import sys
+import tkinter as tk
 from datetime import date
 from tkinter import messagebox, ttk
 
@@ -22,7 +22,7 @@ from functions import (
 )
 
 # connect to database and create cursor
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     # Running in a PyInstaller bundle
     base_dir = sys._MEIPASS
 else:
@@ -57,23 +57,16 @@ data = cur.execute("""
 
 # create the main window
 class App(tk.Tk):
-    def __init__(self, **kw):
+    def __init__(self, **kw):  # noqa: PLR0915
         super().__init__(**kw)
 
         # get path to title bar icon
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             # Running in a PyInstaller bundle
             base_dir = sys._MEIPASS
         else:
             # Running as a normal script
             base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        """ ################################
-        if getattr(sys, 'frozen', False):
-            EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
-        else:
-            EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
-        ################################ """
 
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
 
@@ -143,22 +136,14 @@ class App(tk.Tk):
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
         # insert images
-        img_r = ImageTk.PhotoImage(
-            Image.open(
-                "/Users/larry/python/reminders/images/icons8-home-80.png"
-            )
-        )
         img_l = ImageTk.PhotoImage(
             Image.open(
                 "/Users/larry/python/reminders/images/icons8-home-80.png"
             )
         )
-        """ self.img_lbl_r = tk.Label(self, image=img_r)
-        self.img_lbl_r.image = img_r
-        self.img_lbl_r.grid(row=0, column=3, padx=(47,0), sticky='w') """
         self.img_lbl_l = tk.Label(self, image=img_l)
         self.img_lbl_l.image = img_l
-        self.img_lbl_l.grid(row=0, column=0, sticky='ns')
+        self.img_lbl_l.grid(row=0, column=0, sticky="ns")
 
         ####################################
         # create legend
@@ -166,8 +151,7 @@ class App(tk.Tk):
             # self, highlightbackground="black", highlightthickness=1
             self
         )
-        self.legend_frame.grid(
-            row=0, column=3, pady=(0, 40), sticky='s')
+        self.legend_frame.grid(row=0, column=3, pady=(0, 40), sticky="s")
 
         tk.Label(
             self.legend_frame,
@@ -231,13 +215,14 @@ class App(tk.Tk):
         ####################################
         # add right side buttons
         ttk.Button(self, text="Backup", command=self.backup).grid(
-            row=1, column=3, padx=(20, 0), pady=(45, 0), sticky='n'
+            row=1, column=3, padx=(20, 0), pady=(45, 0), sticky="n"
         )
-        ttk.Button(self, text='Restore', command=self.restore).grid(
-            row=1, column=3, padx=(20, 0), pady=(95, 0), sticky='n'
+        ttk.Button(self, text="Restore", command=self.restore).grid(
+            row=1, column=3, padx=(20, 0), pady=(95, 0), sticky="n"
         )
         ttk.Button(self, text="Delete All", command=self.delete_all).grid(
-            row=1, column=3, padx=(20, 0), pady=(145, 0), sticky='n')
+            row=1, column=3, padx=(20, 0), pady=(145, 0), sticky="n"
+        )
         # end right side buttons
         ####################################
 
@@ -276,11 +261,9 @@ class App(tk.Tk):
 
             # validate inputs
             if not top.description_entry.get():
-                messagebox.showinfo(
-                    "Invalid Input", "Item cannot be blank."
-                )
+                messagebox.showinfo("Invalid Input", "Item cannot be blank.")
                 return
-            
+
             if not valid_frequency(top.frequency_entry.get()):
                 messagebox.showinfo(
                     "Invalid Input", "Frequency requires a numeric input."
@@ -292,7 +275,6 @@ class App(tk.Tk):
                     "Invalid Input", "Please select a period and a date_last."
                 )
                 return
-            
 
             # check for duplicate item
             result = cur.execute("""SELECT * FROM reminders""")
@@ -396,23 +378,29 @@ class App(tk.Tk):
     ####################################
     # functions for right side buttons
     def backup(self):
-        answer = messagebox.askyesno("Backup", "The current backup will be overwritten. Are you sure?")
+        answer = messagebox.askyesno(
+            "Backup", "The current backup will be overwritten. Are you sure?"
+        )
         if answer:
             shutil.copy2(db_path, db_bak_path)
         else:
             return
-        
+
     def restore(self):
-        answer = messagebox.askyesno("Restore", "Any current data will be overwritten. Are you sure?")
+        answer = messagebox.askyesno(
+            "Restore", "Any current data will be overwritten. Are you sure?"
+        )
         if answer:
             shutil.copy2(db_bak_path, db_path)
             refresh(self)
             check_expired(self)
         else:
             return
-        
+
     def delete_all(self):
-        answer = messagebox.askyesno("Delete All", "This will delete all data. Are you sure?")
+        answer = messagebox.askyesno(
+            "Delete All", "This will delete all data. Are you sure?"
+        )
         if answer:
             cur.execute("DELETE FROM reminders")
             con.commit()
@@ -420,10 +408,11 @@ class App(tk.Tk):
             check_expired(self)
         else:
             return
+
     # end functions for right side buttons
 
     # create toplevel to manage row selection
-    def on_treeview_selection_changed(self, event):
+    def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:
             self.refreshed = False
@@ -469,11 +458,9 @@ class App(tk.Tk):
         def update_item():
             # validate inputs
             if not top.description_entry.get():
-                messagebox.showinfo(
-                    "Invalid Input", "Item cannot be blank."
-                )
+                messagebox.showinfo("Invalid Input", "Item cannot be blank.")
                 return
-            
+
             if not valid_frequency(top.frequency_entry.get()):
                 messagebox.showinfo(
                     "Invalid Input", "Frequency requires a numeric input."
