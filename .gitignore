@@ -5,3 +5,5 @@ venv/
 *.spec
 .DS_Store
 *.sav
+snippets.txt
+

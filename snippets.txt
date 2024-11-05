@@ -5,11 +5,15 @@ pyinstaller --onedir --windowed --clean --log-level WARN --hidden-import tzdata 
     --icon "images/icons8-home-40.ico" \
     home_reminders.py
     
-pyinstaller --onefile --windowed --clean --log-level WARN --hidden-import tzdata \
+pyinstaller --onedir --windowed --clean --log-level WARN --hidden-import tzdata \
     --add-data="home_reminders.db:." \
     --add-data="home_reminders.bak:." \
     --add-data="images/icons8-home-80.png:images" \
     --icon "images/icons8-home-40.ico" \
+<<<<<<< HEAD
+=======
+    --name "Home Reminders (Mac)" \
+>>>>>>> new1
     home_reminders.py
 
 """ ################################
