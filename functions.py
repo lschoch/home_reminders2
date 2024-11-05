@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta  # noqa: F401
@@ -216,6 +216,7 @@ def valid_frequency(input_data):
     else:
         return False
 
+
 def check_expired(self):
     self.con = get_con()
     self.cur = self.con.cursor()
@@ -239,10 +240,11 @@ def check_expired(self):
         self.expired_msg.set(f"{len(result)} past due")
     self.view_lbl.config(background=self.lbl_color.get())
 
+
 # function to create database connection
 def get_con():
     # connect to database and create cursor
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         # Running in a PyInstaller bundle
         base_dir = sys._MEIPASS
     else:
