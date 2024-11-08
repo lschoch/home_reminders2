@@ -1,7 +1,7 @@
+import importlib
 import os
 import shutil
 import sqlite3
-import sys
 import tkinter as tk
 from datetime import date
 from tkinter import messagebox, ttk
@@ -21,6 +21,13 @@ from functions import (
     remove_toplevels,
     valid_frequency,
 )
+
+if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
+    import pyi_splash  # type: ignore
+
+    pyi_splash.update_text("UI Loaded ...")
+    pyi_splash.close()
+    print("Splash screen closed.")
 
 # connect to database and create cursor
 dir_path = os.path.join(appsupportdir(), "Home Reminders")
@@ -58,12 +65,24 @@ class App(tk.Tk):
         super().__init__(**kw)
 
         # get path to title bar icon
-        if getattr(sys, "frozen", False):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        """
+            if getattr(sys, 'frozen', False):
             # Running in a PyInstaller bundle
             base_dir = sys._MEIPASS
         else:
             # Running as a normal script
             base_dir = os.path.dirname(os.path.abspath(__file__))
+        """
+
+        """
+        if getattr(sys, 'frozen', False):
+            EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
+        else:
+            EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) )
+            # Other packers
+        """
 
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
 
@@ -71,7 +90,7 @@ class App(tk.Tk):
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("1120x400+3+30")
+        self.geometry("1120x400+3+3")
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=120)
@@ -127,16 +146,19 @@ class App(tk.Tk):
         self.today_is_lbl = tk.Label(
             self,
             textvariable=date_variable,
-            foreground="red",
+            foreground="#8BB7F0",
             font=("Helvetica", 24),
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
         # insert images
-        img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
-        self.img_lbl_l = tk.Label(self, image=img_l)
-        self.img_lbl_l.image = img_l
-        self.img_lbl_l.grid(row=0, column=0, sticky="ns")
+        try:
+            img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
+            self.img_lbl_l = tk.Label(self, image=img_l)
+            self.img_lbl_l.image = img_l
+            self.img_lbl_l.grid(row=0, column=0, sticky="ns")
+        except FileNotFoundError:
+            pass
 
         ####################################
         # create legend
@@ -150,7 +172,7 @@ class App(tk.Tk):
             self.legend_frame,
             text="Legend:",
             justify="center",
-            font=("Arial bold", 14),
+            font=("Arial", 14),
             foreground="black",
             background="#ececec",
         ).grid(row=0, column=0, pady=(5, 0), columnspan=2)
@@ -159,7 +181,7 @@ class App(tk.Tk):
             self.legend_frame,
             text="  ",
             width=2,
-            background="lightblue",
+            background="lime",
             borderwidth=1,
             relief="solid",
         ).grid(

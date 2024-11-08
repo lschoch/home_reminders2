@@ -67,7 +67,7 @@ def insert_data(self, data):
             if dat_nxt < date.today():
                 self.tree.tag_configure(item[0], background="yellow")
             elif dat_nxt == date.today():
-                self.tree.tag_configure(item[0], background="lightblue")
+                self.tree.tag_configure(item[0], background="lime")
             else:
                 self.tree.tag_configure(item[0], background="white")
         self.tree.tag_configure(item[0], font=("Helvetica", 13))
@@ -106,13 +106,13 @@ def get_date(date_last_entry, top):
     top2 = tk.Toplevel(top)
 
     # remove title bar
-    top2.wm_overrideredirect(True)
+    # top2.wm_overrideredirect(True)
 
     top2.configure(background="#cacaca")
     x = top.winfo_x()
     y = top.winfo_y()
     # top2.geometry("+%d+%d" % (x + 48, y + 195))  # y + 120
-    top2.geometry("+%d+%d" % (x + 18, y + 110))
+    top2.geometry("+%d+%d" % (x + 187, y + 86))
 
     # keep calendar in front of it's parent window (only wm_transient works)
     # 1. top2.wm_transient(top)
