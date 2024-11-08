@@ -253,3 +253,31 @@ def get_con():
 
     db_path = os.path.join(base_dir, "home_reminders.db")
     return sqlite3.connect(db_path)
+
+
+def appsupportdir():
+    windows = r"%APPDATA%"
+    windows = os.path.expandvars(windows)
+    if "APPDATA" not in windows:
+        return windows
+
+    user_directory = os.path.expanduser("~")
+
+    macos = os.path.join(user_directory, "Library", "Application Support")
+    if os.path.exists(macos):
+        return macos
+
+    linux = os.path.join(user_directory, ".local", "share")
+    if os.path.exists(linux):
+        return linux
+
+    return user_directory
+
+
+def pathinappsupportdir(*paths, create=False):
+    location = os.path.join(appsupportdir(), *paths)
+
+    if create:
+        os.makedirs(location)
+
+    return location
