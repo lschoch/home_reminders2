@@ -10,6 +10,7 @@ from PIL import Image, ImageTk
 
 from classes import TopLvl
 from functions import (
+    appsupportdir,
     check_expired,
     create_tree_widget,
     date_next_calc,
@@ -22,15 +23,11 @@ from functions import (
 )
 
 # connect to database and create cursor
-if getattr(sys, "frozen", False):
-    # Running in a PyInstaller bundle
-    base_dir = sys._MEIPASS
-else:
-    # Running as a normal script
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-
-db_path = os.path.join(base_dir, "home_reminders.db")
-db_bak_path = os.path.join(base_dir, "home_reminders.bak")
+dir_path = os.path.join(appsupportdir(), "Home Reminders")
+if not os.path.exists(dir_path):
+    os.makedirs(dir_path)
+db_path = os.path.join(dir_path, "home_reminders.db")
+db_bak_path = os.path.join(dir_path, "home_reminders.bak")
 con = sqlite3.connect(db_path)
 cur = con.cursor()
 

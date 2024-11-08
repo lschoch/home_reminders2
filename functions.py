@@ -1,6 +1,5 @@
 import os
 import sqlite3
-import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta  # noqa: F401
 from tkinter import ttk
@@ -243,16 +242,11 @@ def check_expired(self):
 
 # function to create database connection
 def get_con():
-    # connect to database and create cursor
-    if getattr(sys, "frozen", False):
-        # Running in a PyInstaller bundle
-        base_dir = sys._MEIPASS
-    else:
-        # Running as a normal script
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-    db_path = os.path.join(base_dir, "home_reminders.db")
-    return sqlite3.connect(db_path)
+    dir_path = os.path.join(appsupportdir(), "Home Reminders")
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    file_path = os.path.join(dir_path, "home_reminders.db")
+    return sqlite3.connect(file_path)
 
 
 def appsupportdir():
