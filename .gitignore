@@ -6,4 +6,6 @@ venv/
 .DS_Store
 *.sav
 snippets.txt
+images/thumbs.db
+images/splash.*
 
