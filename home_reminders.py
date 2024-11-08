@@ -133,11 +133,7 @@ class App(tk.Tk):
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
         # insert images
-        img_l = ImageTk.PhotoImage(
-            Image.open(
-                "/Users/larry/python/reminders/images/icons8-home-80.png"
-            )
-        )
+        img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
         self.img_lbl_l = tk.Label(self, image=img_l)
         self.img_lbl_l.image = img_l
         self.img_lbl_l.grid(row=0, column=0, sticky="ns")
