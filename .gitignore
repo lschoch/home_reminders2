@@ -7,5 +7,4 @@ venv/
 *.sav
 snippets.txt
 images/thumbs.db
-images/splash.*
-
+images/splash*.*
