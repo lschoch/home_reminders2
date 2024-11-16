@@ -5,8 +5,8 @@ venv/
 *.spec
 .DS_Store
 *.sav
-snippets.txt
 images/thumbs.db
 images/splash*.*
 Home Reminders.pkg
+tmp/
 
