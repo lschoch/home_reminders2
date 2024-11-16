@@ -1,0 +1,33 @@
+pyinstaller --onefile --windowed \
+    --hidden-import tmzdata \
+    --icon="images/icons8-home-40.ico" \
+    --add-data "images/icons8-home-80.png:./images" \
+    --name "Home Reminders" \
+    home_reminders.py
+
+
+security find-identity -p basic -v
+
+codesign --deep --force --options=runtime --entitlements ./entitlements.plist --sign "CE9A89DA681F5F90591D9D8F07C1488D9FF36D7E" --timestamp ./dist/"Home Reminders"
+
+codesign --deep --force --options=runtime --entitlements ./entitlements.plist --sign "Developer ID Application: Lawrence Schoch (SS8V2GBLP4)" --timestamp PDF_renamer
+
+ditto ./dist ./tmp
+
+productbuild --identifier "com.Home Reminders.pkg" --sign "Developer ID Installer: Lawrence Schoch (SS8V2GBLP4)" --timestamp --root ./tmp /Applications "Home Reminders.pkg"
+
+check if pkg is signed:
+/usr/sbin/spctl --assess --ignore-cache --verbose --type install PDF_renamer.pkg
+
+xcrun notarytool history --keychain-profile "MyNotarizationCredentials"
+
+xcrun notarytool submit --keychain-profile "MyNotarizationCredentials" --wait ./"Home Reminders.pkg"
+
+xcrun notarytool log --keychain-profile "MyNotarizationCredentials" 7fc3503c-aedb-4fb5-8402-53d31d8d1298
+
+xcrun stapler staple "Home Reminders.pkg"
+
+hdiutil create  -srcfolder ./dist/"Home Reminders.app" "Home Reminders.dmg"
+hdiutil create  -srcfolder ./dist/PDF_renamer PDF_renamer.dmg
+
+cp -fR PDF_renamer.pkg ../../Downloads
