@@ -305,10 +305,14 @@ class App(tk.Tk):
                 )
                 return
 
-            if not top.date_last_entry.get() or not top.period_combobox.get():
+            if not top.date_last_entry.get():
                 messagebox.showinfo(
-                    "Invalid Input", "Please select a period and a date_last."
+                    "Invalid Input", "Please select a date for last."
                 )
+                return
+
+            if not top.period_combobox.get():
+                messagebox.showinfo("Invalid Input", "Please select a period.")
                 return
 
             # check for duplicate item
