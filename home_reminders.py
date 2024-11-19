@@ -40,8 +40,13 @@ db_bak_path = os.path.join(dir_path, "home_reminders.bak")
 con = sqlite3.connect(db_path)
 cur = con.cursor()
 
+# create table to store user phone number
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        phone_number TEXT)
+""")
 
-# create table if it doesn't exist
+# create data table if it doesn't exist
 cur.execute("""
     CREATE TABLE IF NOT EXISTS reminders(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,16 +57,12 @@ cur.execute("""
         date_next TEXT,
         note TEXT)
 """)
-
-# select data for display, bring NULLs forward so they don't get lost
+# retrieve data for display in treeview
 data = cur.execute("""
     SELECT * FROM reminders
     WHERE date_next >= DATE('now', 'localtime')
     ORDER BY date_next ASC, description ASC
 """)
-
-# initialize phone number for text messages
-number = None
 
 
 # create the main window
@@ -249,7 +250,7 @@ class App(tk.Tk):
         )
         Button(
             self,
-            text="notifications",
+            text="Notifications",
             background="#8BB7F0",
             height=35,
             width=120,
@@ -447,10 +448,10 @@ class App(tk.Tk):
             return
 
     def notifications(self):
-        # check to see if user has a number; i.e., already receiving text
+        # check to see if user has a phone number; i.e., already receiving text
         # notifications
-        global number  # noqa: PLW0603
-        if number is None:  # number is a global variable
+        number = cur.execute("SELECT phone_number FROM users").fetchone()
+        if number is None:
             response = messagebox.askyesno(
                 title="Opt-in?",
                 message="Would you like to start receiving text notifications?",  # noqa: E501
@@ -461,7 +462,6 @@ class App(tk.Tk):
                     num_window.destroy()
 
                 def submit():
-                    global number  # noqa: PLW0603
                     num = entry.get()
                     if not num.isnumeric() or len(num) > 10 or len(num) < 10:
                         messagebox.showinfo(
@@ -470,7 +470,12 @@ class App(tk.Tk):
                         num_window.focus_set()
                         entry.focus_set()
                     else:
-                        number = num
+                        # save number to database
+                        cur.execute(
+                            "INSERT INTO users (phone_number) VALUES(?)",
+                            (num,),
+                        )
+                        con.commit()
                         num_window.destroy()
                         messagebox.showinfo(
                             message="You have opted to start receiving"
@@ -509,7 +514,8 @@ class App(tk.Tk):
                     message="You have opted out of text notifications."
                     + " Texts will no longer be sent."
                 )
-                number = None
+                cur.execute("DELETE FROM users")
+                con.commit()
 
     # end commands for right side buttons
     ####################################
