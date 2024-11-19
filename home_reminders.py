@@ -453,7 +453,7 @@ class App(tk.Tk):
         if number is None:  # number is a global variable
             response = messagebox.askyesno(
                 title="Opt-in?",
-                message="Would you like to start receiving text notifications?",
+                message="Would you like to start receiving text notifications?",  # noqa: E501
             )
             if response:
 
