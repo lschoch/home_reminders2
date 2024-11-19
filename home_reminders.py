@@ -7,6 +7,7 @@ from datetime import date
 from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
+from tkmacosx import Button
 
 from classes import TopLvl
 from functions import (
@@ -19,6 +20,7 @@ from functions import (
     insert_data,
     refresh,
     remove_toplevels,
+    send_sms,  # noqa: F401
     valid_frequency,
 )
 
@@ -57,6 +59,9 @@ data = cur.execute("""
     WHERE date_next >= DATE('now', 'localtime')
     ORDER BY date_next ASC, description ASC
 """)
+
+# initialize phone number for text messages
+number = None
 
 
 # create the main window
@@ -107,6 +112,8 @@ class App(tk.Tk):
         self.expired_msg = tk.StringVar()
 
         # create main screen
+        ####################################
+        # add left side buttons
         self.btn = ttk.Button(self, text="Pending", command=self.pending).grid(
             row=1, column=0, padx=20, pady=(20, 0), sticky="n"
         )
@@ -119,6 +126,8 @@ class App(tk.Tk):
         self.btn = ttk.Button(
             self, text="Quit", command=self.quit_program
         ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="s")
+        # end left side buttons
+        ####################################
 
         self.view_lbl = ttk.Label(
             self,
@@ -146,7 +155,7 @@ class App(tk.Tk):
         self.today_is_lbl = tk.Label(
             self,
             textvariable=date_variable,
-            foreground="#8BB7F0",
+            foreground="black",
             font=("Helvetica", 24),
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
@@ -230,14 +239,22 @@ class App(tk.Tk):
         ####################################
         # add right side buttons
         ttk.Button(self, text="Backup", command=self.backup).grid(
-            row=1, column=3, padx=(20, 0), pady=(45, 0), sticky="n"
+            row=1, column=3, padx=(20, 0), pady=(20, 0), sticky="n"
         )
         ttk.Button(self, text="Restore", command=self.restore).grid(
-            row=1, column=3, padx=(20, 0), pady=(95, 0), sticky="n"
+            row=1, column=3, padx=(20, 0), pady=(72, 0), sticky="n"
         )
         ttk.Button(self, text="Delete All", command=self.delete_all).grid(
-            row=1, column=3, padx=(20, 0), pady=(145, 0), sticky="n"
+            row=1, column=3, padx=(20, 0), pady=(0, 72), sticky="s"
         )
+        Button(
+            self,
+            text="notifications",
+            background="#8BB7F0",
+            height=35,
+            width=120,
+            command=self.notifications,
+        ).grid(row=1, column=3, padx=(20, 0), pady=(0, 20), sticky="s")
         # end right side buttons
         ####################################
 
@@ -253,6 +270,8 @@ class App(tk.Tk):
         self.focus_set()
         self.tree.focus_set()
 
+    ####################################
+    # commands for left side buttons
     # create top level window for entry of data for new item
     def create_new(self):
         # remove any existing toplevels
@@ -390,8 +409,11 @@ class App(tk.Tk):
     def quit_program(self):
         self.destroy()
 
+    # end commands for left side buttons
     ####################################
-    # functions for right side buttons
+
+    ####################################
+    # commands for right side buttons
     def backup(self):
         answer = messagebox.askyesno(
             "Backup", "The current backup will be overwritten. Are you sure?"
@@ -424,7 +446,73 @@ class App(tk.Tk):
         else:
             return
 
-    # end functions for right side buttons
+    def notifications(self):
+        # check to see if user has a number; i.e., already receiving text
+        # notifications
+        global number  # noqa: PLW0603
+        if number is None:  # number is a global variable
+            response = messagebox.askyesno(
+                title="Opt-in?",
+                message="Would you like to start receiving text notifications?",
+            )
+            if response:
+
+                def cancel():
+                    num_window.destroy()
+
+                def submit():
+                    global number  # noqa: PLW0603
+                    num = entry.get()
+                    if not num.isnumeric() or len(num) > 10 or len(num) < 10:
+                        messagebox.showinfo(
+                            message="Must be a ten digit numeric."
+                        )
+                        num_window.focus_set()
+                        entry.focus_set()
+                    else:
+                        number = num
+                        num_window.destroy()
+                        messagebox.showinfo(
+                            message="You have opted to start receiving"
+                            + " text notifications."
+                        )
+
+                num_window = tk.Toplevel(self)
+                num_window.geometry("300x130+600+300")
+                num_window.grid_columnconfigure(0, weight=1)
+                num_window.grid_columnconfigure(1, weight=1)
+                ttk.Label(
+                    num_window,
+                    text="Enter your ten digit phone number:",
+                    background="#ececec",
+                    font=("Helvetica", 13),
+                ).grid(row=0, column=0, columnspan=2, pady=15)
+                num_var = tk.StringVar(num_window)
+                entry = ttk.Entry(
+                    num_window, textvariable=num_var, font=("Helvetica", 13)
+                )
+                entry.grid(row=1, column=0, columnspan=2)
+                tk.Button(num_window, text="Submit", command=submit).grid(
+                    row=2, column=0, pady=15
+                )
+                tk.Button(num_window, text="Cancel", command=cancel).grid(
+                    row=2, column=1, pady=15
+                )
+                entry.focus_set()
+        else:
+            response3 = messagebox.askyesno(
+                title="Opt-out?",
+                message="Do you want to continue receiving text notifications?",  # noqa: E501
+            )
+            if not response3:
+                messagebox.showinfo(
+                    message="You have opted out of text notifications."
+                    + " Texts will no longer be sent."
+                )
+                number = None
+
+    # end commands for right side buttons
+    ####################################
 
     # create toplevel to manage row selection
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
