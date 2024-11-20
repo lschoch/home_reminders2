@@ -474,7 +474,7 @@ class App(tk.Tk):
                         num_window.focus_set()
                         entry.focus_set()
                     else:
-                        # save number to database
+                        # save phone number to database
                         cur.execute(
                             "INSERT INTO users (phone_number) VALUES(?)",
                             (num,),
@@ -487,12 +487,14 @@ class App(tk.Tk):
                         )
 
                 num_window = tk.Toplevel(self)
-                num_window.geometry("300x130+600+300")
+                num_window.geometry("300x150+600+300")
                 num_window.grid_columnconfigure(0, weight=1)
                 num_window.grid_columnconfigure(1, weight=1)
                 ttk.Label(
                     num_window,
-                    text="Enter your ten digit phone number:",
+                    text="Enter your ten digit phone number\n"
+                    + "              (numbers only):",
+                    anchor="center",
                     background="#ececec",
                     font=("Helvetica", 13),
                 ).grid(row=0, column=0, columnspan=2, pady=15)
@@ -502,10 +504,10 @@ class App(tk.Tk):
                 )
                 entry.grid(row=1, column=0, columnspan=2)
                 tk.Button(num_window, text="Submit", command=submit).grid(
-                    row=2, column=0, pady=15
+                    row=2, column=0, padx=(0, 5), pady=15, sticky="e"
                 )
                 tk.Button(num_window, text="Cancel", command=cancel).grid(
-                    row=2, column=1, pady=15
+                    row=2, column=1, padx=(5, 0), pady=15, sticky="w"
                 )
                 entry.focus_set()
         else:
