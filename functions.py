@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import tkinter as tk
-from datetime import date, datetime, timedelta  # noqa: F401
+from datetime import date, datetime, timedelta
 from tkinter import ttk
 
 from dateutil.relativedelta import relativedelta
@@ -294,3 +294,23 @@ def send_sms(number):
     )
 
     print(f"Message sent to {number} with SID: {message.sid}")
+
+
+# initialize user data if the table is empty_check
+def initialize_user():
+    con = get_con()
+    cur = con.cursor()
+    empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchall()
+    if empty_check[0][0] == 0:
+        values = (0, 0, 0, "1970-01-01")
+        cur.execute(
+            """
+            INSERT INTO user (
+                week_before,
+                day_before,
+                day_of,
+                last_notification_date)
+                VALUES (?, ?, ?, ?)""",
+            values,
+        )
+        con.commit()
