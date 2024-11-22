@@ -3,7 +3,7 @@ import os
 import shutil
 import sqlite3
 import tkinter as tk
-from datetime import date
+from datetime import date, datetime, timedelta  # noqa: F401
 from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
@@ -17,6 +17,7 @@ from functions import (
     date_next_calc,
     get_con,
     get_date,
+    initialize_user,
     insert_data,
     refresh,
     remove_toplevels,
@@ -24,6 +25,7 @@ from functions import (
     valid_frequency,
 )
 
+# create splash screen
 if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     import pyi_splash  # type: ignore
 
@@ -42,8 +44,12 @@ cur = con.cursor()
 
 # create table to store user phone number
 cur.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-        phone_number TEXT)
+    CREATE TABLE IF NOT EXISTS user(
+        phone_number TEXT,
+        week_before INT,
+        day_before INT,
+        day_of INT,
+        last_notification_date TEXT)
 """)
 
 # create data table if it doesn't exist
@@ -452,13 +458,15 @@ class App(tk.Tk):
             return
 
     def notifications(self):
-        # check to see if user has a phone number; i.e., already receiving text
+        initialize_user()
+        # check to see if user has a phone number; i.e., already receiving
         # notifications
-        number = cur.execute("SELECT phone_number FROM users").fetchone()
-        if number is None:
+        phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+        if phone_number is None:
             response = messagebox.askyesno(
                 title="Opt-in?",
-                message="Would you like to start receiving text notifications?",  # noqa: E501
+                message="Would you like to to be notified by text "
+                + "when your items are coming due?",
             )
             if response:
 
@@ -467,17 +475,57 @@ class App(tk.Tk):
 
                 def submit():
                     num = entry.get()
+                    no_options_selected = (
+                        var1.get() == 0 and var2.get() == 0 and var3.get() == 0
+                    )
+                    # validate the entered phone number
                     if not num.isnumeric() or len(num) > 10 or len(num) < 10:
                         messagebox.showinfo(
                             message="Must be a ten digit numeric."
                         )
                         num_window.focus_set()
                         entry.focus_set()
+                    # require at least one "when" option
+                    elif no_options_selected:
+                        txt = (
+                            "Please select at least one option for when "
+                            + "to be notified."
+                        )
+                        messagebox.showinfo(message=txt)
+                        num_window.focus_set()
                     else:
-                        # save phone number to database
+                        # save phone number and options to database
+                        if var1.get() == 1:
+                            week_before = True
+                        else:
+                            week_before = False
+                        if var2.get() == 1:
+                            day_before = True
+                        else:
+                            day_before = False
+                        if var3.get() == 1:
+                            day_of = True
+                        else:
+                            day_of = False
+                        last_notification_date = datetime.strftime(
+                            date.today(), "%Y-%m-%d"
+                        )
+                        values = (
+                            num,
+                            week_before,
+                            day_before,
+                            day_of,
+                            last_notification_date,
+                        )
+                        cur.execute("DELETE FROM user")
                         cur.execute(
-                            "INSERT INTO users (phone_number) VALUES(?)",
-                            (num,),
+                            """INSERT INTO user (
+                            phone_number,
+                            week_before,
+                            day_before,
+                            day_of,
+                            last_notification_date) VALUES(?, ?, ?, ?, ?)""",
+                            values,
                         )
                         con.commit()
                         num_window.destroy()
@@ -487,27 +535,77 @@ class App(tk.Tk):
                         )
 
                 num_window = tk.Toplevel(self)
-                num_window.geometry("300x150+600+300")
+                num_window.geometry("300x185+600+300")
                 num_window.grid_columnconfigure(0, weight=1)
                 num_window.grid_columnconfigure(1, weight=1)
                 ttk.Label(
                     num_window,
-                    text="Enter your ten digit phone number\n"
-                    + "              (numbers only):",
+                    text="Enter your ten digit phone number:",
                     anchor="center",
                     background="#ececec",
                     font=("Helvetica", 13),
-                ).grid(row=0, column=0, columnspan=2, pady=15)
+                ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
                 num_var = tk.StringVar(num_window)
                 entry = ttk.Entry(
                     num_window, textvariable=num_var, font=("Helvetica", 13)
                 )
                 entry.grid(row=1, column=0, columnspan=2)
+
+                ttk.Label(
+                    num_window,
+                    text="Notify when? Select all that apply:",
+                    anchor="center",
+                    background="#ececec",
+                    font=("Helvetica", 13),
+                ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
+
+                var1 = tk.IntVar()
+                var2 = tk.IntVar()
+                var3 = tk.IntVar()
+                c1 = tk.Checkbutton(
+                    num_window,
+                    text="Week before",
+                    font=("Helvetica", 12),
+                    variable=var1,
+                    onvalue=1,
+                    offvalue=0,
+                )
+                c1.grid(
+                    row=3, column=0, columnspan=2, padx=(20, 0), sticky="w"
+                )
+
+                c2 = tk.Checkbutton(
+                    num_window,
+                    text="Day before",
+                    font=("Helvetica", 12),
+                    variable=var2,
+                    onvalue=1,
+                    offvalue=0,
+                )
+                c2.grid(
+                    row=3,
+                    column=0,
+                    columnspan=2,
+                    padx=(25, 0),
+                )
+
+                c3 = tk.Checkbutton(
+                    num_window,
+                    text="Day of",
+                    font=("Helvetica", 12),
+                    variable=var3,
+                    onvalue=1,
+                    offvalue=0,
+                )
+                c3.grid(
+                    row=3, column=0, columnspan=2, padx=(0, 25), sticky="e"
+                )
+
                 tk.Button(num_window, text="Submit", command=submit).grid(
-                    row=2, column=0, padx=(0, 5), pady=15, sticky="e"
+                    row=4, column=0, padx=(0, 5), pady=15, sticky="e"
                 )
                 tk.Button(num_window, text="Cancel", command=cancel).grid(
-                    row=2, column=1, padx=(5, 0), pady=15, sticky="w"
+                    row=4, column=1, padx=(5, 0), pady=15, sticky="w"
                 )
                 entry.focus_set()
         else:
@@ -520,7 +618,7 @@ class App(tk.Tk):
                     message="You have opted out of text notifications."
                     + " Texts will no longer be sent."
                 )
-                cur.execute("DELETE FROM users")
+                cur.execute("DELETE FROM user")
                 con.commit()
 
     # end commands for right side buttons
