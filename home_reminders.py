@@ -17,6 +17,7 @@ from functions import (
     date_next_calc,
     get_con,
     get_date,
+    get_user_data,
     initialize_user,
     insert_data,
     refresh,
@@ -458,6 +459,7 @@ class App(tk.Tk):
             return
 
     def notifications(self):
+        # initialize user table if empty
         initialize_user()
         # check to see if user has a phone number; i.e., already receiving
         # notifications
@@ -468,146 +470,10 @@ class App(tk.Tk):
                 message="Would you like to to be notified by text "
                 + "when your items are coming due?",
             )
+            # if user opts to receive notifications, get user data
             if response:
-
-                def cancel():
-                    num_window.destroy()
-
-                def submit():
-                    num = entry.get()
-                    no_options_selected = (
-                        var1.get() == 0 and var2.get() == 0 and var3.get() == 0
-                    )
-                    # validate the entered phone number
-                    if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-                        messagebox.showinfo(
-                            message="Must be a ten digit numeric."
-                        )
-                        num_window.focus_set()
-                        entry.focus_set()
-                    # require at least one "when" option
-                    elif no_options_selected:
-                        txt = (
-                            "Please select at least one option for when "
-                            + "to be notified."
-                        )
-                        messagebox.showinfo(message=txt)
-                        num_window.focus_set()
-                    else:
-                        # save phone number and options to database
-                        if var1.get() == 1:
-                            week_before = True
-                        else:
-                            week_before = False
-                        if var2.get() == 1:
-                            day_before = True
-                        else:
-                            day_before = False
-                        if var3.get() == 1:
-                            day_of = True
-                        else:
-                            day_of = False
-                        last_notification_date = datetime.strftime(
-                            date.today(), "%Y-%m-%d"
-                        )
-                        values = (
-                            num,
-                            week_before,
-                            day_before,
-                            day_of,
-                            last_notification_date,
-                        )
-                        cur.execute("DELETE FROM user")
-                        cur.execute(
-                            """INSERT INTO user (
-                            phone_number,
-                            week_before,
-                            day_before,
-                            day_of,
-                            last_notification_date) VALUES(?, ?, ?, ?, ?)""",
-                            values,
-                        )
-                        con.commit()
-                        num_window.destroy()
-                        messagebox.showinfo(
-                            message="You have opted to start receiving"
-                            + " text notifications."
-                        )
-
-                num_window = tk.Toplevel(self)
-                num_window.geometry("300x185+600+300")
-                num_window.grid_columnconfigure(0, weight=1)
-                num_window.grid_columnconfigure(1, weight=1)
-                ttk.Label(
-                    num_window,
-                    text="Enter your ten digit phone number:",
-                    anchor="center",
-                    background="#ececec",
-                    font=("Helvetica", 13),
-                ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
-                num_var = tk.StringVar(num_window)
-                entry = ttk.Entry(
-                    num_window, textvariable=num_var, font=("Helvetica", 13)
-                )
-                entry.grid(row=1, column=0, columnspan=2)
-
-                ttk.Label(
-                    num_window,
-                    text="Notify when? Select all that apply:",
-                    anchor="center",
-                    background="#ececec",
-                    font=("Helvetica", 13),
-                ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
-
-                var1 = tk.IntVar()
-                var2 = tk.IntVar()
-                var3 = tk.IntVar()
-                c1 = tk.Checkbutton(
-                    num_window,
-                    text="Week before",
-                    font=("Helvetica", 12),
-                    variable=var1,
-                    onvalue=1,
-                    offvalue=0,
-                )
-                c1.grid(
-                    row=3, column=0, columnspan=2, padx=(20, 0), sticky="w"
-                )
-
-                c2 = tk.Checkbutton(
-                    num_window,
-                    text="Day before",
-                    font=("Helvetica", 12),
-                    variable=var2,
-                    onvalue=1,
-                    offvalue=0,
-                )
-                c2.grid(
-                    row=3,
-                    column=0,
-                    columnspan=2,
-                    padx=(25, 0),
-                )
-
-                c3 = tk.Checkbutton(
-                    num_window,
-                    text="Day of",
-                    font=("Helvetica", 12),
-                    variable=var3,
-                    onvalue=1,
-                    offvalue=0,
-                )
-                c3.grid(
-                    row=3, column=0, columnspan=2, padx=(0, 25), sticky="e"
-                )
-
-                tk.Button(num_window, text="Submit", command=submit).grid(
-                    row=4, column=0, padx=(0, 5), pady=15, sticky="e"
-                )
-                tk.Button(num_window, text="Cancel", command=cancel).grid(
-                    row=4, column=1, padx=(5, 0), pady=15, sticky="w"
-                )
-                entry.focus_set()
+                get_user_data(self)
+        # if user opts out of notifications, delete user's data
         else:
             response3 = messagebox.askyesno(
                 title="Opt-out?",
@@ -624,7 +490,7 @@ class App(tk.Tk):
     # end commands for right side buttons
     ####################################
 
-    # create toplevel to manage row selection
+    # create toplevel to manage row selection in treeview
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:
