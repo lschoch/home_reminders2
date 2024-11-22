@@ -6,7 +6,8 @@ from tkinter import messagebox, ttk
 
 from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
-from twilio.rest import Client
+
+# from twilio.rest import Client
 
 
 # create treeview to display data from database
@@ -278,22 +279,8 @@ def pathinappsupportdir(*paths, create=False):
     return location
 
 
-def send_sms(number):
-    account_sid = ***REMOVED***
-    auth_token = ***REMOVED***
-    twilio_number = ***REMOVED***
-    recipient_number = number
-
-    # Create Twilio client
-    client = Client(account_sid, auth_token)
-
-    # Send SMS
-    # in body part you have to write your message
-    message = client.messages.create(
-        body="Twilio message", from_=twilio_number, to=recipient_number
-    )
-
-    print(f"Message sent to {number} with SID: {message.sid}")
+def send_sms():
+    pass
 
 
 # initialize user data if the table is empty_check
