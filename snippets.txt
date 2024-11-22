@@ -32,4 +32,4 @@ hdiutil create  -srcfolder ./dist/PDF_renamer PDF_renamer.dmg
 
 cp -fR PDF_renamer.pkg ../../Downloads
 
-
+BFG run is complete! When ready, run: git reflog expire --expire=now --all && git gc --prune=now --aggressive
