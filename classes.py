@@ -147,3 +147,31 @@ if __name__ == "__main__":
         "Anise",
     )
     test(test_list)
+
+
+# custom message box class
+class MsgBox(tk.Toplevel):
+    def __init__(self, master, title="", message="", x_offset=0, y_offset=0):
+        super().__init__(master)
+        self.title(title)
+        self.config(bg="#ececec")
+        self.txt = tk.Text(
+            self,
+            bg="#ececec",
+            width=50,
+            height=10,
+            font=("Helvetica, 13"),
+            padx=10,
+            pady=10,
+        )
+        self.button = ttk.Button(self, text="OK", command=self.destroy)
+        self.txt.pack()
+        self.button.pack(side="bottom", pady=15)
+        self.txt.insert(tk.END, message)
+        x = master.winfo_x()
+        y = master.winfo_y()
+        self.geometry("350x250+%d+%d" % (x + x_offset, y + y_offset))
+
+        # self.wm.grab_set()
+        # self.lift()
+        # print(self.focus_set())
