@@ -33,3 +33,20 @@ hdiutil create  -srcfolder ./dist/PDF_renamer PDF_renamer.dmg
 cp -fR PDF_renamer.pkg ../../Downloads
 
 BFG run is complete! When ready, run: git reflog expire --expire=now --all && git gc --prune=now --aggressive
+
+"""
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    base_dir = sys._MEIPASS
+else:
+    # Running as a normal script
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+"""
+
+"""
+if getattr(sys, 'frozen', False):
+    XE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
+else:
+    EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) )
+# Other packers
+"""

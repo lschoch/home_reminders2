@@ -80,23 +80,6 @@ class App(tk.Tk):
         # get path to title bar icon
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        """
-            if getattr(sys, 'frozen', False):
-            # Running in a PyInstaller bundle
-            base_dir = sys._MEIPASS
-        else:
-            # Running as a normal script
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        """
-
-        """
-        if getattr(sys, 'frozen', False):
-            EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
-        else:
-            EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) )
-            # Other packers
-        """
-
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
 
         self.title("Home Reminders")
@@ -277,6 +260,59 @@ class App(tk.Tk):
 
         self.focus_set()
         self.tree.focus_set()
+
+        ####################################
+        # notifications for upcoming events
+        ####################################
+        # initialize user table if empty
+        initialize_user()
+        user_data = cur.execute("SELECT * FROM user").fetchone()
+        # check whether user has opted in for notifications by entering a
+        # phone number
+        if user_data[0] is not None:
+            # create list to hold messages re: upcoming items
+            messages = "Items coming due: \n"
+            # check whether user wants day of notificatons
+            if user_data[3]:
+                dat = datetime.today().strftime("%Y-%m-%d")
+                day_of_items = cur.execute(
+                    """
+                    SELECT * FROM reminders WHERE date_next == ?""",
+                    (dat,),
+                ).fetchall()
+                for item in day_of_items:
+                    messages += f"{item[1]} - today\n"
+            # check whether user wants day before notificatons
+            if user_data[2]:
+                dat = (datetime.today() + timedelta(days=1)).strftime(
+                    "%Y-%m-%d"
+                )
+                day_before_items = cur.execute(
+                    """
+                    SELECT * FROM reminders WHERE date_next == ?""",
+                    (dat,),
+                ).fetchall()
+                for item in day_before_items:
+                    messages += f"{item[1]} - tomorrow\n"
+            # check whether user wants week before notificatons
+            if user_data[1]:
+                dat = (datetime.today() + timedelta(days=7)).strftime(
+                    "%Y-%m-%d"
+                )
+                week_before_items = cur.execute(
+                    """
+                    SELECT * FROM reminders WHERE date_next == ?""",
+                    (dat,),
+                ).fetchall()
+                for item in week_before_items:
+                    messages += f"{item[1]} - 7 days\n"
+            if len(messages) > 0:
+                print(messages)
+                messagebox.showinfo(message=messages)
+
+        ####################################
+        # end notifications for upcoming events
+        ####################################
 
     ####################################
     # commands for left side buttons

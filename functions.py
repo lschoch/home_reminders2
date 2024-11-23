@@ -283,7 +283,7 @@ def send_sms():
     pass
 
 
-# initialize user data if the table is empty_check
+# initialize user data if the table is empty
 def initialize_user():
     con = get_con()
     cur = con.cursor()
