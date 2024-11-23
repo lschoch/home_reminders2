@@ -9,7 +9,7 @@ from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 from tkmacosx import Button
 
-from classes import TopLvl
+from classes import MsgBox, TopLvl
 from functions import (
     appsupportdir,
     check_expired,
@@ -102,7 +102,6 @@ class App(tk.Tk):
         self.lbl_color = tk.StringVar()
         self.expired_msg = tk.StringVar()
 
-        # create main screen
         ####################################
         # add left side buttons
         self.btn = ttk.Button(self, text="Pending", command=self.pending).grid(
@@ -151,7 +150,7 @@ class App(tk.Tk):
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
-        # insert images
+        # insert image
         try:
             img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
             self.img_lbl_l = tk.Label(self, image=img_l)
@@ -258,21 +257,18 @@ class App(tk.Tk):
         # set view_label message and color
         check_expired(self)
 
-        self.focus_set()
-        self.tree.focus_set()
-
-        ####################################
+        #######################################
         # notifications for upcoming events
-        ####################################
-        # initialize user table if empty
+        #######################################
+        # initialize user table if it's empty
         initialize_user()
         user_data = cur.execute("SELECT * FROM user").fetchone()
-        # check whether user has opted in for notifications by entering a
-        # phone number
+        # check whether user has entered a phone number; i.e., opted in for
+        # notifications
         if user_data[0] is not None:
-            # create list to hold messages re: upcoming items
-            messages = "Items coming due: \n"
-            # check whether user wants day of notificatons
+            # create a string to hold upcoming items
+            messages = ""
+            # check whether user wants 'day of' notificatons
             if user_data[3]:
                 dat = datetime.today().strftime("%Y-%m-%d")
                 day_of_items = cur.execute(
@@ -281,8 +277,8 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_of_items:
-                    messages += f"{item[1]} - today\n"
-            # check whether user wants day before notificatons
+                    messages += f"{item[1]} due today\n\n"
+            # check whether user wants 'day before' notificatons
             if user_data[2]:
                 dat = (datetime.today() + timedelta(days=1)).strftime(
                     "%Y-%m-%d"
@@ -293,8 +289,8 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_before_items:
-                    messages += f"{item[1]} - tomorrow\n"
-            # check whether user wants week before notificatons
+                    messages += f"{item[1]} due tomorrow\n\n"
+            # check whether user wants 'week before' notificatons
             if user_data[1]:
                 dat = (datetime.today() + timedelta(days=7)).strftime(
                     "%Y-%m-%d"
@@ -305,16 +301,22 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in week_before_items:
-                    messages += f"{item[1]} - 7 days\n"
+                    messages += f"{item[1]} due in 7 days\n\n"
+            # create notifications window only if there are messages
             if len(messages) > 0:
-                print(messages)
-                messagebox.showinfo(message=messages)
-
-        ####################################
+                start_box = MsgBox(
+                    self,
+                    title="Items Coming Due",
+                    message=messages,
+                    x_offset=350,
+                    y_offset=150,
+                )
+                start_box.lift()
+        #######################################
         # end notifications for upcoming events
-        ####################################
+        #######################################
 
-    ####################################
+    #################################
     # commands for left side buttons
     # create top level window for entry of data for new item
     def create_new(self):
@@ -460,7 +462,7 @@ class App(tk.Tk):
     # end commands for left side buttons
     ####################################
 
-    ####################################
+    #################################
     # commands for right side buttons
     def backup(self):
         answer = messagebox.askyesno(
@@ -524,9 +526,9 @@ class App(tk.Tk):
                 con.commit()
 
     # end commands for right side buttons
-    ####################################
+    #####################################
 
-    # create toplevel to manage row selection in treeview
+    # manage row selection in treeview
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:
