@@ -277,7 +277,7 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_of_items:
-                    messages += f"{item[1]} due today\n\n"
+                    messages += f"\u2022 Due today: {item[1]}\n\n"
             # check whether user wants 'day before' notificatons
             if user_data[2]:
                 dat = (datetime.today() + timedelta(days=1)).strftime(
@@ -289,7 +289,7 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_before_items:
-                    messages += f"{item[1]} due tomorrow\n\n"
+                    messages += f"\u2022 Due tomorrow: {item[1]}\n\n"
             # check whether user wants 'week before' notificatons
             if user_data[1]:
                 dat = (datetime.today() + timedelta(days=7)).strftime(
@@ -301,15 +301,15 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in week_before_items:
-                    messages += f"{item[1]} due in 7 days\n\n"
+                    messages += f"\u2022 Due in 7 days: {item[1]}\n\n"
             # create notifications window only if there are messages
             if len(messages) > 0:
                 start_box = MsgBox(
                     self,
                     title="Items Coming Due",
                     message=messages,
-                    x_offset=350,
-                    y_offset=150,
+                    x_offset=355,
+                    y_offset=400,
                 )
                 start_box.lift()
         #######################################

@@ -154,24 +154,41 @@ class MsgBox(tk.Toplevel):
     def __init__(self, master, title="", message="", x_offset=0, y_offset=0):
         super().__init__(master)
         self.title(title)
-        self.config(bg="#ececec")
+        # self.config(background="#ececec")
+        # ensure a consistent GUI size
+        self.grid_propagate(False)
+        # implement stretchability
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.txt = tk.Text(
             self,
-            bg="#ececec",
-            width=50,
-            height=10,
+            bg="#ececed",
             font=("Helvetica, 13"),
+            highlightthickness=0,
+            wrap="none",
             padx=10,
             pady=10,
         )
-        self.button = ttk.Button(self, text="OK", command=self.destroy)
-        self.txt.pack()
-        self.button.pack(side="bottom", pady=15)
+        """ self.button = tk.Button(
+            self, text="OK", command=self.destroy
+        ) """
+        self.txt.grid(row=0, column=0, sticky="nsew")
+        # self.button.grid(row=2, column=0, columnspan=2, pady=10, sticky="s")
         self.txt.insert(tk.END, message)
         x = master.winfo_x()
         y = master.winfo_y()
-        self.geometry("350x250+%d+%d" % (x + x_offset, y + y_offset))
+        self.geometry("400x100+%d+%d" % (x + x_offset, y + y_offset))
 
-        # self.wm.grab_set()
-        # self.lift()
-        # print(self.focus_set())
+        # add a vertical scrollbar
+        v_scrollbar = ttk.Scrollbar(
+            self, orient=tk.VERTICAL, command=self.txt.yview
+        )
+        self.txt.configure(yscroll=v_scrollbar.set)
+        v_scrollbar.grid(row=0, column=1, pady=(0, 0), sticky="ns")
+
+        # add a horizontal scrollbar
+        h_scrollbar = ttk.Scrollbar(
+            self, orient=tk.HORIZONTAL, command=self.txt.xview
+        )
+        self.txt.configure(xscroll=h_scrollbar.set)
+        h_scrollbar.grid(row=1, column=0, columnspan=2, sticky="ew")
