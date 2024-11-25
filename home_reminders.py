@@ -9,7 +9,7 @@ from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 from tkmacosx import Button
 
-from classes import MsgBox, TopLvl
+from classes import InfoMsgBox, NofificationsPopup, TopLvl
 from functions import (
     appsupportdir,
     check_expired,
@@ -277,7 +277,7 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_of_items:
-                    messages += f"\u2022 Due today: {item[1]}\n\n"
+                    messages += f"\u2022 Due today: {item[1]}\n"
             # check whether user wants 'day before' notificatons
             if user_data[2]:
                 dat = (datetime.today() + timedelta(days=1)).strftime(
@@ -289,7 +289,7 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in day_before_items:
-                    messages += f"\u2022 Due tomorrow: {item[1]}\n\n"
+                    messages += f"\u2022 Due tomorrow: {item[1]}\n"
             # check whether user wants 'week before' notificatons
             if user_data[1]:
                 dat = (datetime.today() + timedelta(days=7)).strftime(
@@ -301,17 +301,18 @@ class App(tk.Tk):
                     (dat,),
                 ).fetchall()
                 for item in week_before_items:
-                    messages += f"\u2022 Due in 7 days: {item[1]}\n\n"
+                    messages += f"\u2022 Due in 7 days: {item[1]}\n"
             # create notifications window only if there are messages
             if len(messages) > 0:
-                start_box = MsgBox(
+                # remove the last /n from messages
+                messages = messages[:-1]
+                NofificationsPopup(
                     self,
                     title="Items Coming Due",
                     message=messages,
-                    x_offset=355,
+                    x_offset=310,
                     y_offset=400,
                 )
-                start_box.lift()
         #######################################
         # end notifications for upcoming events
         #######################################
@@ -336,40 +337,54 @@ class App(tk.Tk):
 
         # function to save new item to database
         def save_item():
+            # save_btn.config(state="disabled")
             con = get_con()
             cur = con.cursor()
 
             # validate inputs
             if not top.description_entry.get():
-                messagebox.showinfo("Invalid Input", "Item cannot be blank.")
-                return
-
-            if not valid_frequency(top.frequency_entry.get()):
-                messagebox.showinfo(
-                    "Invalid Input", "Frequency requires a numeric input."
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Item cannot be blank.",
                 )
-                return
-
-            if not top.date_last_entry.get():
-                messagebox.showinfo(
-                    "Invalid Input", "Please select a date for last."
-                )
-                return
-
-            if not top.period_combobox.get():
-                messagebox.showinfo("Invalid Input", "Please select a period.")
                 return
 
             # check for duplicate item
             result = cur.execute("""SELECT * FROM reminders""")
             for item in result.fetchall():
                 if item[1] == top.description_entry.get():
-                    messagebox.showinfo(
+                    InfoMsgBox(
+                        self,
                         "Invalid Input",
-                        """There is already an item with that description.\n
-                        Try again.""",
+                        "There is already an item with that description."
+                        + " Try again.",
                     )
                     return
+
+            if not valid_frequency(top.frequency_entry.get()):
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Frequency requires a numeric input.",
+                )
+                return
+
+            if not top.date_last_entry.get():
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Please select a date for last.",
+                )
+                return
+
+            if not top.period_combobox.get():
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Please select a period.",
+                )
+                return
 
             # calculate date_next
             date_last = top.date_last_entry.get()
@@ -403,6 +418,7 @@ class App(tk.Tk):
             # set view_label message and color
             check_expired(self)
 
+            save_btn.config(state="normal")
             top.destroy()
             self.tree.focus()
 
@@ -411,9 +427,8 @@ class App(tk.Tk):
             top.destroy()
             self.tree.focus()
 
-        ttk.Button(top, text="Save", command=save_item).grid(
-            row=2, column=1, padx=(33, 0), pady=(15, 0), sticky="w"
-        )
+        save_btn = ttk.Button(top, text="Save", command=save_item)
+        save_btn.grid(row=2, column=1, padx=(33, 0), pady=(15, 0), sticky="w")
 
         ttk.Button(top, text="Cancel", command=cancel).grid(
             row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
@@ -435,8 +450,7 @@ class App(tk.Tk):
 
         remove_toplevels(self)
         self.refreshed = True
-        self.focus_set()
-        self.tree.focus_set()
+        self.tree.focus()
 
     def view_all(self):
         self.view_current = False
@@ -518,9 +532,11 @@ class App(tk.Tk):
                 message="Do you want to continue receiving text notifications?",  # noqa: E501
             )
             if not response3:
-                messagebox.showinfo(
-                    message="You have opted out of text notifications."
-                    + " Texts will no longer be sent."
+                InfoMsgBox(
+                    self,
+                    "Opted Out",
+                    "You have opted out of text notifications."
+                    + " Texts will no longer be sent.",
                 )
                 cur.execute("DELETE FROM user")
                 con.commit()
@@ -575,18 +591,26 @@ class App(tk.Tk):
         def update_item():
             # validate inputs
             if not top.description_entry.get():
-                messagebox.showinfo("Invalid Input", "Item cannot be blank.")
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Item cannot be blank.",
+                )
                 return
 
             if not valid_frequency(top.frequency_entry.get()):
-                messagebox.showinfo(
-                    "Invalid Input", "Frequency requires a numeric input."
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Frequency requires a numeric input.",
                 )
                 return
 
             if not top.date_last_entry.get() or not top.period_combobox.get():
-                messagebox.showinfo(
-                    "Invalid Input", "Please select a period and a date_last."
+                InfoMsgBox(
+                    self,
+                    "Invalid Input",
+                    "Please select a period and a last date.",
                 )
                 return
 
@@ -603,10 +627,11 @@ class App(tk.Tk):
                     # reset original description
                     top.description_entry.delete(0, tk.END)
                     top.description_entry.insert(0, original_description)
-                    messagebox.showinfo(
+                    InfoMsgBox(
+                        self,
                         "Invalid Input",
-                        """There is already an item with that description.\n
-                        Try again.""",
+                        "There is already an item with that description."
+                        + " Try again.",
                     )
                     return
 

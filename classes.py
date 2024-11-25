@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from tkmacosx import Button
+
 
 # create toplevel
 class TopLvl(tk.Toplevel):
@@ -149,42 +151,42 @@ if __name__ == "__main__":
     test(test_list)
 
 
-# custom message box class
-class MsgBox(tk.Toplevel):
+# message box class for notifications pop=up
+class NofificationsPopup(tk.Toplevel):
     def __init__(self, master, title="", message="", x_offset=0, y_offset=0):
         super().__init__(master)
         self.title(title)
-        # self.config(background="#ececec")
-        # ensure a consistent GUI size
-        self.grid_propagate(False)
-        # implement stretchability
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.config(background="#ececec")
+        self.resizable(False, False)
         self.txt = tk.Text(
             self,
-            bg="#ececed",
+            bg="#ececec",
             font=("Helvetica, 13"),
+            height=3,
+            width=50,
             highlightthickness=0,
             wrap="none",
-            padx=10,
-            pady=10,
         )
-        """ self.button = tk.Button(
-            self, text="OK", command=self.destroy
-        ) """
-        self.txt.grid(row=0, column=0, sticky="nsew")
-        # self.button.grid(row=2, column=0, columnspan=2, pady=10, sticky="s")
+        self.button = Button(
+            self,
+            text="Close",
+            height=23,
+            background="#dbdad6",
+            command=self.destroy,
+        )
+        self.txt.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+        self.button.grid(row=2, column=0, columnspan=2, pady=(0, 1))
         self.txt.insert(tk.END, message)
         x = master.winfo_x()
         y = master.winfo_y()
-        self.geometry("400x100+%d+%d" % (x + x_offset, y + y_offset))
+        self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
 
         # add a vertical scrollbar
         v_scrollbar = ttk.Scrollbar(
             self, orient=tk.VERTICAL, command=self.txt.yview
         )
         self.txt.configure(yscroll=v_scrollbar.set)
-        v_scrollbar.grid(row=0, column=1, pady=(0, 0), sticky="ns")
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
 
         # add a horizontal scrollbar
         h_scrollbar = ttk.Scrollbar(
@@ -192,3 +194,44 @@ class MsgBox(tk.Toplevel):
         )
         self.txt.configure(xscroll=h_scrollbar.set)
         h_scrollbar.grid(row=1, column=0, columnspan=2, sticky="ew")
+
+
+# custom showinfo messagebox class
+class InfoMsgBox(tk.Toplevel):
+    def __init__(
+        self,
+        master,
+        title="",
+        message="",
+        height=2,
+        width=30,
+        x_offset=350,
+        y_offset=300,
+    ):
+        super().__init__(master)
+        self.title(title)
+        self.config(background="#ffc49c")
+        self.txt = tk.Text(
+            self,
+            bg="#ffc49c",
+            font=("Helvetica, 13"),
+            height=height,
+            width=width,
+            wrap="word",
+            highlightthickness=0,
+        )
+        self.button = ttk.Button(
+            self,
+            text="Close",
+            width=4,
+            # height=3,
+            # background="#dbdad6",
+            command=self.destroy,
+        )
+        self.txt.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.button.grid(row=1, column=0, columnspan=2, pady=(0, 3))
+        self.txt.tag_configure("tag-center", justify="center")
+        self.txt.insert(tk.END, message, "tag-center")
+        x = master.winfo_x()
+        y = master.winfo_y()
+        self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
