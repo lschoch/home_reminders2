@@ -9,6 +9,7 @@ class TopLvl(tk.Toplevel):
     def __init__(self, master, title):
         super().__init__(master)
         self.title(title)
+        self.wm_transient(master)
         self.config(padx=20, pady=20)
         x = master.winfo_x()
         y = master.winfo_y()
@@ -205,12 +206,15 @@ class InfoMsgBox(tk.Toplevel):
         message="",
         height=2,
         width=30,
-        x_offset=350,
-        y_offset=300,
+        x_offset=405,
+        y_offset=275,
     ):
         super().__init__(master)
         self.title(title)
         self.config(background="#ffc49c")
+        self.wm_transient(master)
+        self.wait_visibility()
+        self.grab_set()
         self.txt = tk.Text(
             self,
             bg="#ffc49c",
@@ -246,12 +250,15 @@ class YesNoMsgBox(tk.Toplevel):
         message="",
         height=2,
         width=30,
-        x_offset=350,
+        x_offset=405,
         y_offset=300,
     ):
         super().__init__(master)
         self.title(title)
         self.config(background="#ffc49c")
+        self.wm_transient(master)
+        self.wait_visibility()
+        self.grab_set()
         self.response = False
         self.var = tk.IntVar()
         self.txt = tk.Text(
@@ -278,7 +285,7 @@ class YesNoMsgBox(tk.Toplevel):
             width=3,
             # height=3,
             # background="#dbdad6",
-            command=self.destroy,
+            command=self.quit,
         )
 
         self.txt.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
@@ -302,5 +309,9 @@ class YesNoMsgBox(tk.Toplevel):
 
     def set_response(self):
         self.response = True
+        self.destroy()
+        self.var.set(1)
+
+    def quit(self):
         self.destroy()
         self.var.set(1)
