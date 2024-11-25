@@ -4,12 +4,12 @@ import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta  # noqa: F401
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 from tkmacosx import Button
 
-from classes import InfoMsgBox, NofificationsPopup, TopLvl
+from classes import InfoMsgBox, NofificationsPopup, TopLvl, YesNoMsgBox
 from functions import (
     appsupportdir,
     check_expired,
@@ -479,19 +479,23 @@ class App(tk.Tk):
     #################################
     # commands for right side buttons
     def backup(self):
-        answer = messagebox.askyesno(
-            "Backup", "The current backup will be overwritten. Are you sure?"
+        answer = YesNoMsgBox(
+            self,
+            "Backup",
+            "The current backup will be overwritten. Are you sure?",
         )
-        if answer:
+        if answer.get_response():
             shutil.copy2(db_path, db_bak_path)
         else:
             return
 
     def restore(self):
-        answer = messagebox.askyesno(
-            "Restore", "Any current data will be overwritten. Are you sure?"
+        answer = YesNoMsgBox(
+            self,
+            "Restore",
+            "Any current data will be overwritten. Are you sure?",
         )
-        if answer:
+        if answer.get_response():
             shutil.copy2(db_bak_path, db_path)
             refresh(self)
             check_expired(self)
@@ -499,10 +503,12 @@ class App(tk.Tk):
             return
 
     def delete_all(self):
-        answer = messagebox.askyesno(
-            "Delete All", "This will delete all data. Are you sure?"
+        answer = YesNoMsgBox(
+            self,
+            "Delete All",
+            "This will delete all data. Are you sure?",
         )
-        if answer:
+        if answer.get_response():
             cur.execute("DELETE FROM reminders")
             con.commit()
             refresh(self)
@@ -517,24 +523,26 @@ class App(tk.Tk):
         # notifications
         phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
         if phone_number is None:
-            response = messagebox.askyesno(
-                title="Opt-in?",
+            response = YesNoMsgBox(
+                self,
+                title="Opt-in",
                 message="Would you like to to be notified by text "
                 + "when your items are coming due?",
             )
             # if user opts to receive notifications, get user data
-            if response:
+            if response.get_response():
                 get_user_data(self)
         # if user opts out of notifications, delete user's data
         else:
-            response3 = messagebox.askyesno(
-                title="Opt-out?",
+            response3 = YesNoMsgBox(
+                self,
+                title="Opt-out",
                 message="Do you want to continue receiving text notifications?",  # noqa: E501
             )
-            if not response3:
+            if not response3.get_response():
                 InfoMsgBox(
                     self,
-                    "Opted Out",
+                    "Opt-out",
                     "You have opted out of text notifications."
                     + " Texts will no longer be sent.",
                 )

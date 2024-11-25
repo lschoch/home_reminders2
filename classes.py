@@ -235,3 +235,72 @@ class InfoMsgBox(tk.Toplevel):
         x = master.winfo_x()
         y = master.winfo_y()
         self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
+
+
+# custom askyesno messagebox class
+class YesNoMsgBox(tk.Toplevel):
+    def __init__(
+        self,
+        master,
+        title="",
+        message="",
+        height=2,
+        width=30,
+        x_offset=350,
+        y_offset=300,
+    ):
+        super().__init__(master)
+        self.title(title)
+        self.config(background="#ffc49c")
+        self.response = False
+        self.var = tk.IntVar()
+        self.txt = tk.Text(
+            self,
+            bg="#ffc49c",
+            font=("Helvetica, 13"),
+            height=height,
+            width=width,
+            wrap="word",
+            highlightthickness=0,
+        )
+        self.button1 = ttk.Button(
+            self,
+            text="Yes",
+            width=3,
+            # height=3,
+            # background="#dbdad6",
+            command=self.set_response,
+        )
+
+        self.button2 = ttk.Button(
+            self,
+            text="No",
+            width=3,
+            # height=3,
+            # background="#dbdad6",
+            command=self.destroy,
+        )
+
+        self.txt.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.button1.grid(
+            row=1, column=0, padx=(80, 0), pady=(0, 3), sticky="w"
+        )
+        self.button2.grid(
+            row=1, column=0, padx=(0, 80), pady=(0, 3), sticky="e"
+        )
+        self.txt.tag_configure("tag-center", justify="center")
+        self.txt.insert(tk.END, message, "tag-center")
+        x = master.winfo_x()
+        y = master.winfo_y()
+        self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
+
+        # use wait_variable method to force user reponse before closing window
+        self.button1.wait_variable(self.var)
+
+    def get_response(self):
+        return self.response
+
+    def set_response(self):
+        self.response = True
+        self.destroy()
+        self.var.set(1)
