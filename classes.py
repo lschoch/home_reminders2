@@ -153,7 +153,7 @@ if __name__ == "__main__":
     test(test_list)
 
 
-# message box class for notifications pop=up
+# message box class for notifications pop-up
 class NofificationsPopup(tk.Toplevel):
     def __init__(self, master, title="", message="", x_offset=0, y_offset=0):
         super().__init__(master)

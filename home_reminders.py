@@ -485,6 +485,7 @@ class App(tk.Tk):
             self,
             "Backup",
             "The current backup will be overwritten. Are you sure?",
+            x_offset=600,
         )
         if answer.get_response():
             shutil.copy2(db_path, db_bak_path)
@@ -496,6 +497,7 @@ class App(tk.Tk):
             self,
             "Restore",
             "Any current data will be overwritten. Are you sure?",
+            x_offset=600,
         )
         if answer.get_response():
             shutil.copy2(db_bak_path, db_path)
@@ -509,6 +511,7 @@ class App(tk.Tk):
             self,
             "Delete All",
             "This will delete all data. Are you sure?",
+            x_offset=600,
         )
         if answer.get_response():
             cur.execute("DELETE FROM reminders")
