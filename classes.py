@@ -160,6 +160,9 @@ class NofificationsPopup(tk.Toplevel):
         self.title(title)
         self.config(background="#ececec")
         self.resizable(False, False)
+        self.wm_transient(master)
+        self.wait_visibility()
+        self.grab_set()
         self.txt = tk.Text(
             self,
             bg="#ececec",
