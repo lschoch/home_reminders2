@@ -240,9 +240,11 @@ class App(tk.Tk):
         Button(
             self,
             text="Notifications",
-            background="#8BB7F0",
+            bg="#ffc49c",  # background="#8BB7F0",
             height=35,
             width=120,
+            focuscolor="black",  # "#ffc49c",
+            focusthickness=1,
             command=self.notifications,
         ).grid(row=1, column=3, padx=(20, 0), pady=(0, 20), sticky="s")
         # end right side buttons
@@ -528,6 +530,7 @@ class App(tk.Tk):
                 title="Opt-in",
                 message="Would you like to to be notified by text "
                 + "when your items are coming due?",
+                x_offset=600,
             )
             # if user opts to receive notifications, get user data
             if response.get_response():
@@ -537,7 +540,9 @@ class App(tk.Tk):
             response3 = YesNoMsgBox(
                 self,
                 title="Opt-out",
-                message="Do you want to continue receiving text notifications?",  # noqa: E501
+                message="Do you want to continue receiving text"
+                + " notifications?",
+                x_offset=600,
             )
             if not response3.get_response():
                 InfoMsgBox(
@@ -545,9 +550,20 @@ class App(tk.Tk):
                     "Opt-out",
                     "You have opted out of text notifications."
                     + " Texts will no longer be sent.",
+                    x_offset=600,
                 )
                 cur.execute("DELETE FROM user")
                 con.commit()
+            else:
+                response4 = YesNoMsgBox(
+                    self,
+                    title="Continuing",
+                    message="Do you want to change the phone number or"
+                    + " notification frequency?",
+                    x_offset=600,
+                )
+                if response4.get_response():
+                    get_user_data(self)
 
     # end commands for right side buttons
     #####################################

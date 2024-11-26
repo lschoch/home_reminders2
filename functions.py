@@ -2,10 +2,12 @@ import os
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
+
+from classes import InfoMsgBox
 
 # from twilio.rest import Client
 
@@ -317,7 +319,12 @@ def get_user_data(self):
         )
         # validate the entered phone number
         if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-            messagebox.showinfo(message="Must be a ten digit numeric.")
+            InfoMsgBox(
+                self,
+                "Invalid Entry",
+                "Must be a ten digit numeric.",
+                x_offset=600,
+            )
             num_window.focus_set()
             entry.focus_set()
         # require at least one "when" option
@@ -326,7 +333,12 @@ def get_user_data(self):
                 "Please select at least one option for when "
                 + "to be notified."
             )
-            messagebox.showinfo(message=txt)
+            InfoMsgBox(
+                self,
+                "Invalid Entry",
+                txt,
+                x_offset=600,
+            )
             num_window.focus_set()
         else:
             values = (
@@ -349,20 +361,27 @@ def get_user_data(self):
             )
             con.commit()
             num_window.destroy()
-            messagebox.showinfo(
-                message="You have opted to start receiving"
-                + " text notifications."
+            InfoMsgBox(
+                self,
+                "Opt-in",
+                "You have opted to start receiving text notifications.",
+                x_offset=600,
             )
 
     num_window = tk.Toplevel(self)
+    num_window.configure(background="#ffc49c")
     num_window.geometry("300x185+600+300")
+    num_window.resizable(False, False)
+    num_window.wm_transient(self)
+    num_window.wait_visibility()
+    num_window.grab_set()
     num_window.grid_columnconfigure(0, weight=1)
     num_window.grid_columnconfigure(1, weight=1)
     ttk.Label(
         num_window,
         text="Enter your ten digit phone number:",
         anchor="center",
-        background="#ececec",
+        background="#ffc49c",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
     num_var = tk.StringVar(num_window)
@@ -373,7 +392,7 @@ def get_user_data(self):
         num_window,
         text="Notify when? Select all that apply:",
         anchor="center",
-        background="#ececec",
+        background="#ffc49c",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
 
@@ -387,6 +406,7 @@ def get_user_data(self):
         variable=var1,
         onvalue=1,
         offvalue=0,
+        background="#ffc49c",  # "#ececec",
     )
     c1.grid(row=3, column=0, columnspan=2, padx=(20, 0), sticky="w")
 
@@ -397,6 +417,7 @@ def get_user_data(self):
         variable=var2,
         onvalue=1,
         offvalue=0,
+        background="#ffc49c",  # "#ececec",
     )
     c2.grid(
         row=3,
@@ -412,13 +433,14 @@ def get_user_data(self):
         variable=var3,
         onvalue=1,
         offvalue=0,
+        background="#ffc49c",  # "#ececec",
     )
     c3.grid(row=3, column=0, columnspan=2, padx=(0, 25), sticky="e")
 
-    tk.Button(num_window, text="Submit", command=submit).grid(
-        row=4, column=0, padx=(0, 5), pady=15, sticky="e"
+    ttk.Button(num_window, text="Submit", width=6, command=submit).grid(
+        row=4, column=0, padx=(0, 15), pady=15, sticky="e"
     )
-    tk.Button(num_window, text="Cancel", command=cancel).grid(
-        row=4, column=1, padx=(5, 0), pady=15, sticky="w"
+    ttk.Button(num_window, text="Cancel", width=6, command=cancel).grid(
+        row=4, column=1, padx=(15, 0), pady=15, sticky="w"
     )
     entry.focus_set()
