@@ -43,7 +43,7 @@ db_bak_path = os.path.join(dir_path, "home_reminders.bak")
 con = sqlite3.connect(db_path)
 cur = con.cursor()
 
-# create table to store user phone number
+# create table to store user phone number and notification preferences
 cur.execute("""
     CREATE TABLE IF NOT EXISTS user(
         phone_number TEXT,
@@ -530,7 +530,7 @@ class App(tk.Tk):
         if phone_number is None:
             response = YesNoMsgBox(
                 self,
-                title="Opt-in",
+                title="Notifications",
                 message="Would you like to to be notified by text "
                 + "when your items are coming due?",
                 x_offset=600,
@@ -542,7 +542,7 @@ class App(tk.Tk):
         else:
             response3 = YesNoMsgBox(
                 self,
-                title="Opt-out",
+                title="Notifications",
                 message="Do you want to continue receiving text"
                 + " notifications?",
                 x_offset=600,
@@ -550,7 +550,7 @@ class App(tk.Tk):
             if not response3.get_response():
                 InfoMsgBox(
                     self,
-                    "Opt-out",
+                    "Notifications",
                     "You have opted out of text notifications."
                     + " Texts will no longer be sent.",
                     x_offset=600,
@@ -560,7 +560,7 @@ class App(tk.Tk):
             else:
                 response4 = YesNoMsgBox(
                     self,
-                    title="Continuing",
+                    title="Notifications",
                     message="Do you want to change the phone number or"
                     + " notification frequency?",
                     x_offset=600,

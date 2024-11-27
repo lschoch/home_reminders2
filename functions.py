@@ -321,8 +321,8 @@ def get_user_data(self):
         if not num.isnumeric() or len(num) > 10 or len(num) < 10:
             InfoMsgBox(
                 self,
-                "Invalid Entry",
-                "Must be a ten digit numeric.",
+                "Notifications",
+                "Phone number must be a ten digit numeric.",
                 x_offset=600,
             )
             num_window.focus_set()
@@ -335,7 +335,7 @@ def get_user_data(self):
             )
             InfoMsgBox(
                 self,
-                "Invalid Entry",
+                "Notifications",
                 txt,
                 x_offset=600,
             )
@@ -361,14 +361,34 @@ def get_user_data(self):
             )
             con.commit()
             num_window.destroy()
-            InfoMsgBox(
-                self,
-                "Opt-in",
-                "You have opted to start receiving text notifications.",
-                x_offset=600,
-            )
+            if user_exists:
+                InfoMsgBox(
+                    self,
+                    "Notifications",
+                    "Your data has been saved.",
+                    x_offset=600,
+                )
+            else:
+                InfoMsgBox(
+                    self,
+                    "Notifications",
+                    "You will now start receiving text notifications.",
+                    x_offset=600,
+                )
 
+    # get user data if it exists
+    con = get_con()
+    cur = con.cursor()
+    # initialize user table if it's empty
+    initialize_user()
+    user_data = cur.execute("SELECT * FROM user").fetchone()
+    if user_data[0] is not None:
+        user_exists = True
+    else:
+        user_exists = False
+    # create window for entry/modification of user data
     num_window = tk.Toplevel(self)
+    num_window.title("Notifications")
     num_window.configure(background="#ffc49c")
     num_window.geometry("300x185+600+300")
     num_window.resizable(False, False)
@@ -384,9 +404,14 @@ def get_user_data(self):
         background="#ffc49c",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
-    num_var = tk.StringVar(num_window)
-    entry = ttk.Entry(num_window, textvariable=num_var, font=("Helvetica", 13))
+    entry = ttk.Entry(
+        num_window,
+        font=("Helvetica", 13),
+        width=10)
     entry.grid(row=1, column=0, columnspan=2)
+    # enter phone number if one exists
+    if user_data[0] is not None:
+        entry.insert(0, user_data[0])
 
     ttk.Label(
         num_window,
@@ -399,6 +424,11 @@ def get_user_data(self):
     var1 = tk.IntVar()
     var2 = tk.IntVar()
     var3 = tk.IntVar()
+    # if there is a phone number set the frequency options
+    if user_data[0] is not None: 
+        var1.initialize(user_data[1])
+        var2.initialize(user_data[2])
+        var3.initialize(user_data[3])
     c1 = tk.Checkbutton(
         num_window,
         text="Week before",
@@ -409,7 +439,6 @@ def get_user_data(self):
         background="#ffc49c",  # "#ececec",
     )
     c1.grid(row=3, column=0, columnspan=2, padx=(20, 0), sticky="w")
-
     c2 = tk.Checkbutton(
         num_window,
         text="Day before",
