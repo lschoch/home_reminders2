@@ -230,12 +230,12 @@ class App(tk.Tk):
 
         ####################################
         # add left side buttons
-        self.btn = ttk.Button(self, text="Pending", command=self.pending).grid(
+        """ self.btn = ttk.Button(self, text="Pending", command=self.pending).grid(
             row=1, column=0, padx=20, pady=(20, 0), sticky="n"
         )
         self.btn = ttk.Button(self, text="All", command=self.view_all).grid(
             row=1, column=0, padx=20, pady=(72, 0), sticky="n"
-        )
+        ) """
         self.btn = ttk.Button(self, text="New Item", command=self.create_new).grid(
             row=1, column=0, padx=20, pady=(0, 72), sticky="s"
         )
@@ -291,7 +291,7 @@ class App(tk.Tk):
             # self, highlightbackground="black", highlightthickness=1
             self
         )
-        self.legend_frame.grid(row=0, column=3, pady=(0, 40), sticky="s")
+        self.legend_frame.grid(row=1, column=3, pady=(0, 20), sticky="s")
 
         tk.Label(
             self.legend_frame,
@@ -354,7 +354,7 @@ class App(tk.Tk):
 
         ####################################
         # add right side buttons
-        ttk.Button(self, text="Backup", command=self.backup).grid(
+        """ ttk.Button(self, text="Backup", command=self.backup).grid(
             row=1, column=3, padx=(20, 0), pady=(20, 0), sticky="n"
         )
         ttk.Button(self, text="Restore", command=self.restore).grid(
@@ -372,7 +372,7 @@ class App(tk.Tk):
             focuscolor="black",  # "#ffc49c",
             focusthickness=1,
             command=self.notifications,
-        ).grid(row=1, column=3, padx=(20, 0), pady=(0, 20), sticky="s")
+        ).grid(row=1, column=3, padx=(20, 0), pady=(0, 20), sticky="s") """
         # end right side buttons
         ####################################
 
