@@ -119,7 +119,7 @@ class App(tk.Tk):
                     message="Would you like to to be notified by text "
                     + "when your items are coming due?",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
                 # if user opts to receive notifications, get user data
                 if response.get_response():
@@ -132,7 +132,7 @@ class App(tk.Tk):
                     message="You are already receiving text"
                     + " notifications? Do want to continue.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
                 if not response1.get_response():
                     InfoMsgBox(
@@ -141,7 +141,7 @@ class App(tk.Tk):
                         "You have opted out of text notifications."
                         + " Texts will no longer be sent.",
                         x_offset=100,
-                        y_offset=50,
+                        y_offset=15,
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
@@ -152,7 +152,7 @@ class App(tk.Tk):
                         message="Do you want to change your notification phone number or"
                         + " notification frequency?",
                         x_offset=100,
-                        y_offset=50,
+                        y_offset=15,
                     )
                     if response2.get_response():
                         get_user_data(self)
@@ -166,7 +166,7 @@ class App(tk.Tk):
                     title="Notifications",
                     message="Do you want to stop receiving text notifications?",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
                 if response.get_response():
                     InfoMsgBox(
@@ -175,7 +175,7 @@ class App(tk.Tk):
                     "You have opted out of text notifications."
                     + " Texts will no longer be sent.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
@@ -186,7 +186,7 @@ class App(tk.Tk):
                     "You are not currently receiving text notifications. " \
                         + "Click opt-in to start.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
         def preferences():
             initialize_user()
@@ -200,7 +200,7 @@ class App(tk.Tk):
                     "You are not currently receiving text notifications. " \
                         + "Click opt-in to start.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
 
         menubar = Menu(self)
@@ -211,10 +211,22 @@ class App(tk.Tk):
         notifications_menu.add_command(label="Opt-in", command=opt_in)
         notifications_menu.add_command(label="Opt-out", command=opt_out)
         notifications_menu.add_command(label="Preferences", command=preferences)
+
+        view_menu = Menu(menubar)
+        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(label="Pending", command=self.pending)
+        view_menu.add_command(label="All", command=self.view_all)
+
+        data_menu = Menu(menubar)
+        menubar.add_cascade(label="Data", menu=data_menu)
+        data_menu.add_command(label="Backup", command=self.backup)
+        data_menu.add_command(label="Restore", command=self.restore)
+        data_menu.add_command(label="Delete All", command=self.delete_all)
         
         #######################################
         # end create menu
         #######################################
+
 
         ####################################
         # add left side buttons
@@ -224,7 +236,7 @@ class App(tk.Tk):
         self.btn = ttk.Button(self, text="All", command=self.view_all).grid(
             row=1, column=0, padx=20, pady=(72, 0), sticky="n"
         )
-        self.btn = ttk.Button(self, text="New", command=self.create_new).grid(
+        self.btn = ttk.Button(self, text="New Item", command=self.create_new).grid(
             row=1, column=0, padx=20, pady=(0, 72), sticky="s"
         )
         self.btn = ttk.Button(
@@ -599,7 +611,8 @@ class App(tk.Tk):
             self,
             "Backup",
             "The current backup will be overwritten. Are you sure?",
-            x_offset=600,
+            x_offset=250,
+            y_offset=15,
         )
         if answer.get_response():
             shutil.copy2(db_path, db_bak_path)
@@ -610,8 +623,9 @@ class App(tk.Tk):
         answer = YesNoMsgBox(
             self,
             "Restore",
-            "Any current data will be overwritten. Are you sure?",
-            x_offset=600,
+            "All current data will be overwritten. Are you sure?",
+            x_offset=250,
+            y_offset=15,
         )
         if answer.get_response():
             shutil.copy2(db_bak_path, db_path)
@@ -625,7 +639,8 @@ class App(tk.Tk):
             self,
             "Delete All",
             "This will delete all data. Are you sure?",
-            x_offset=600,
+            x_offset=250,
+            y_offset=15,
         )
         if answer.get_response():
             cur.execute("DELETE FROM reminders")

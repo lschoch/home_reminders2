@@ -324,7 +324,7 @@ def get_user_data(self):
                 "Notifications",
                 "Phone number must be a ten digit numeric.",
                 x_offset=100,
-                y_offset=50,
+                y_offset=15,
             )
             num_window.focus_set()
             entry.focus_set()
@@ -339,7 +339,7 @@ def get_user_data(self):
                 "Notifications",
                 txt,
                 x_offset=100,
-                y_offset=50,
+                y_offset=15,
             )
             num_window.focus_set()
         else:
@@ -369,7 +369,7 @@ def get_user_data(self):
                     "Notifications",
                     "Your data has been saved.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
             else:
                 InfoMsgBox(
@@ -377,7 +377,7 @@ def get_user_data(self):
                     "Notifications",
                     "You will now start receiving text notifications.",
                     x_offset=100,
-                    y_offset=50,
+                    y_offset=15,
                 )
 
     # get user data if it exists
