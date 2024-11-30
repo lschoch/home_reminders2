@@ -215,14 +215,14 @@ class InfoMsgBox(tk.Toplevel):
     ):
         super().__init__(master)
         self.title(title)
-        self.config(background="#ffc49c")
+        # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
             self,
-            bg="#ffc49c",
+            bg="#ececec",
             font=("Helvetica, 13"),
             height=height,
             width=width,
@@ -260,7 +260,7 @@ class YesNoMsgBox(tk.Toplevel):
     ):
         super().__init__(master)
         self.title(title)
-        self.config(background="#ffc49c")
+        # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
         self.wait_visibility()
@@ -269,7 +269,7 @@ class YesNoMsgBox(tk.Toplevel):
         self.var = tk.IntVar()
         self.txt = tk.Text(
             self,
-            bg="#ffc49c",
+            bg="#ececec", # house color = "#ffc49c",
             font=("Helvetica, 13"),
             height=height,
             width=width,

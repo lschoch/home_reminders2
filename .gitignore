@@ -9,6 +9,4 @@ images/thumbs.db
 images/splash*.*
 Home Reminders.pkg
 tmp/
-twilio_sms.py
 python_sms.py
-von_sms.py

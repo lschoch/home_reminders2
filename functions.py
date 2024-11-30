@@ -323,7 +323,8 @@ def get_user_data(self):
                 self,
                 "Notifications",
                 "Phone number must be a ten digit numeric.",
-                x_offset=600,
+                x_offset=100,
+                y_offset=50,
             )
             num_window.focus_set()
             entry.focus_set()
@@ -337,7 +338,8 @@ def get_user_data(self):
                 self,
                 "Notifications",
                 txt,
-                x_offset=600,
+                x_offset=100,
+                y_offset=50,
             )
             num_window.focus_set()
         else:
@@ -366,14 +368,16 @@ def get_user_data(self):
                     self,
                     "Notifications",
                     "Your data has been saved.",
-                    x_offset=600,
+                    x_offset=100,
+                    y_offset=50,
                 )
             else:
                 InfoMsgBox(
                     self,
                     "Notifications",
                     "You will now start receiving text notifications.",
-                    x_offset=600,
+                    x_offset=100,
+                    y_offset=50,
                 )
 
     # get user data if it exists
@@ -389,8 +393,8 @@ def get_user_data(self):
     # create window for entry/modification of user data
     num_window = tk.Toplevel(self)
     num_window.title("Notifications")
-    num_window.configure(background="#ffc49c")
-    num_window.geometry("300x185+600+300")
+    num_window.configure(background="#ececec") # "#ffc49c")
+    num_window.geometry("300x185+100+50")
     num_window.resizable(False, False)
     num_window.wm_transient(self)
     num_window.wait_visibility()
@@ -401,7 +405,7 @@ def get_user_data(self):
         num_window,
         text="Enter your ten digit phone number:",
         anchor="center",
-        background="#ffc49c",  # "#ececec",
+        background="#ececec",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
     entry = ttk.Entry(
@@ -417,7 +421,7 @@ def get_user_data(self):
         num_window,
         text="Notify when? Select all that apply:",
         anchor="center",
-        background="#ffc49c",  # "#ececec",
+        background="#ececec",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
 
@@ -436,7 +440,7 @@ def get_user_data(self):
         variable=var1,
         onvalue=1,
         offvalue=0,
-        background="#ffc49c",  # "#ececec",
+        background="#ececec",  # "#ececec",
     )
     c1.grid(row=3, column=0, columnspan=2, padx=(20, 0), sticky="w")
     c2 = tk.Checkbutton(
@@ -446,7 +450,7 @@ def get_user_data(self):
         variable=var2,
         onvalue=1,
         offvalue=0,
-        background="#ffc49c",  # "#ececec",
+        background="#ececec",  # "#ececec",
     )
     c2.grid(
         row=3,
@@ -462,7 +466,7 @@ def get_user_data(self):
         variable=var3,
         onvalue=1,
         offvalue=0,
-        background="#ffc49c",  # "#ececec",
+        background="#ececec",  # "#ececec",
     )
     c3.grid(row=3, column=0, columnspan=2, padx=(0, 25), sticky="e")
 

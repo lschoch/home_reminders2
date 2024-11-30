@@ -4,7 +4,8 @@ import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta  # noqa: F401
-from tkinter import ttk
+from tkinter import ttk, Menu
+
 
 from PIL import Image, ImageTk
 from tkmacosx import Button
@@ -101,6 +102,119 @@ class App(tk.Tk):
         self.lbl_msg = tk.StringVar()
         self.lbl_color = tk.StringVar()
         self.expired_msg = tk.StringVar()
+
+        #######################################
+        # create menu
+        #######################################
+        self.option_add('*tearOff', False)
+
+        def opt_in():
+            # initialize user table if empty
+            initialize_user()
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            if phone_number is None:
+                response = YesNoMsgBox(
+                    self,
+                    title="Notifications",
+                    message="Would you like to to be notified by text "
+                    + "when your items are coming due?",
+                    x_offset=100,
+                    y_offset=50,
+                )
+                # if user opts to receive notifications, get user data
+                if response.get_response():
+                    get_user_data(self)
+            # if user opts out of notifications, delete user's data
+            else:
+                response1 = YesNoMsgBox(
+                    self,
+                    title="Notifications",
+                    message="You are already receiving text"
+                    + " notifications? Do want to continue.",
+                    x_offset=100,
+                    y_offset=50,
+                )
+                if not response1.get_response():
+                    InfoMsgBox(
+                        self,
+                        "Notifications",
+                        "You have opted out of text notifications."
+                        + " Texts will no longer be sent.",
+                        x_offset=100,
+                        y_offset=50,
+                    )
+                    cur.execute("DELETE FROM user")
+                    con.commit()
+                else:
+                    response2 = YesNoMsgBox(
+                        self,
+                        title="Notifications",
+                        message="Do you want to change your notification phone number or"
+                        + " notification frequency?",
+                        x_offset=100,
+                        y_offset=50,
+                    )
+                    if response2.get_response():
+                        get_user_data(self)
+        
+        def opt_out():
+            initialize_user()
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            if phone_number is not None:
+                response = YesNoMsgBox(
+                    self, 
+                    title="Notifications",
+                    message="Do you want to stop receiving text notifications?",
+                    x_offset=100,
+                    y_offset=50,
+                )
+                if response.get_response():
+                    InfoMsgBox(
+                    self,
+                    "Notifications",
+                    "You have opted out of text notifications."
+                    + " Texts will no longer be sent.",
+                    x_offset=100,
+                    y_offset=50,
+                    )
+                    cur.execute("DELETE FROM user")
+                    con.commit()
+            else:
+                InfoMsgBox(
+                    self,
+                    "Notifications",
+                    "You are not currently receiving text notifications. " \
+                        + "Click opt-in to start.",
+                    x_offset=100,
+                    y_offset=50,
+                )
+        def preferences():
+            initialize_user()
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            if phone_number is not None:
+                get_user_data(self)
+            else:
+                InfoMsgBox(
+                    self,
+                    "Notifications",
+                    "You are not currently receiving text notifications. " \
+                        + "Click opt-in to start.",
+                    x_offset=100,
+                    y_offset=50,
+                )
+
+        menubar = Menu(self)
+        self.config(menu=menubar)
+
+        notifications_menu = Menu(menubar)
+        menubar.add_cascade(label="Notifications", menu=notifications_menu)
+        notifications_menu.add_command(label="Opt-in", command=opt_in)
+        notifications_menu.add_command(label="Opt-out", command=opt_out)
+        notifications_menu.add_command(label="Preferences", command=preferences)
+        
+        #######################################
+        # end create menu
+        #######################################
 
         ####################################
         # add left side buttons
@@ -260,7 +374,7 @@ class App(tk.Tk):
         check_expired(self)
 
         #######################################
-        # notifications for upcoming events
+        # notifications for upcoming items
         #######################################
         # initialize user table if it's empty
         initialize_user()
@@ -306,7 +420,7 @@ class App(tk.Tk):
                     messages += f"\u2022 Due in 7 days: {item[1]}\n"
             # create notifications window only if there are messages
             if len(messages) > 0:
-                # remove the last /n from messages
+                # remove the last \n from messages
                 messages = messages[:-1]
                 NofificationsPopup(
                     self,
