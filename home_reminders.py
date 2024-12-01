@@ -87,7 +87,7 @@ class App(tk.Tk):
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("1120x400+3+3")
+        self.geometry("990x375+3+3")
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=120)
@@ -234,14 +234,14 @@ class App(tk.Tk):
             row=1, column=0, padx=20, pady=(20, 0), sticky="n"
         )
         self.btn = ttk.Button(self, text="All", command=self.view_all).grid(
-            row=1, column=0, padx=20, pady=(72, 0), sticky="n"
+            row=1, column=0, padx=20, pady=(20, 0), sticky="n"
         ) """
         self.btn = ttk.Button(self, text="New Item", command=self.create_new).grid(
-            row=1, column=0, padx=20, pady=(0, 72), sticky="s"
+            row=1, column=0, padx=20, pady=(20, 0), sticky="n"
         )
         self.btn = ttk.Button(
             self, text="Quit", command=self.quit_program
-        ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="s")
+        ).grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
         # end left side buttons
         ####################################
 
@@ -291,7 +291,7 @@ class App(tk.Tk):
             # self, highlightbackground="black", highlightthickness=1
             self
         )
-        self.legend_frame.grid(row=1, column=3, pady=(0, 20), sticky="s")
+        self.legend_frame.grid(row=1, column=0, pady=(0, 20), sticky="s")
 
         tk.Label(
             self.legend_frame,
