@@ -84,13 +84,15 @@ class App(tk.Tk):
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
 
         self.title("Home Reminders")
+        # self.wm_overrideredirect(True)
+        # self.wm_attributes('-type', 'splash')
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("990x375+3+3")
+        self.geometry("990x393+3+3")
         self.style = ttk.Style()
         self.style.theme_use("clam")
-        self.rowconfigure(0, minsize=120)
+        self.rowconfigure(0, minsize=140)
 
         # create variable to prevent calling
         # treeview_on_selection_changed after refresh
@@ -130,7 +132,7 @@ class App(tk.Tk):
                     self,
                     title="Notifications",
                     message="You are already receiving text"
-                    + " notifications? Do want to continue.",
+                    + " notifications? Do want to continue receiving them?",
                     x_offset=100,
                     y_offset=15,
                 )
@@ -251,7 +253,7 @@ class App(tk.Tk):
             background=self.lbl_color.get(),
             font=("Arial", 18),
         )
-        self.view_lbl.grid(row=0, column=1, pady=(0, 35), sticky="s")
+        self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
         self.expired_lbl = tk.Label(
             self,
@@ -261,7 +263,7 @@ class App(tk.Tk):
             relief="solid",
         )
         self.expired_lbl.grid(
-            row=0, column=1, ipadx=4, ipady=4, pady=(0, 5), sticky="s"
+            row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
         )
 
         # display current date
@@ -384,6 +386,10 @@ class App(tk.Tk):
 
         # set view_label message and color
         check_expired(self)
+        print("****************")
+        child_id = self.tree.get_children()[0]
+        self.tree.focus(child_id)
+        # self.tree.selection_set(child_id)
 
         #######################################
         # notifications for upcoming items
@@ -444,6 +450,8 @@ class App(tk.Tk):
         #######################################
         # end notifications for upcoming events
         #######################################
+        # end init
+        print("end init ****************")
 
     #################################
     # commands for left side buttons
@@ -702,14 +710,14 @@ class App(tk.Tk):
 
     # manage row selection in treeview
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
+        print("1.###############################")
         # abort if the selection change was after a refresh
         if self.refreshed:
             self.refreshed = False
             return
-
+        print("2.###############################")
         selected_item = self.tree.focus()
         remove_toplevels(self)
-
         # create toplevel
         top = TopLvl(self, "Edit Selection")
 

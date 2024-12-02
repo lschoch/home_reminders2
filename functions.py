@@ -9,8 +9,6 @@ from tkcalendar import Calendar
 
 from classes import InfoMsgBox
 
-# from twilio.rest import Client
-
 
 # create treeview to display data from database
 def create_tree_widget(self):
@@ -116,13 +114,14 @@ def get_date(date_last_entry, top):
     x = top.winfo_x()
     y = top.winfo_y()
     # top2.geometry("+%d+%d" % (x + 48, y + 195))  # y + 120
-    top2.geometry("+%d+%d" % (x + 187, y + 86))
+    top2.geometry("+%d+%d" % (x + 187, y - 25))
 
     # keep calendar in front of it's parent window (only wm_transient works)
     # 1. top2.wm_transient(top)
     # 2. top2.wm_attributes("-topmost", True)
     # 3. top2.lift()
     top2.wm_transient(top)
+    top2.wm_overrideredirect(True)
 
     cal = Calendar(
         top2,
@@ -229,18 +228,18 @@ def check_expired(self):
         ORDER BY date_next ASC
     """).fetchall()
     if result and self.view_current:
-        msg = "Pending items - select a row to update or delete "
+        msg = "Pending items - select item to update or delete "
         self.lbl_msg.set(msg)
         self.lbl_color.set("#ececec")
-        self.expired_msg.set('Click "All" to view past due items')
+        self.expired_msg.set(f"{len(result)} past due items. Click <View> <All>")
     elif self.view_current:
-        self.lbl_msg.set("Pending items - select a row to update or delete")
+        self.lbl_msg.set("Pending items - select item to update or delete")
         self.lbl_color.set("#ececec")
-        self.expired_msg.set(f"{len(result)} past due")
+        self.expired_msg.set(f"{len(result)} past due items")
     else:
-        self.lbl_msg.set("All items - select a row to update or delete")
+        self.lbl_msg.set("All items - select item to update or delete")
         self.lbl_color.set("#ececec")
-        self.expired_msg.set(f"{len(result)} past due")
+        self.expired_msg.set(f"{len(result)} past due items")
     self.view_lbl.config(background=self.lbl_color.get())
 
 
@@ -392,9 +391,10 @@ def get_user_data(self):
         user_exists = False
     # create window for entry/modification of user data
     num_window = tk.Toplevel(self)
-    num_window.title("Notifications")
+    # num_window.title("Notifications")
     num_window.configure(background="#ececec") # "#ffc49c")
     num_window.geometry("300x185+100+50")
+    # num_window.wm_overrideredirect(True)
     num_window.resizable(False, False)
     num_window.wm_transient(self)
     num_window.wait_visibility()

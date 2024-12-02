@@ -4,12 +4,13 @@ from tkinter import ttk
 from tkmacosx import Button
 
 
-# create toplevel
+# create toplevel for new and update windows
 class TopLvl(tk.Toplevel):
     def __init__(self, master, title):
         super().__init__(master)
         self.title(title)
         self.wm_transient(master)
+        # self.wm_overrideredirect(True)
         self.resizable(False, False)
         self.config(padx=20, pady=20)
         x = master.winfo_x()
@@ -38,15 +39,14 @@ class TopLvl(tk.Toplevel):
         ttk.Label(self, text="period", background="#ececec").grid(
             row=0, column=4, padx=5, pady=(0, 15), sticky="e"
         )
-        self.period_combobox = AutocompleteCombobox(self)
+        self.period_combobox = AutocompleteCombobox(self, width=7)
         self.period_combobox.set_list(self.period_list)
         self.period_combobox.grid(row=0, column=5, pady=(0, 15))
-        self.period_combobox.grid(row=0, column=5, pady=(0, 15))
 
-        ttk.Label(self, text="last", background="#ececec").grid(
+        ttk.Label(self, text="last date", background="#ececec").grid(
             row=1, column=0, padx=(0, 5), pady=(0, 15), sticky="e"
         )
-        self.date_last_entry = ttk.Entry(self)
+        self.date_last_entry = ttk.Entry(self, width=10)
         self.date_last_entry.grid(row=1, column=1, padx=(0, 15), pady=(0, 15))
 
         ttk.Label(self, text="note", background="#ececec").grid(
@@ -161,6 +161,7 @@ class NofificationsPopup(tk.Toplevel):
         self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
+        self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
@@ -218,6 +219,7 @@ class InfoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
+        self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
@@ -263,6 +265,7 @@ class YesNoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
+        self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.response = False
@@ -294,12 +297,24 @@ class YesNoMsgBox(tk.Toplevel):
             command=self.quit,
         )
 
+        self.button3 = ttk.Button(
+            self,
+            text="Cancel",
+            width=6,
+            # height=3,
+            # background="#dbdad6",
+            command=self.cancel,
+        )
+
         self.txt.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.button1.grid(
-            row=1, column=0, padx=(80, 0), pady=(0, 3), sticky="w"
+            row=1, column=0, padx=(40, 0), pady=(0, 3), sticky="w"
         )
         self.button2.grid(
-            row=1, column=0, padx=(0, 80), pady=(0, 3), sticky="e"
+            row=1, column=0, padx=(0, 138), pady=(0, 3), sticky="e"
+        )
+        self.button3.grid(
+            row=1, column=0, padx=(0, 40), pady=(0, 3), sticky="e"
         )
         self.txt.tag_configure("tag-center", justify="center")
         self.txt.insert(tk.END, message, "tag-center")
@@ -321,3 +336,6 @@ class YesNoMsgBox(tk.Toplevel):
     def quit(self):
         self.destroy()
         self.var.set(1)
+
+    def cancel(self):
+        self.destroy()
