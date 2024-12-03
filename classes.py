@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkmacosx import Button
 
 
-# create toplevel for new and update windows
+# create toplevel
 class TopLvl(tk.Toplevel):
     def __init__(self, master, title):
         super().__init__(master)
@@ -34,25 +34,25 @@ class TopLvl(tk.Toplevel):
             row=0, column=2, padx=5, pady=(0, 15), sticky="e"
         )
         self.frequency_entry = ttk.Entry(self)
-        self.frequency_entry.grid(row=0, column=3, padx=(0, 15), pady=(0, 15))
+        self.frequency_entry.grid(row=0, column=3, pady=(0, 15), sticky='w')
 
         ttk.Label(self, text="period", background="#ececec").grid(
             row=0, column=4, padx=5, pady=(0, 15), sticky="e"
         )
-        self.period_combobox = AutocompleteCombobox(self, width=7)
+        self.period_combobox = AutocompleteCombobox(self)
         self.period_combobox.set_list(self.period_list)
-        self.period_combobox.grid(row=0, column=5, pady=(0, 15))
+        self.period_combobox.grid(row=0, column=5, pady=(0, 15), sticky='w')
 
-        ttk.Label(self, text="last date", background="#ececec").grid(
+        ttk.Label(self, text="last", background="#ececec").grid(
             row=1, column=0, padx=(0, 5), pady=(0, 15), sticky="e"
         )
-        self.date_last_entry = ttk.Entry(self, width=10)
+        self.date_last_entry = ttk.Entry(self)
         self.date_last_entry.grid(row=1, column=1, padx=(0, 15), pady=(0, 15))
 
         ttk.Label(self, text="note", background="#ececec").grid(
             row=1, column=2, padx=(0, 5), pady=(0, 15), sticky="e"
         )
-        self.note_entry = ttk.Entry(self, width=48)
+        self.note_entry = ttk.Entry(self, width=52)
         self.note_entry.grid(
             row=1,
             column=3,
@@ -266,6 +266,7 @@ class YesNoMsgBox(tk.Toplevel):
         self.resizable(False, False)
         self.wm_transient(master)
         self.wm_overrideredirect(True)
+        
         self.wait_visibility()
         self.grab_set()
         self.response = False

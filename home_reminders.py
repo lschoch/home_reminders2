@@ -120,8 +120,8 @@ class App(tk.Tk):
                     title="Notifications",
                     message="Would you like to to be notified by text "
                     + "when your items are coming due?",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                 )
                 # if user opts to receive notifications, get user data
                 if response.get_response():
@@ -133,8 +133,8 @@ class App(tk.Tk):
                     title="Notifications",
                     message="You are already receiving text"
                     + " notifications? Do want to continue receiving them?",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                 )
                 if not response1.get_response():
                     InfoMsgBox(
@@ -142,8 +142,8 @@ class App(tk.Tk):
                         "Notifications",
                         "You have opted out of text notifications."
                         + " Texts will no longer be sent.",
-                        x_offset=100,
-                        y_offset=15,
+                        x_offset=3,
+                        y_offset=5,
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
@@ -153,8 +153,8 @@ class App(tk.Tk):
                         title="Notifications",
                         message="Do you want to change your notification phone number or"
                         + " notification frequency?",
-                        x_offset=100,
-                        y_offset=15,
+                        x_offset=3,
+                        y_offset=5,
                     )
                     if response2.get_response():
                         get_user_data(self)
@@ -167,8 +167,8 @@ class App(tk.Tk):
                     self, 
                     title="Notifications",
                     message="Do you want to stop receiving text notifications?",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                 )
                 if response.get_response():
                     InfoMsgBox(
@@ -176,8 +176,8 @@ class App(tk.Tk):
                     "Notifications",
                     "You have opted out of text notifications."
                     + " Texts will no longer be sent.",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
@@ -187,8 +187,8 @@ class App(tk.Tk):
                     "Notifications",
                     "You are not currently receiving text notifications. " \
                         + "Click opt-in to start.",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                 )
         def preferences():
             initialize_user()
@@ -201,8 +201,8 @@ class App(tk.Tk):
                     "Notifications",
                     "You are not currently receiving text notifications. " \
                         + "Click opt-in to start.",
-                    x_offset=100,
-                    y_offset=15,
+                    x_offset=3,
+                    y_offset=5,
                 )
 
         menubar = Menu(self)
@@ -386,7 +386,6 @@ class App(tk.Tk):
 
         # set view_label message and color
         check_expired(self)
-        print("****************")
         child_id = self.tree.get_children()[0]
         self.tree.focus(child_id)
         # self.tree.selection_set(child_id)
@@ -451,7 +450,6 @@ class App(tk.Tk):
         # end notifications for upcoming events
         #######################################
         # end init
-        print("end init ****************")
 
     #################################
     # commands for left side buttons
@@ -619,8 +617,8 @@ class App(tk.Tk):
             self,
             "Backup",
             "The current backup will be overwritten. Are you sure?",
-            x_offset=250,
-            y_offset=15,
+            x_offset=3,
+            y_offset=5,
         )
         if answer.get_response():
             shutil.copy2(db_path, db_bak_path)
@@ -632,8 +630,8 @@ class App(tk.Tk):
             self,
             "Restore",
             "All current data will be overwritten. Are you sure?",
-            x_offset=250,
-            y_offset=15,
+            x_offset=3,
+            y_offset=5,
         )
         if answer.get_response():
             shutil.copy2(db_bak_path, db_path)
@@ -647,8 +645,8 @@ class App(tk.Tk):
             self,
             "Delete All",
             "This will delete all data. Are you sure?",
-            x_offset=250,
-            y_offset=15,
+            x_offset=3,
+            y_offset=5,
         )
         if answer.get_response():
             cur.execute("DELETE FROM reminders")
@@ -710,12 +708,10 @@ class App(tk.Tk):
 
     # manage row selection in treeview
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
-        print("1.###############################")
         # abort if the selection change was after a refresh
         if self.refreshed:
             self.refreshed = False
             return
-        print("2.###############################")
         selected_item = self.tree.focus()
         remove_toplevels(self)
         # create toplevel
