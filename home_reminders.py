@@ -4,6 +4,7 @@ import shutil
 import sqlite3
 import sys
 import tkinter as tk
+from colorama import Back, Style
 from datetime import date, datetime, timedelta  # noqa: F401
 from tkinter import ttk, Menu
 
@@ -415,7 +416,15 @@ class App(tk.Tk):
         if user_data[0] is not None:
             # create a string to hold upcoming items
             messages = ""
+            dat = datetime.today().strftime("%Y-%m-%d")
             # check whether user wants 'day of' notificatons
+            past_due_items = cur.execute(
+                """
+                SELECT * FROM reminders WHERE date_next < ?""",
+                (dat,),
+            ).fetchall()
+            for item in past_due_items:
+                messages += f"\u2022 Past due: {item[1]}\n"
             if user_data[3]:
                 dat = datetime.today().strftime("%Y-%m-%d")
                 day_of_items = cur.execute(
@@ -455,7 +464,7 @@ class App(tk.Tk):
                 messages = messages[:-1]
                 NofificationsPopup(
                     self,
-                    title="Items Coming Due",
+                    title="Notifications",
                     message=messages,
                     x_offset=310,
                     y_offset=400,

@@ -162,8 +162,8 @@ class NofificationsPopup(tk.Toplevel):
         self.resizable(False, False)
         self.wm_transient(master)
         # self.wm_overrideredirect(True)
-        self.wait_visibility()
-        self.grab_set()
+        # self.wait_visibility()
+        # self.grab_set()
         self.txt = tk.Text(
             self,
             bg="#ececec",
@@ -219,7 +219,7 @@ class InfoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        # self.wm_overrideredirect(True)
+        self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
@@ -265,7 +265,7 @@ class YesNoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        # self.wm_overrideredirect(True)
+        self.wm_overrideredirect(True)
         
         self.wait_visibility()
         self.grab_set()

@@ -108,7 +108,7 @@ def get_date(date_last_entry, top):
     top2 = tk.Toplevel(top)
 
     # remove title bar
-    # top2.wm_overrideredirect(True)
+    top2.wm_overrideredirect(True)
 
     top2.configure(background="#cacaca")
     x = top.winfo_x()
