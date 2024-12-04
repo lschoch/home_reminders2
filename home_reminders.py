@@ -71,7 +71,7 @@ data = cur.execute("""
     WHERE date_next >= DATE('now', 'localtime')
     ORDER BY date_next ASC, description ASC
 """)
-
+############################################################################
 
 # create the main window
 class App(tk.Tk):
@@ -265,7 +265,8 @@ class App(tk.Tk):
         self.expired_lbl.grid(
             row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
         )
-
+        
+        ####################################
         # display current date
         date_variable = tk.StringVar()
         date_variable.set(f"Today is {date.today()}")
@@ -277,6 +278,7 @@ class App(tk.Tk):
             font=("Helvetica", 24),
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
+        ####################################
 
         # insert image
         try:
@@ -611,7 +613,6 @@ class App(tk.Tk):
     ####################################
 
     #################################
-    # commands for right side buttons
     def backup(self):
         answer = YesNoMsgBox(
             self,
@@ -703,7 +704,6 @@ class App(tk.Tk):
                 if response4.get_response():
                     get_user_data(self)
 
-    # end commands for right side buttons
     #####################################
 
     # manage row selection in treeview
