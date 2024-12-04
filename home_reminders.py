@@ -2,6 +2,7 @@ import importlib
 import os
 import shutil
 import sqlite3
+import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta  # noqa: F401
 from tkinter import ttk, Menu
@@ -124,19 +125,9 @@ class App(tk.Tk):
                     y_offset=5,
                 )
                 # if user opts to receive notifications, get user data
-                if response.get_response():
+                if response.get_response() == 1:
                     get_user_data(self)
-            # if user opts out of notifications, delete user's data
-            else:
-                response1 = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="You are already receiving text"
-                    + " notifications? Do want to continue receiving them?",
-                    x_offset=3,
-                    y_offset=5,
-                )
-                if not response1.get_response():
+                elif response.get_response == -1:
                     InfoMsgBox(
                         self,
                         "Notifications",
@@ -147,7 +138,28 @@ class App(tk.Tk):
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
-                else:
+            # if user opts out of notifications, delete user's data
+            else:
+                response1 = YesNoMsgBox(
+                    self,
+                    title="Notifications",
+                    message="You are already receiving text"
+                    + " notifications? Do want to continue receiving them?",
+                    x_offset=3,
+                    y_offset=5,
+                )
+                if response1.get_response() == -1:
+                    InfoMsgBox(
+                        self,
+                        "Notifications",
+                        "You have opted out of text notifications."
+                        + " Texts will no longer be sent.",
+                        x_offset=3,
+                        y_offset=5,
+                    )
+                    cur.execute("DELETE FROM user")
+                    con.commit()
+                elif response1.get_response() == 1:
                     response2 = YesNoMsgBox(
                         self,
                         title="Notifications",
@@ -156,7 +168,7 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    if response2.get_response():
+                    if response2.get_response() == 1:
                         get_user_data(self)
         
         def opt_out():
@@ -170,7 +182,7 @@ class App(tk.Tk):
                     x_offset=3,
                     y_offset=5,
                 )
-                if response.get_response():
+                if response.get_response() == 1:
                     InfoMsgBox(
                     self,
                     "Notifications",
@@ -453,6 +465,9 @@ class App(tk.Tk):
         #######################################
         # end init
 
+    def quit_program(self):
+        sys.exit()
+
     #################################
     # commands for left side buttons
     # create top level window for entry of data for new item
@@ -605,9 +620,6 @@ class App(tk.Tk):
         self.refreshed = True
         self.focus_set()
         self.tree.focus_set()
-
-    def quit_program(self):
-        self.destroy()
 
     # end commands for left side buttons
     ####################################

@@ -219,7 +219,7 @@ class InfoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        self.wm_overrideredirect(True)
+        # self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
@@ -248,7 +248,7 @@ class InfoMsgBox(tk.Toplevel):
         self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
 
 
-# custom askyesno messagebox class
+# custom yesnomessagebox class
 class YesNoMsgBox(tk.Toplevel):
     def __init__(
         self,
@@ -265,11 +265,11 @@ class YesNoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        self.wm_overrideredirect(True)
+        # self.wm_overrideredirect(True)
         
         self.wait_visibility()
         self.grab_set()
-        self.response = False
+        self.response = 0
         self.var = tk.IntVar()
         self.txt = tk.Text(
             self,
@@ -286,7 +286,7 @@ class YesNoMsgBox(tk.Toplevel):
             width=3,
             # height=3,
             # background="#dbdad6",
-            command=self.set_response,
+            command=self.yes,
         )
 
         self.button2 = ttk.Button(
@@ -295,7 +295,7 @@ class YesNoMsgBox(tk.Toplevel):
             width=3,
             # height=3,
             # background="#dbdad6",
-            command=self.quit,
+            command=self.no,
         )
 
         self.button3 = ttk.Button(
@@ -329,14 +329,17 @@ class YesNoMsgBox(tk.Toplevel):
     def get_response(self):
         return self.response
 
-    def set_response(self):
-        self.response = True
+    def yes(self):
+        self.response = 1
         self.destroy()
         self.var.set(1)
 
-    def quit(self):
+    def no(self):
+        # self.response = -1
         self.destroy()
         self.var.set(1)
 
     def cancel(self):
+        self.response = 0
         self.destroy()
+        self.var.set(1)

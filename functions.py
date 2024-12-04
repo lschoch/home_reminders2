@@ -88,12 +88,12 @@ def get_date(date_last_entry, top):
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
         # restore overrideredirect to False
-        top2.wm_overrideredirect(False)
+        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     def cal_cancel():
         # restore overrideredirect to False
-        top2.wm_overrideredirect(False)
+        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     # function to set date_last_entry from calendar click
@@ -101,7 +101,7 @@ def get_date(date_last_entry, top):
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
         # restore overrideredirect to False
-        top2.wm_overrideredirect(False)
+        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     # create a toplevel for the calendar
@@ -121,7 +121,7 @@ def get_date(date_last_entry, top):
     # 2. top2.wm_attributes("-topmost", True)
     # 3. top2.lift()
     top2.wm_transient(top)
-    top2.wm_overrideredirect(True)
+    # top2.wm_overrideredirect(True)
 
     cal = Calendar(
         top2,
