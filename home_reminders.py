@@ -281,19 +281,6 @@ class App(tk.Tk):
         )
         
         ####################################
-        # display current date
-        """ self.date_variable = tk.StringVar()
-        self.date_variable.set(f"Today is {date.today()}")
-
-        self.today_is_lbl = tk.Label(
-            self,
-            textvariable=self.date_variable,
-            foreground="black",
-            font=("Helvetica", 24),
-        )
-        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n") """
-        ####################################
-
         # insert image
         try:
             img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
@@ -302,8 +289,8 @@ class App(tk.Tk):
             self.img_lbl_l.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
             pass
-
         ####################################
+
         # create legend
         self.legend_frame = tk.Frame(
             # self, highlightbackground="black", highlightthickness=1
@@ -475,7 +462,8 @@ class App(tk.Tk):
         #######################################
         self.refresh_date()
         # end init
-        
+
+    ###############################################################   
     # function to display current date
     def refresh_date(self):
         self.date_var = tk.StringVar()
@@ -483,8 +471,12 @@ class App(tk.Tk):
         # check for date change; i.e., midnight
         if today and (today != datetime.now().strftime('%Y-%m-%d')):
             today = datetime.now().strftime('%Y-%m-%d')
-            print("Date changed!")
-            # refresh all needed data
+            print("date changed!")
+            # refresh all data
+            refresh(self)
+            check_expired(self)
+            insert_data(self, data)
+            print('updated data')
         
         print("refreshing")
         self.date_var.set(f"Today is {today}")
@@ -496,8 +488,9 @@ class App(tk.Tk):
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
         # refresh date every 5 seconds
-        self.after(600000, self.refresh_date)
-
+        self.after(360000, self.refresh_date)
+    ###############################################################
+        
     def quit_program(self):
         sys.exit()
 
