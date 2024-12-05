@@ -3,6 +3,7 @@ import os
 import shutil
 import sqlite3
 import sys
+from time import strftime
 import tkinter as tk
 from colorama import Back, Style
 from datetime import date, datetime, timedelta  # noqa: F401
@@ -281,16 +282,16 @@ class App(tk.Tk):
         
         ####################################
         # display current date
-        date_variable = tk.StringVar()
-        date_variable.set(f"Today is {date.today()}")
+        """ self.date_variable = tk.StringVar()
+        self.date_variable.set(f"Today is {date.today()}")
 
         self.today_is_lbl = tk.Label(
             self,
-            textvariable=date_variable,
+            textvariable=self.date_variable,
             foreground="black",
             font=("Helvetica", 24),
         )
-        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
+        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n") """
         ####################################
 
         # insert image
@@ -472,7 +473,30 @@ class App(tk.Tk):
         #######################################
         # end notifications for upcoming events
         #######################################
+        self.refresh_date()
         # end init
+        
+    # function to display current date
+    def refresh_date(self):
+        self.date_var = tk.StringVar()
+        today = ''
+        # check for date change; i.e., midnight
+        if today and (today != datetime.now().strftime('%Y-%m-%d')):
+            today = datetime.now().strftime('%Y-%m-%d')
+            print("Date changed!")
+            # refresh all needed data
+        
+        print("refreshing")
+        self.date_var.set(f"Today is {today}")
+        self.today_is_lbl = tk.Label(
+            self,
+            textvariable=self.date_var,
+            foreground="black",
+            font=("Helvetica", 24),
+        )
+        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
+        # refresh date every 5 seconds
+        self.after(600000, self.refresh_date)
 
     def quit_program(self):
         sys.exit()
@@ -724,7 +748,6 @@ class App(tk.Tk):
                 )
                 if response4.get_response():
                     get_user_data(self)
-
     #####################################
 
     # manage row selection in treeview
@@ -880,7 +903,6 @@ class App(tk.Tk):
         ttk.Button(top, text="Cancel", command=cancel).grid(
             row=2, column=5, pady=(15, 0), sticky="w"
         )
-
 
 if __name__ == "__main__":
     app = App()
