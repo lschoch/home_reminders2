@@ -3,15 +3,15 @@ import os
 import shutil
 import sqlite3
 import sys
-from time import strftime
-import tkinter as tk
-from colorama import Back, Style
-from datetime import date, datetime, timedelta  # noqa: F401
-from tkinter import ttk, Menu
 
+# from time import strftime
+import tkinter as tk
+
+# from colorama import Back, Style
+from datetime import date, datetime, timedelta  # noqa: F401
+from tkinter import Menu, ttk
 
 from PIL import Image, ImageTk
-from tkmacosx import Button
 
 from classes import InfoMsgBox, NofificationsPopup, TopLvl, YesNoMsgBox
 from functions import (
@@ -76,9 +76,10 @@ data = cur.execute("""
 """)
 ############################################################################
 
+
 # create the main window
 class App(tk.Tk):
-    def __init__(self, **kw):  # noqa: PLR0915
+    def __init__(self, **kw):  # noqa: C901, PLR0915
         super().__init__(**kw)
 
         # get path to title bar icon
@@ -111,7 +112,7 @@ class App(tk.Tk):
         #######################################
         # create menu
         #######################################
-        self.option_add('*tearOff', False)
+        self.option_add("*tearOff", False)
 
         def opt_in():
             # initialize user table if empty
@@ -165,33 +166,34 @@ class App(tk.Tk):
                     response2 = YesNoMsgBox(
                         self,
                         title="Notifications",
-                        message="Do you want to change your notification phone number or"
-                        + " notification frequency?",
+                        message="""Do you want to change your notification
+                         phone number or notification frequency?""",
                         x_offset=3,
                         y_offset=5,
                     )
                     if response2.get_response() == 1:
                         get_user_data(self)
-        
+
         def opt_out():
             initialize_user()
             phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
             if phone_number is not None:
                 response = YesNoMsgBox(
-                    self, 
+                    self,
                     title="Notifications",
-                    message="Do you want to stop receiving text notifications?",
+                    message="""Do you want to stop receiving
+                     text notifications?""",
                     x_offset=3,
                     y_offset=5,
                 )
                 if response.get_response() == 1:
                     InfoMsgBox(
-                    self,
-                    "Notifications",
-                    "You have opted out of text notifications."
-                    + " Texts will no longer be sent.",
-                    x_offset=3,
-                    y_offset=5,
+                        self,
+                        "Notifications",
+                        "You have opted out of text notifications."
+                        + " Texts will no longer be sent.",
+                        x_offset=3,
+                        y_offset=5,
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
@@ -199,11 +201,12 @@ class App(tk.Tk):
                 InfoMsgBox(
                     self,
                     "Notifications",
-                    "You are not currently receiving text notifications. " \
-                        + "Click opt-in to start.",
+                    "You are not currently receiving text notifications. "
+                    + "Click opt-in to start.",
                     x_offset=3,
                     y_offset=5,
                 )
+
         def preferences():
             initialize_user()
             phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
@@ -213,8 +216,8 @@ class App(tk.Tk):
                 InfoMsgBox(
                     self,
                     "Notifications",
-                    "You are not currently receiving text notifications. " \
-                        + "Click opt-in to start.",
+                    "You are not currently receiving text notifications. "
+                    + "Click opt-in to start.",
                     x_offset=3,
                     y_offset=5,
                 )
@@ -226,7 +229,9 @@ class App(tk.Tk):
         menubar.add_cascade(label="Notifications", menu=notifications_menu)
         notifications_menu.add_command(label="Opt-in", command=opt_in)
         notifications_menu.add_command(label="Opt-out", command=opt_out)
-        notifications_menu.add_command(label="Preferences", command=preferences)
+        notifications_menu.add_command(
+            label="Preferences", command=preferences
+        )
 
         view_menu = Menu(menubar)
         menubar.add_cascade(label="View", menu=view_menu)
@@ -238,23 +243,16 @@ class App(tk.Tk):
         data_menu.add_command(label="Backup", command=self.backup)
         data_menu.add_command(label="Restore", command=self.restore)
         data_menu.add_command(label="Delete All", command=self.delete_all)
-        
+
         #######################################
         # end create menu
         #######################################
 
-
         ####################################
         # add left side buttons
-        """ self.btn = ttk.Button(self, text="Pending", command=self.pending).grid(
-            row=1, column=0, padx=20, pady=(20, 0), sticky="n"
-        )
-        self.btn = ttk.Button(self, text="All", command=self.view_all).grid(
-            row=1, column=0, padx=20, pady=(20, 0), sticky="n"
-        ) """
-        self.btn = ttk.Button(self, text="New Item", command=self.create_new).grid(
-            row=1, column=0, padx=20, pady=(20, 0), sticky="n"
-        )
+        self.btn = ttk.Button(
+            self, text="New Item", command=self.create_new
+        ).grid(row=1, column=0, padx=20, pady=(20, 0), sticky="n")
         self.btn = ttk.Button(
             self, text="Quit", command=self.quit_program
         ).grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
@@ -279,7 +277,7 @@ class App(tk.Tk):
         self.expired_lbl.grid(
             row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
         )
-        
+
         ####################################
         # insert image
         try:
@@ -463,21 +461,21 @@ class App(tk.Tk):
         self.refresh_date()
         # end init
 
-    ###############################################################   
+    ###############################################################
     # function to display current date
     def refresh_date(self):
         self.date_var = tk.StringVar()
-        today = ''
-        # check for date change; i.e., midnight
-        if today and (today != datetime.now().strftime('%Y-%m-%d')):
-            today = datetime.now().strftime('%Y-%m-%d')
+        today = ""
+        # check for date changeover at midnight
+        if today and (today != datetime.now().strftime("%Y-%m-%d")):
+            today = datetime.now().strftime("%Y-%m-%d")
             print("date changed!")
             # refresh all data
             refresh(self)
             check_expired(self)
             insert_data(self, data)
-            print('updated data')
-        
+            print("updated data")
+
         print("refreshing")
         self.date_var.set(f"Today is {today}")
         self.today_is_lbl = tk.Label(
@@ -488,9 +486,10 @@ class App(tk.Tk):
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
         # refresh date every 5 seconds
-        self.after(360000, self.refresh_date)
+        self.after(60000, self.refresh_date)
+
     ###############################################################
-        
+
     def quit_program(self):
         sys.exit()
 
@@ -741,6 +740,7 @@ class App(tk.Tk):
                 )
                 if response4.get_response():
                     get_user_data(self)
+
     #####################################
 
     # manage row selection in treeview
@@ -896,6 +896,7 @@ class App(tk.Tk):
         ttk.Button(top, text="Cancel", command=cancel).grid(
             row=2, column=5, pady=(15, 0), sticky="w"
         )
+
 
 if __name__ == "__main__":
     app = App()
