@@ -231,7 +231,9 @@ def check_expired(self):
         msg = "Pending items - select item to update or delete "
         self.lbl_msg.set(msg)
         self.lbl_color.set("#ececec")
-        self.expired_msg.set(f"{len(result)} past due items. Click <View> <All>")
+        self.expired_msg.set(
+            f"{len(result)} past due items. Click <View> <All>"
+        )
     elif self.view_current:
         self.lbl_msg.set("Pending items - select item to update or delete")
         self.lbl_color.set("#ececec")
@@ -305,7 +307,7 @@ def initialize_user():
 
 
 # get user data if user opts in for notifications
-def get_user_data(self):
+def get_user_data(self):  # noqa: PLR0915
     def cancel():
         num_window.destroy()
 
@@ -391,10 +393,9 @@ def get_user_data(self):
         user_exists = False
     # create window for entry/modification of user data
     num_window = tk.Toplevel(self)
-    # num_window.title("Notifications")
-    num_window.configure(background="#ececec") # "#ffc49c")
+    num_window.title("Notifications")
+    num_window.configure(background="#ececec")  # "#ffc49c")
     num_window.geometry("300x185+100+50")
-    # num_window.wm_overrideredirect(True)
     num_window.resizable(False, False)
     num_window.wm_transient(self)
     num_window.wait_visibility()
@@ -408,10 +409,7 @@ def get_user_data(self):
         background="#ececec",  # "#ececec",
         font=("Helvetica", 13),
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
-    entry = ttk.Entry(
-        num_window,
-        font=("Helvetica", 13),
-        width=10)
+    entry = ttk.Entry(num_window, font=("Helvetica", 13), width=10)
     entry.grid(row=1, column=0, columnspan=2)
     # enter phone number if one exists
     if user_data[0] is not None:
@@ -429,7 +427,7 @@ def get_user_data(self):
     var2 = tk.IntVar()
     var3 = tk.IntVar()
     # if there is a phone number set the frequency options
-    if user_data[0] is not None: 
+    if user_data[0] is not None:
         var1.initialize(user_data[1])
         var2.initialize(user_data[2])
         var3.initialize(user_data[3])

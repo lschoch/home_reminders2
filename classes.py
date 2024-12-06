@@ -34,14 +34,14 @@ class TopLvl(tk.Toplevel):
             row=0, column=2, padx=5, pady=(0, 15), sticky="e"
         )
         self.frequency_entry = ttk.Entry(self)
-        self.frequency_entry.grid(row=0, column=3, pady=(0, 15), sticky='w')
+        self.frequency_entry.grid(row=0, column=3, pady=(0, 15), sticky="w")
 
         ttk.Label(self, text="period", background="#ececec").grid(
             row=0, column=4, padx=5, pady=(0, 15), sticky="e"
         )
         self.period_combobox = AutocompleteCombobox(self)
         self.period_combobox.set_list(self.period_list)
-        self.period_combobox.grid(row=0, column=5, pady=(0, 15), sticky='w')
+        self.period_combobox.grid(row=0, column=5, pady=(0, 15), sticky="w")
 
         ttk.Label(self, text="last", background="#ececec").grid(
             row=1, column=0, padx=(0, 5), pady=(0, 15), sticky="e"
@@ -266,14 +266,14 @@ class YesNoMsgBox(tk.Toplevel):
         self.resizable(False, False)
         self.wm_transient(master)
         self.wm_overrideredirect(True)
-        
+
         self.wait_visibility()
         self.grab_set()
         self.response = 0
         self.var = tk.IntVar()
         self.txt = tk.Text(
             self,
-            bg="#ececec", # house color = "#ffc49c",
+            bg="#ececec",  # house color = "#ffc49c",
             font=("Helvetica, 13"),
             height=height,
             width=width,
