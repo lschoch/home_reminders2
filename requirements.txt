@@ -1,5 +1,6 @@
 altgraph==0.17.4
 babel==2.16.0
+colorama==0.4.6
 colour==0.1.5
 macholib==1.16.3
 packaging==24.1
