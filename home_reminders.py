@@ -13,7 +13,7 @@ from tkinter import Menu, ttk
 
 from PIL import Image, ImageTk
 
-from classes import InfoMsgBox, NofificationsPopup, TopLvl, YesNoMsgBox
+from classes import InfoMsgBox, TopLvl, YesNoMsgBox
 from functions import (
     appsupportdir,
     check_expired,
@@ -24,6 +24,7 @@ from functions import (
     get_user_data,
     initialize_user,
     insert_data,
+    notifications_popup,
     refresh,
     remove_toplevels,
     send_sms,  # noqa: F401
@@ -74,7 +75,6 @@ data = cur.execute("""
     WHERE date_next >= DATE('now', 'localtime')
     ORDER BY date_next ASC, description ASC
 """)
-############################################################################
 
 
 # create the main window
@@ -110,9 +110,8 @@ class App(tk.Tk):
         self.expired_msg = tk.StringVar()
         self.date_var = tk.StringVar()
 
-        #######################################
-        # create menu
-        #######################################
+        ###############################################################
+        # create menus
         self.option_add("*tearOff", False)
 
         def opt_in():
@@ -244,12 +243,10 @@ class App(tk.Tk):
         data_menu.add_command(label="Backup", command=self.backup)
         data_menu.add_command(label="Restore", command=self.restore)
         data_menu.add_command(label="Delete All", command=self.delete_all)
+        # end create menus
+        ###############################################################
 
-        #######################################
-        # end create menu
-        #######################################
-
-        ####################################
+        ###############################################################
         # add left side buttons
         self.btn = ttk.Button(
             self, text="New Item", command=self.create_new
@@ -258,7 +255,7 @@ class App(tk.Tk):
             self, text="Quit", command=self.quit_program
         ).grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
         # end left side buttons
-        ####################################
+        ###############################################################
 
         self.view_lbl = ttk.Label(
             self,
@@ -279,7 +276,7 @@ class App(tk.Tk):
             row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
         )
 
-        ####################################
+        ###############################################################
         # insert image
         try:
             img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
@@ -288,8 +285,9 @@ class App(tk.Tk):
             self.img_lbl_l.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
             pass
-        ####################################
+        ###############################################################
 
+        ###############################################################
         # create legend
         self.legend_frame = tk.Frame(
             # self, highlightbackground="black", highlightthickness=1
@@ -354,31 +352,7 @@ class App(tk.Tk):
             self.legend_frame, text="pending - ", background="#ececec"
         ).grid(row=3, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
         # end legend
-        ####################################
-
-        ####################################
-        # add right side buttons
-        """ ttk.Button(self, text="Backup", command=self.backup).grid(
-            row=1, column=3, padx=(20, 0), pady=(20, 0), sticky="n"
-        )
-        ttk.Button(self, text="Restore", command=self.restore).grid(
-            row=1, column=3, padx=(20, 0), pady=(72, 0), sticky="n"
-        )
-        ttk.Button(self, text="Delete All", command=self.delete_all).grid(
-            row=1, column=3, padx=(20, 0), pady=(0, 72), sticky="s"
-        )
-        Button(
-            self,
-            text="Notifications",
-            bg="#ffc49c",  # background="#8BB7F0",
-            height=35,
-            width=120,
-            focuscolor="black",  # "#ffc49c",
-            focusthickness=1,
-            command=self.notifications,
-        ).grid(row=1, column=3, padx=(20, 0), pady=(0, 20), sticky="s") """
-        # end right side buttons
-        ####################################
+        ###############################################################
 
         # create treeview to display data
         self.tree = create_tree_widget(self)
@@ -392,73 +366,7 @@ class App(tk.Tk):
         self.tree.focus(child_id)
         # self.tree.selection_set(child_id)
 
-        #######################################
-        # notifications for upcoming items
-        #######################################
-        # initialize user table if it's empty
-        initialize_user()
-        user_data = cur.execute("SELECT * FROM user").fetchone()
-        # check whether user has entered a phone number; i.e., opted in for
-        # notifications
-        if user_data[0] is not None:
-            # create a string to hold upcoming items
-            messages = ""
-            dat = datetime.today().strftime("%Y-%m-%d")
-            # check whether user wants 'day of' notificatons
-            past_due_items = cur.execute(
-                """
-                SELECT * FROM reminders WHERE date_next < ?""",
-                (dat,),
-            ).fetchall()
-            for item in past_due_items:
-                messages += f"\u2022 Past due: {item[1]}\n"
-            if user_data[3]:
-                dat = datetime.today().strftime("%Y-%m-%d")
-                day_of_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next == ?""",
-                    (dat,),
-                ).fetchall()
-                for item in day_of_items:
-                    messages += f"\u2022 Due today: {item[1]}\n"
-            # check whether user wants 'day before' notificatons
-            if user_data[2]:
-                dat = (datetime.today() + timedelta(days=1)).strftime(
-                    "%Y-%m-%d"
-                )
-                day_before_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next == ?""",
-                    (dat,),
-                ).fetchall()
-                for item in day_before_items:
-                    messages += f"\u2022 Due tomorrow: {item[1]}\n"
-            # check whether user wants 'week before' notificatons
-            if user_data[1]:
-                dat = (datetime.today() + timedelta(days=7)).strftime(
-                    "%Y-%m-%d"
-                )
-                week_before_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next == ?""",
-                    (dat,),
-                ).fetchall()
-                for item in week_before_items:
-                    messages += f"\u2022 Due in 7 days: {item[1]}\n"
-            # create notifications window only if there are messages
-            if len(messages) > 0:
-                # remove the last \n from messages
-                messages = messages[:-1]
-                NofificationsPopup(
-                    self,
-                    title="Notifications",
-                    message=messages,
-                    x_offset=310,
-                    y_offset=400,
-                )
-        #######################################
-        # end notifications for upcoming events
-        #######################################
+        notifications_popup(self)
         self.refresh_date()
 
     # end init
@@ -491,12 +399,13 @@ class App(tk.Tk):
         # refresh date periodically
         self.after(10000, self.refresh_date)
 
+    # end function to display current date
     ###############################################################
 
     def quit_program(self):
         sys.exit()
 
-    #################################
+    ###############################################################
     # commands for left side buttons
     # create top level window for entry of data for new item
     def create_new(self):
@@ -650,9 +559,8 @@ class App(tk.Tk):
         self.tree.focus_set()
 
     # end commands for left side buttons
-    ####################################
+    ###############################################################
 
-    #################################
     def backup(self):
         answer = YesNoMsgBox(
             self,
@@ -743,8 +651,6 @@ class App(tk.Tk):
                 )
                 if response4.get_response():
                     get_user_data(self)
-
-    #####################################
 
     # manage row selection in treeview
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915

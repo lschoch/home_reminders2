@@ -7,7 +7,7 @@ from tkinter import ttk
 from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
 
-from classes import InfoMsgBox
+from classes import InfoMsgBox, NofificationsPopup
 
 
 # create treeview to display data from database
@@ -307,7 +307,7 @@ def initialize_user():
 
 
 # get user data if user opts in for notifications
-def get_user_data(self):  # noqa: PLR0915
+def get_user_data(self):  # noqa: C901, PLR0915
     def cancel():
         num_window.destroy()
 
@@ -475,3 +475,69 @@ def get_user_data(self):  # noqa: PLR0915
         row=4, column=1, padx=(15, 0), pady=15, sticky="w"
     )
     entry.focus_set()
+
+
+# notifications popup for upcoming items
+def notifications_popup(self):
+    # initialize user table if it's empty
+    initialize_user()
+    con = get_con()
+    cur = con.cursor()
+    user_data = cur.execute("SELECT * FROM user").fetchone()
+    # check whether user has entered a phone number; i.e., opted in for
+    # notifications
+    if user_data[0] is not None:
+        # create a string to hold upcoming items
+        messages = ""
+        dat = datetime.today().strftime("%Y-%m-%d")
+        # check whether user wants 'day of' notificatons
+        past_due_items = cur.execute(
+            """
+            SELECT * FROM reminders WHERE date_next < ?""",
+            (dat,),
+        ).fetchall()
+        for item in past_due_items:
+            messages += f"\u2022 Past due: {item[1]}\n"
+        if user_data[3]:
+            dat = datetime.today().strftime("%Y-%m-%d")
+            day_of_items = cur.execute(
+                """
+                SELECT * FROM reminders WHERE date_next == ?""",
+                (dat,),
+            ).fetchall()
+            for item in day_of_items:
+                messages += f"\u2022 Due today: {item[1]}\n"
+        # check whether user wants 'day before' notificatons
+        if user_data[2]:
+            dat = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+            day_before_items = cur.execute(
+                """
+                SELECT * FROM reminders WHERE date_next == ?""",
+                (dat,),
+            ).fetchall()
+            for item in day_before_items:
+                messages += f"\u2022 Due tomorrow: {item[1]}\n"
+        # check whether user wants 'week before' notificatons
+        if user_data[1]:
+            dat = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+            week_before_items = cur.execute(
+                """
+                SELECT * FROM reminders WHERE date_next == ?""",
+                (dat,),
+            ).fetchall()
+            for item in week_before_items:
+                messages += f"\u2022 Due in 7 days: {item[1]}\n"
+        # create notifications window only if there are messages
+        if len(messages) > 0:
+            # remove the last \n from messages
+            messages = messages[:-1]
+            NofificationsPopup(
+                self,
+                title="Notifications",
+                message=messages,
+                x_offset=310,
+                y_offset=400,
+            )
+
+
+# end notifications popup for upcoming events
