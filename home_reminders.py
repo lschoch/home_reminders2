@@ -108,6 +108,7 @@ class App(tk.Tk):
         self.lbl_msg = tk.StringVar()
         self.lbl_color = tk.StringVar()
         self.expired_msg = tk.StringVar()
+        self.date_var = tk.StringVar()
 
         #######################################
         # create menu
@@ -459,34 +460,36 @@ class App(tk.Tk):
         # end notifications for upcoming events
         #######################################
         self.refresh_date()
-        # end init
+
+    # end init
+    ###############################################################
 
     ###############################################################
-    # function to display current date
+    # function to display current date and update treeview when date changes
     def refresh_date(self):
-        self.date_var = tk.StringVar()
-        today = ""
-        # check for date changeover at midnight
-        if today and (today != datetime.now().strftime("%Y-%m-%d")):
-            today = datetime.now().strftime("%Y-%m-%d")
+        # initialize date_var one time only
+        if len(self.date_var.get()) == 0:
+            self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
+        # catch the date change at midnight
+        if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
+            self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
             print("date changed!")
             # refresh all data
             refresh(self)
             check_expired(self)
             insert_data(self, data)
             print("updated data")
-
-        print("refreshing")
-        self.date_var.set(f"Today is {today}")
+        # create widget
         self.today_is_lbl = tk.Label(
             self,
-            textvariable=self.date_var,
+            # textvariable=self.date_var,
+            text=f"Today is {self.date_var.get()}",
             foreground="black",
             font=("Helvetica", 24),
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
-        # refresh date every 5 seconds
-        self.after(60000, self.refresh_date)
+        # refresh date periodically
+        self.after(10000, self.refresh_date)
 
     ###############################################################
 
