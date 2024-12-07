@@ -306,11 +306,8 @@ def initialize_user():
         con.commit()
 
 
-# get user data if user opts in for notifications
-def get_user_data(self):  # noqa: C901, PLR0915
-    def cancel():
-        num_window.destroy()
-
+# get user preferences and store in user table
+def get_user_data(self):  # noqa: PLR0915
     def submit():
         con = get_con()
         cur = con.cursor()
@@ -381,7 +378,7 @@ def get_user_data(self):  # noqa: C901, PLR0915
                     y_offset=15,
                 )
 
-    # get user data if it exists
+    # get existing user preferences, if present
     con = get_con()
     cur = con.cursor()
     # initialize user table if it's empty
@@ -391,7 +388,8 @@ def get_user_data(self):  # noqa: C901, PLR0915
         user_exists = True
     else:
         user_exists = False
-    # create window for entry/modification of user data
+
+    # create window for user to input/modify preferences
     num_window = tk.Toplevel(self)
     num_window.title("Notifications")
     num_window.configure(background="#ececec")  # "#ffc49c")
@@ -402,6 +400,8 @@ def get_user_data(self):  # noqa: C901, PLR0915
     num_window.grab_set()
     num_window.grid_columnconfigure(0, weight=1)
     num_window.grid_columnconfigure(1, weight=1)
+
+    # create widgets for the window
     ttk.Label(
         num_window,
         text="Enter your ten digit phone number:",
@@ -411,9 +411,10 @@ def get_user_data(self):  # noqa: C901, PLR0915
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
     entry = ttk.Entry(num_window, font=("Helvetica", 13), width=10)
     entry.grid(row=1, column=0, columnspan=2)
-    # enter phone number if one exists
-    if user_data[0] is not None:
-        entry.insert(0, user_data[0])
+
+    var1 = tk.IntVar()
+    var2 = tk.IntVar()
+    var3 = tk.IntVar()
 
     ttk.Label(
         num_window,
@@ -423,14 +424,6 @@ def get_user_data(self):  # noqa: C901, PLR0915
         font=("Helvetica", 13),
     ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
 
-    var1 = tk.IntVar()
-    var2 = tk.IntVar()
-    var3 = tk.IntVar()
-    # if there is a phone number set the frequency options
-    if user_data[0] is not None:
-        var1.initialize(user_data[1])
-        var2.initialize(user_data[2])
-        var3.initialize(user_data[3])
     c1 = tk.Checkbutton(
         num_window,
         text="Week before",
@@ -471,9 +464,17 @@ def get_user_data(self):  # noqa: C901, PLR0915
     ttk.Button(num_window, text="Submit", width=6, command=submit).grid(
         row=4, column=0, padx=(0, 15), pady=15, sticky="e"
     )
-    ttk.Button(num_window, text="Cancel", width=6, command=cancel).grid(
-        row=4, column=1, padx=(15, 0), pady=15, sticky="w"
-    )
+    ttk.Button(
+        num_window, text="Cancel", width=6, command=num_window.destroy
+    ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
+
+    # insert pre-existing phone number and notification frequencies, if present
+    if user_data[0] is not None:
+        entry.insert(0, user_data[0])
+        var1.initialize(user_data[1])
+        var2.initialize(user_data[2])
+        var3.initialize(user_data[3])
+
     entry.focus_set()
 
 
