@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from tkmacosx import Button
-
 
 # create toplevel
 class TopLvl(tk.Toplevel):
@@ -173,11 +171,11 @@ class NofificationsPopup(tk.Toplevel):
             highlightthickness=0,
             wrap="none",
         )
-        self.button = Button(
+        self.button = ttk.Button(
             self,
             text="Close",
-            height=23,
-            background="#dbdad6",
+            # height=23,
+            # background="#dbdad6",
             command=self.destroy,
         )
         self.txt.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
