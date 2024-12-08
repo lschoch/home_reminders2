@@ -289,10 +289,7 @@ class App(tk.Tk):
 
         ###############################################################
         # create legend
-        self.legend_frame = tk.Frame(
-            # self, highlightbackground="black", highlightthickness=1
-            self
-        )
+        self.legend_frame = tk.Frame(self)
         self.legend_frame.grid(row=1, column=0, pady=(0, 20), sticky="s")
 
         tk.Label(

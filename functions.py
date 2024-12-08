@@ -306,7 +306,7 @@ def initialize_user():
         con.commit()
 
 
-# get user preferences and store in user table
+# get/modify user preferences and store in user table
 def get_user_data(self):  # noqa: PLR0915
     def submit():
         con = get_con()
@@ -485,60 +485,84 @@ def notifications_popup(self):
     con = get_con()
     cur = con.cursor()
     user_data = cur.execute("SELECT * FROM user").fetchone()
-    # check whether user has entered a phone number; i.e., opted in for
-    # notifications
+    # check whether user has entered a phone number (opted in)
     if user_data[0] is not None:
         # create a string to hold upcoming items
         messages = ""
-        dat = datetime.today().strftime("%Y-%m-%d")
+        date = datetime.today().strftime("%Y-%m-%d")
         # check whether user wants 'day of' notificatons
         past_due_items = cur.execute(
             """
             SELECT * FROM reminders WHERE date_next < ?""",
-            (dat,),
+            (date,),
         ).fetchall()
         for item in past_due_items:
             messages += f"\u2022 Past due: {item[1]}\n"
         if user_data[3]:
-            dat = datetime.today().strftime("%Y-%m-%d")
+            date = datetime.today().strftime("%Y-%m-%d")
             day_of_items = cur.execute(
                 """
                 SELECT * FROM reminders WHERE date_next == ?""",
-                (dat,),
+                (date,),
             ).fetchall()
             for item in day_of_items:
                 messages += f"\u2022 Due today: {item[1]}\n"
         # check whether user wants 'day before' notificatons
         if user_data[2]:
-            dat = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+            date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
             day_before_items = cur.execute(
                 """
                 SELECT * FROM reminders WHERE date_next == ?""",
-                (dat,),
+                (date,),
             ).fetchall()
             for item in day_before_items:
                 messages += f"\u2022 Due tomorrow: {item[1]}\n"
         # check whether user wants 'week before' notificatons
         if user_data[1]:
-            dat = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+            date = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
             week_before_items = cur.execute(
                 """
                 SELECT * FROM reminders WHERE date_next == ?""",
-                (dat,),
+                (date,),
             ).fetchall()
             for item in week_before_items:
                 messages += f"\u2022 Due in 7 days: {item[1]}\n"
         # create notifications window only if there are messages
         if len(messages) > 0:
             # remove the last \n from messages
-            messages = messages[:-1]
-            NofificationsPopup(
+            # messages = messages[:-1]
+            notifications_win = NofificationsPopup(
                 self,
                 title="Notifications",
-                message=messages,
+                message="",
                 x_offset=310,
                 y_offset=400,
             )
+            # add color to messages
+            message_list = messages.split("\n")
+            line_num = 1
+            for msg in message_list:
+                if msg.startswith("\u2022 Past due"):
+                    notifications_win.txt.insert("end", msg + "\n")
+                    indx_start = str(line_num) + ".0"
+                    indx_end = str(line_num + 1) + ".0"
+                    notifications_win.txt.tag_add(
+                        "yellow", indx_start, indx_end
+                    )
+                    notifications_win.txt.tag_config(
+                        "yellow", background="yellow"
+                    )
+                    line_num += 1
+                elif msg.startswith("\u2022 Due today"):
+                    notifications_win.txt.insert("end", msg + "\n")
+                    indx_start = str(line_num) + ".0"
+                    indx_end = str(line_num + 1) + ".0"
+                    notifications_win.txt.tag_add("lime", indx_start, indx_end)
+                    notifications_win.txt.tag_config("lime", background="lime")
+                    line_num += 1
+                else:
+                    notifications_win.txt.insert("end", msg + "\n")
+                    line_num += 1
 
 
 # end notifications popup for upcoming events

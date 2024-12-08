@@ -164,9 +164,9 @@ class NofificationsPopup(tk.Toplevel):
         # self.grab_set()
         self.txt = tk.Text(
             self,
-            bg="#ececec",
+            # bg="#ececec",
             font=("Helvetica, 13"),
-            height=3,
+            height=4,
             width=50,
             highlightthickness=0,
             wrap="none",
