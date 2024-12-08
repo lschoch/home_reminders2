@@ -359,8 +359,9 @@ class App(tk.Tk):
 
         # set view_label message and color
         check_expired(self)
-        child_id = self.tree.get_children()[0]
-        self.tree.focus(child_id)
+        if self.tree.get_children():
+            child_id = self.tree.get_children()[0]
+            self.tree.focus(child_id)
         # self.tree.selection_set(child_id)
 
         notifications_popup(self)
@@ -568,6 +569,13 @@ class App(tk.Tk):
         )
         if answer.get_response():
             shutil.copy2(db_path, db_bak_path)
+            InfoMsgBox(
+                self,
+                "Backup",
+                "Backup completed.",
+                x_offset=3,
+                y_offset=5,
+            )
         else:
             return
 
@@ -583,6 +591,13 @@ class App(tk.Tk):
             shutil.copy2(db_bak_path, db_path)
             refresh(self)
             check_expired(self)
+            InfoMsgBox(
+                self,
+                "Restore",
+                "Data restored.",
+                x_offset=3,
+                y_offset=5,
+            )
         else:
             return
 
@@ -599,6 +614,13 @@ class App(tk.Tk):
             con.commit()
             refresh(self)
             check_expired(self)
+            InfoMsgBox(
+                self,
+                "Delete All",
+                "Data has been deleted.",
+                x_offset=3,
+                y_offset=5,
+            )
         else:
             return
 

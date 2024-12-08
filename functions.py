@@ -87,21 +87,15 @@ def get_date(date_last_entry, top):
     def cal_done():
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
-        # restore overrideredirect to False
-        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     def cal_cancel():
-        # restore overrideredirect to False
-        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     # function to set date_last_entry from calendar click
     def on_cal_selection_changed(event):
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
-        # restore overrideredirect to False
-        # top2.wm_overrideredirect(False)
         top2.destroy()
 
     # create a toplevel for the calendar
@@ -113,15 +107,10 @@ def get_date(date_last_entry, top):
     top2.configure(background="#cacaca")
     x = top.winfo_x()
     y = top.winfo_y()
-    # top2.geometry("+%d+%d" % (x + 48, y + 195))  # y + 120
     top2.geometry("+%d+%d" % (x + 187, y - 25))
 
     # keep calendar in front of it's parent window (only wm_transient works)
-    # 1. top2.wm_transient(top)
-    # 2. top2.wm_attributes("-topmost", True)
-    # 3. top2.lift()
     top2.wm_transient(top)
-    # top2.wm_overrideredirect(True)
 
     cal = Calendar(
         top2,
@@ -530,7 +519,7 @@ def notifications_popup(self):
         # create notifications window only if there are messages
         if len(messages) > 0:
             # remove the last \n from messages
-            # messages = messages[:-1]
+            messages = messages[:-1]
             notifications_win = NofificationsPopup(
                 self,
                 title="Notifications",

@@ -8,6 +8,7 @@ class TopLvl(tk.Toplevel):
         super().__init__(master)
         self.title(title)
         self.wm_transient(master)
+        # self.wm_attributes("-type", "splash")
         # self.wm_overrideredirect(True)
         self.resizable(False, False)
         self.config(padx=20, pady=20)
@@ -217,7 +218,8 @@ class InfoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        self.wm_overrideredirect(True)
+        # self.wm_attributes("-type", "splash")
+        # self.wm_overrideredirect(True)
         self.wait_visibility()
         self.grab_set()
         self.txt = tk.Text(
@@ -263,7 +265,7 @@ class YesNoMsgBox(tk.Toplevel):
         # self.config(background="#ececec")
         self.resizable(False, False)
         self.wm_transient(master)
-        self.wm_overrideredirect(True)
+        # self.wm_overrideredirect(True)
 
         self.wait_visibility()
         self.grab_set()
