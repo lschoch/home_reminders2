@@ -96,15 +96,18 @@ def get_date(date_last_entry, top):
     def cal_done():
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
+        top2.wm_overrideredirect(False)
         top2.destroy()
 
     def cal_cancel():
+        top2.wm_overrideredirect(False)
         top2.destroy()
 
     # function to set date_last_entry from calendar click
     def on_cal_selection_changed(event):
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
+        top2.wm_overrideredirect(False)
         top2.destroy()
 
     # create a toplevel for the calendar
@@ -491,7 +494,8 @@ def notifications_popup(self):
         # check whether user wants 'day of' notificatons
         past_due_items = cur.execute(
             """
-            SELECT * FROM reminders WHERE date_next < ?""",
+            SELECT * FROM reminders WHERE date_next < ?
+            ORDER BY date_next ASC""",
             (date,),
         ).fetchall()
         for item in past_due_items:
@@ -500,7 +504,8 @@ def notifications_popup(self):
             date = datetime.today().strftime("%Y-%m-%d")
             day_of_items = cur.execute(
                 """
-                SELECT * FROM reminders WHERE date_next == ?""",
+                SELECT * FROM reminders WHERE date_next == ?
+                ORDER BY date_next ASC""",
                 (date,),
             ).fetchall()
             for item in day_of_items:
@@ -510,7 +515,8 @@ def notifications_popup(self):
             date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
             day_before_items = cur.execute(
                 """
-                SELECT * FROM reminders WHERE date_next == ?""",
+                SELECT * FROM reminders WHERE date_next == ?
+                ORDER BY date_next ASC""",
                 (date,),
             ).fetchall()
             for item in day_before_items:
@@ -520,7 +526,8 @@ def notifications_popup(self):
             date = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
             week_before_items = cur.execute(
                 """
-                SELECT * FROM reminders WHERE date_next == ?""",
+                SELECT * FROM reminders WHERE date_next == ?
+                ORDER BY date_next ASC""",
                 (date,),
             ).fetchall()
             for item in week_before_items:
