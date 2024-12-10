@@ -32,12 +32,21 @@ def create_tree_widget(self):
     tree.heading("date_next", text="Next")
     tree.heading("note", text="Note", anchor="w")
     tree.column("id", width=50, anchor="center")
-    tree.column("description", anchor="w")
+    tree.column("description", width=250, anchor="w")
     tree.column("frequency", width=65, anchor="center")
     tree.column("period", width=75, anchor="w")
     tree.column("date_last", width=100, anchor="center")
     tree.column("date_next", width=100, anchor="center")
-    tree.column("note", width=200, anchor="w")
+    tree.column("note", width=350, anchor="w")
+    displaycolumns = (
+        "description",
+        "frequency",
+        "period",
+        "date_last",
+        "date_next",
+        "note",
+    )
+    tree["displaycolumns"] = displaycolumns
 
     tree.bind("<<TreeviewSelect>>", self.on_treeview_selection_changed)
     tree.grid(row=1, column=1)
