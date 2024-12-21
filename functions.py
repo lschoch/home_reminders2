@@ -121,7 +121,7 @@ def get_date(date_last_entry, top):
     y = top.winfo_y()
     top2.geometry("+%d+%d" % (x + 187, y - 25))
 
-    # keep calendar in front of it's parent window (only wm_transient works)
+    # keep calendar in front of it's parent window
     top2.wm_transient(top)
 
     cal = Calendar(
