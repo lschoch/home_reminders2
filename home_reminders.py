@@ -379,12 +379,10 @@ class App(tk.Tk):
         # catch the date change at midnight
         if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
             self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
-            print("date changed!")
             # refresh all data
             refresh(self)
             check_expired(self)
             insert_data(self, data)
-            print("updated data")
         # create widget
         self.today_is_lbl = tk.Label(
             self,
