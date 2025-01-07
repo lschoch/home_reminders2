@@ -568,7 +568,7 @@ def notifications_popup(self):
                 else:
                     notifications_win.txt.insert("end", msg + "\n")
                     line_num += 1
-    self.after(240000, notifications_popup, self)
+    self.after(14400000, notifications_popup, self)
 
 
 # end notifications popup for upcoming events
