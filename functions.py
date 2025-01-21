@@ -185,6 +185,9 @@ def date_next_calc(date_last, frequency, period):
     match period:
         case "":
             date_next = ""
+        case "one-time":
+            date_next = datetime.strptime(date_last, "%Y-%m-%d").date()
+            date_next = date_next.strftime("%Y-%m-%d")
         case "days":
             date_next = datetime.strptime(
                 date_last, "%Y-%m-%d"

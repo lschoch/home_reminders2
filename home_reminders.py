@@ -9,7 +9,7 @@ import tkinter as tk
 
 # from colorama import Back, Style
 from datetime import date, datetime, timedelta  # noqa: F401
-from tkinter import Menu, ttk
+from tkinter import END, Menu, ttk
 
 from PIL import Image, ImageTk
 
@@ -476,6 +476,9 @@ class App(tk.Tk):
             period = top.period_combobox.get()
             date_next = date_next_calc(date_last, frequency, period)
 
+            if top.period_combobox.get() == "one-time":
+                frequency = "0"
+
             data_get = (
                 top.description_entry.get(),
                 frequency,
@@ -763,6 +766,10 @@ class App(tk.Tk):
             frequency = int(top.frequency_entry.get())
             period = top.period_combobox.get()
             date_next = date_next_calc(date_last, frequency, period)
+
+            if top.period_combobox.get() == "one-time":
+                top.frequency_entry.delete(0, END)
+                top.frequency_entry.insert(0, "0")
 
             cur.execute(
                 """
