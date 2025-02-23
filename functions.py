@@ -484,6 +484,14 @@ def get_user_data(self):  # noqa: PLR0915
 
 # notifications popup for upcoming items
 def notifications_popup(self):
+    # remove existing notifications popups, if any exist
+    for widget in self.winfo_children():
+        if (
+            isinstance(widget, tk.Toplevel)
+            and widget.title() == "Notifications"
+        ):
+            widget.destroy()
+
     # initialize user table if it's empty
     initialize_user()
     con = get_con()
@@ -571,7 +579,7 @@ def notifications_popup(self):
                 else:
                     notifications_win.txt.insert("end", msg + "\n")
                     line_num += 1
-    self.after(14400000, notifications_popup, self)
+    self.after(60000, notifications_popup, self)
 
 
 # end notifications popup for upcoming events
