@@ -6,6 +6,7 @@ import sys
 
 # from time import strftime
 import tkinter as tk
+import tracemalloc
 
 # from colorama import Back, Style
 from datetime import date, datetime, timedelta  # noqa: F401
@@ -30,6 +31,8 @@ from functions import (
     send_sms,  # noqa: F401
     valid_frequency,
 )
+
+tracemalloc.start()
 
 # create splash screen
 if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
@@ -830,6 +833,12 @@ class App(tk.Tk):
             row=2, column=5, pady=(15, 0), sticky="w"
         )
 
+
+snapshot = tracemalloc.take_snapshot()
+top_stats = snapshot.statistics("lineno")
+print("[ Top 10 ]")
+for stat in top_stats[:10]:
+    print(stat)
 
 if __name__ == "__main__":
     app = App()
