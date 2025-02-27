@@ -772,7 +772,7 @@ class App(tk.Tk):
 
             if top.period_combobox.get() == "one-time":
                 top.frequency_entry.delete(0, END)
-                top.frequency_entry.insert(0, "0")
+                top.frequency_entry.insert(0, "1")
 
             cur.execute(
                 """
