@@ -769,7 +769,7 @@ class App(tk.Tk):
             frequency = int(top.frequency_entry.get())
             period = top.period_combobox.get()
             date_next = date_next_calc(date_last, frequency, period)
-
+            # set frequency to 1 if period is "one-time"
             if top.period_combobox.get() == "one-time":
                 top.frequency_entry.delete(0, END)
                 top.frequency_entry.insert(0, "1")

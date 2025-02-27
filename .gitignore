@@ -11,4 +11,7 @@ Home Reminders.pkg
 tmp/
 python_sms.py
 home_reminders2.code-workspace
-mprofile*.*
+*.dat
+*.txt
+
+!requirements.txt
