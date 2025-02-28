@@ -480,7 +480,7 @@ class App(tk.Tk):
             date_next = date_next_calc(date_last, frequency, period)
 
             if top.period_combobox.get() == "one-time":
-                frequency = "0"
+                frequency = "1"
 
             data_get = (
                 top.description_entry.get(),
