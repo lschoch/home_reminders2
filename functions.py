@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
 
 from classes import InfoMsgBox, NofificationsPopup
+import gc
 
 
 # create treeview to display data from database
@@ -484,6 +485,8 @@ def get_user_data(self):  # noqa: PLR0915
 
 # notifications popup for upcoming items
 def notifications_popup(self):
+    # garbage collection every 4 hours when notifications_popup activates
+    gc.collect()
     # remove existing notifications popups, if any exist
     for widget in self.winfo_children():
         if (

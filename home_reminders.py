@@ -31,6 +31,7 @@ from functions import (
     send_sms,  # noqa: F401
     valid_frequency,
 )
+import gc
 
 tracemalloc.start()
 
