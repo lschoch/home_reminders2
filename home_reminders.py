@@ -76,7 +76,6 @@ cur.execute("""
 # retrieve data for display in treeview
 data = cur.execute("""
     SELECT * FROM reminders
-    WHERE date_next >= DATE('now', 'localtime')
     ORDER BY date_next ASC, description ASC
 """)
 
@@ -102,12 +101,12 @@ class App(tk.Tk):
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=140)
 
-        # create variable to prevent calling
-        # treeview_on_selection_changed after refresh
+        # create variable to prevent calling treeview_on_selection_changed
+        # after refresh
         self.refreshed = False
 
         # flag to track whether coming from view_all or view_current
-        self.view_current = True
+        self.view_current = False
 
         self.lbl_msg = tk.StringVar()
         self.lbl_color = tk.StringVar()
