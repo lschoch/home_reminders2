@@ -3,15 +3,14 @@ import os
 import shutil
 import sqlite3
 import sys
-
-# from time import strftime
 import tkinter as tk
-import tracemalloc
 
+# import tracemalloc
 # from colorama import Back, Style
-from datetime import date, datetime, timedelta  # noqa: F401
+from datetime import date, datetime
 from tkinter import END, Menu, ttk
 
+from memory_profiler import profile
 from PIL import Image, ImageTk
 
 from classes import InfoMsgBox, TopLvl, YesNoMsgBox
@@ -28,12 +27,10 @@ from functions import (
     notifications_popup,
     refresh,
     remove_toplevels,
-    send_sms,  # noqa: F401
     valid_frequency,
 )
-import gc
 
-tracemalloc.start()
+# tracemalloc.start()
 
 # create splash screen
 if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
@@ -49,35 +46,35 @@ if not os.path.exists(dir_path):
     os.makedirs(dir_path)
 db_path = os.path.join(dir_path, "home_reminders.db")
 db_bak_path = os.path.join(dir_path, "home_reminders.bak")
-con = sqlite3.connect(db_path)
-cur = con.cursor()
+with sqlite3.connect(db_path) as con:
+    cur = con.cursor()
 
-# create table to store user phone number and notification preferences
-cur.execute("""
-    CREATE TABLE IF NOT EXISTS user(
-        phone_number TEXT,
-        week_before INT,
-        day_before INT,
-        day_of INT,
-        last_notification_date TEXT)
-""")
+    # create table to store user phone number and notification preferences
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user(
+            phone_number TEXT,
+            week_before INT,
+            day_before INT,
+            day_of INT,
+            last_notification_date TEXT)
+    """)
 
-# create data table if it doesn't exist
-cur.execute("""
-    CREATE TABLE IF NOT EXISTS reminders(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        description TEXT,
-        frequency TEXT,
-        period TEXT,
-        date_last TEXT,
-        date_next TEXT,
-        note TEXT)
-""")
-# retrieve data for display in treeview
-data = cur.execute("""
-    SELECT * FROM reminders
-    ORDER BY date_next ASC, description ASC
-""")
+    # create data table if it doesn't exist
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS reminders(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            description TEXT,
+            frequency TEXT,
+            period TEXT,
+            date_last TEXT,
+            date_next TEXT,
+            note TEXT)
+    """)
+    # retrieve data for display in treeview
+    data = cur.execute("""
+        SELECT * FROM reminders
+        ORDER BY date_next ASC, description ASC
+    """)
 
 
 # create the main window
@@ -179,7 +176,11 @@ class App(tk.Tk):
 
         def opt_out():
             initialize_user()
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            with get_con() as con:
+                cur = con.cursor()
+                # check to see if user has a phone number; i.e., already
+                # receiving notifications
+                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
             if phone_number is not None:
                 response = YesNoMsgBox(
                     self,
@@ -198,8 +199,10 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    cur.execute("DELETE FROM user")
-                    con.commit()
+                    with get_con() as con:
+                        cur = con.cursor()
+                        cur.execute("DELETE FROM user")
+                        con.commit()
             else:
                 InfoMsgBox(
                     self,
@@ -212,7 +215,11 @@ class App(tk.Tk):
 
         def preferences():
             initialize_user()
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            # check to see if user has a phone number; i.e., already receiving
+            # notifications
+            with get_con() as con:
+                cur = con.cursor()
+                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
             if phone_number is not None:
                 get_user_data(self)
             else:
@@ -375,6 +382,7 @@ class App(tk.Tk):
 
     ###############################################################
     # function to display current date and update treeview when date changes
+    @profile
     def refresh_date(self):
         # initialize date_var one time only
         if len(self.date_var.get()) == 0:
@@ -407,6 +415,7 @@ class App(tk.Tk):
     ###############################################################
     # commands for left side buttons
     # create top level window for entry of data for new item
+    @profile
     def create_new(self):
         # remove any existing toplevels
         remove_toplevels(self)
@@ -425,8 +434,6 @@ class App(tk.Tk):
         # function to save new item to database
         def save_item():
             # save_btn.config(state="disabled")
-            con = get_con()
-            cur = con.cursor()
 
             # validate inputs
             if not top.description_entry.get():
@@ -438,7 +445,9 @@ class App(tk.Tk):
                 return
 
             # check for duplicate item
-            result = cur.execute("""SELECT * FROM reminders""")
+            with get_con() as con:
+                cur = con.cursor()
+                result = cur.execute("""SELECT * FROM reminders""")
             for item in result.fetchall():
                 if item[1] == top.description_entry.get():
                     InfoMsgBox(
@@ -490,19 +499,22 @@ class App(tk.Tk):
                 date_next,
                 top.note_entry.get(),
             )
-            cur.execute(
-                """
-                INSERT INTO reminders (
-                    description,
-                    frequency,
-                    period,
-                    date_last,
-                    date_next,
-                    note)
-                VALUES (?, ?, ?, ?, ?, ?)""",
-                data_get,
-            )
-            con.commit()
+            with get_con() as con:
+                cur = con.cursor()
+                # insert data into database
+                cur.execute(
+                    """
+                    INSERT INTO reminders (
+                        description,
+                        frequency,
+                        period,
+                        date_last,
+                        date_next,
+                        note)
+                    VALUES (?, ?, ?, ?, ?, ?)""",
+                    data_get,
+                )
+                con.commit()
             refresh(self)
 
             # set view_label message and color
@@ -524,13 +536,16 @@ class App(tk.Tk):
             row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
         )
 
+    @profile
     def pending(self):
         self.view_current = True
-        data = cur.execute("""
-            SELECT * FROM reminders
-            WHERE date_next >= DATE('now', 'localtime')
-            ORDER BY date_next ASC, description ASC
-        """)
+        with get_con() as con:
+            cur = con.cursor()
+            data = cur.execute("""
+                SELECT * FROM reminders
+                WHERE date_next >= DATE('now', 'localtime')
+                ORDER BY date_next ASC, description ASC
+            """)
         for item in self.tree.get_children():
             self.tree.delete(item)
         insert_data(self, data)
@@ -542,12 +557,15 @@ class App(tk.Tk):
         self.refreshed = True
         self.tree.focus()
 
+    @profile
     def view_all(self):
         self.view_current = False
-        data = cur.execute("""
-            SELECT * FROM reminders
-            ORDER BY date_next ASC, description ASC
-        """)
+        with get_con() as con:
+            cur = con.cursor()
+            data = cur.execute("""
+                SELECT * FROM reminders
+                ORDER BY date_next ASC, description ASC
+            """)
         for item in self.tree.get_children():
             self.tree.delete(item)
         insert_data(self, data)
@@ -563,6 +581,7 @@ class App(tk.Tk):
     # end commands for left side buttons
     ###############################################################
 
+    @profile
     def backup(self):
         answer = YesNoMsgBox(
             self,
@@ -583,6 +602,7 @@ class App(tk.Tk):
         else:
             return
 
+    @profile
     def restore(self):
         answer = YesNoMsgBox(
             self,
@@ -605,6 +625,7 @@ class App(tk.Tk):
         else:
             return
 
+    @profile
     def delete_all(self):
         answer = YesNoMsgBox(
             self,
@@ -614,8 +635,10 @@ class App(tk.Tk):
             y_offset=5,
         )
         if answer.get_response():
-            cur.execute("DELETE FROM reminders")
-            con.commit()
+            with get_con() as con:
+                cur = con.cursor()
+                cur.execute("DELETE FROM user")
+                con.commit()
             refresh(self)
             check_expired(self)
             InfoMsgBox(
@@ -628,54 +651,58 @@ class App(tk.Tk):
         else:
             return
 
+    @profile
     def notifications(self):
         # initialize user table if empty
         initialize_user()
         # check to see if user has a phone number; i.e., already receiving
         # notifications
-        phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-        if phone_number is None:
-            response = YesNoMsgBox(
-                self,
-                title="Notifications",
-                message="Would you like to to be notified by text "
-                + "when your items are coming due?",
-                x_offset=600,
-            )
-            # if user opts to receive notifications, get user data
-            if response.get_response():
-                get_user_data(self)
-        # if user opts out of notifications, delete user's data
-        else:
-            response3 = YesNoMsgBox(
-                self,
-                title="Notifications",
-                message="Do you want to continue receiving text"
-                + " notifications?",
-                x_offset=600,
-            )
-            if not response3.get_response():
-                InfoMsgBox(
-                    self,
-                    "Notifications",
-                    "You have opted out of text notifications."
-                    + " Texts will no longer be sent.",
-                    x_offset=600,
-                )
-                cur.execute("DELETE FROM user")
-                con.commit()
-            else:
-                response4 = YesNoMsgBox(
+        with get_con() as con:
+            cur = con.cursor()
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            if phone_number is None:
+                response = YesNoMsgBox(
                     self,
                     title="Notifications",
-                    message="Do you want to change the phone number or"
-                    + " notification frequency?",
+                    message="Would you like to to be notified by text "
+                    + "when your items are coming due?",
                     x_offset=600,
                 )
-                if response4.get_response():
+                # if user opts to receive notifications, get user data
+                if response.get_response():
                     get_user_data(self)
+            # if user opts out of notifications, delete user's data
+            else:
+                response3 = YesNoMsgBox(
+                    self,
+                    title="Notifications",
+                    message="Do you want to continue receiving text"
+                    + " notifications?",
+                    x_offset=600,
+                )
+                if not response3.get_response():
+                    InfoMsgBox(
+                        self,
+                        "Notifications",
+                        "You have opted out of text notifications."
+                        + " Texts will no longer be sent.",
+                        x_offset=600,
+                    )
+                    cur.execute("DELETE FROM user")
+                    con.commit()
+                else:
+                    response4 = YesNoMsgBox(
+                        self,
+                        title="Notifications",
+                        message="Do you want to change the phone number or"
+                        + " notification frequency?",
+                        x_offset=600,
+                    )
+                    if response4.get_response():
+                        get_user_data(self)
 
     # manage row selection in treeview
+    @profile
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:
@@ -744,54 +771,56 @@ class App(tk.Tk):
                 return
 
             # check for duplicate description
-            result = cur.execute("""SELECT * FROM reminders""")
-            for item in result.fetchall():
-                if (
-                    # item[1] is the selected description
-                    item[1] == top.description_entry.get()
-                    # duplicate OK if just changing other parameters
-                    # item[0] is the selected id
-                    and not item[0] == id
-                ):
-                    # reset original description
-                    top.description_entry.delete(0, tk.END)
-                    top.description_entry.insert(0, original_description)
-                    InfoMsgBox(
-                        self,
-                        "Invalid Input",
-                        "There is already an item with that description."
-                        + " Try again.",
-                    )
-                    return
+            with get_con() as con:
+                cur = con.cursor()
+                result = cur.execute("""SELECT * FROM reminders""")
+                for item in result.fetchall():
+                    if (
+                        # item[1] is the selected description
+                        item[1] == top.description_entry.get()
+                        # duplicate OK if just changing other parameters
+                        # item[0] is the selected id
+                        and not item[0] == id
+                    ):
+                        # reset original description
+                        top.description_entry.delete(0, tk.END)
+                        top.description_entry.insert(0, original_description)
+                        InfoMsgBox(
+                            self,
+                            "Invalid Input",
+                            "There is already an item with that description."
+                            + " Try again.",
+                        )
+                        return
 
-            # calculate date_next
-            date_last = top.date_last_entry.get()
-            frequency = int(top.frequency_entry.get())
-            period = top.period_combobox.get()
-            date_next = date_next_calc(date_last, frequency, period)
-            # set frequency to 1 if period is "one-time"
-            if top.period_combobox.get() == "one-time":
-                top.frequency_entry.delete(0, END)
-                top.frequency_entry.insert(0, "1")
+                # calculate date_next
+                date_last = top.date_last_entry.get()
+                frequency = int(top.frequency_entry.get())
+                period = top.period_combobox.get()
+                date_next = date_next_calc(date_last, frequency, period)
+                # set frequency to 1 if period is "one-time"
+                if top.period_combobox.get() == "one-time":
+                    top.frequency_entry.delete(0, END)
+                    top.frequency_entry.insert(0, "1")
 
-            cur.execute(
-                """
-                UPDATE reminders
-                SET (
-                description, frequency, period, date_last, date_next, note) =
-                    (?, ?, ?, ?, ?, ?)
-                WHERE id = ? """,
-                (
-                    top.description_entry.get(),
-                    top.frequency_entry.get(),
-                    top.period_combobox.get(),
-                    top.date_last_entry.get(),
-                    date_next,
-                    top.note_entry.get(),
-                    self.tree.item(selected_item)["values"][0],
-                ),
-            )
-            con.commit()
+                cur.execute(
+                    """
+                    UPDATE reminders
+                    SET (
+                    description, frequency, period, date_last, date_next, note)
+                      = (?, ?, ?, ?, ?, ?)
+                    WHERE id = ? """,
+                    (
+                        top.description_entry.get(),
+                        top.frequency_entry.get(),
+                        top.period_combobox.get(),
+                        top.date_last_entry.get(),
+                        date_next,
+                        top.note_entry.get(),
+                        self.tree.item(selected_item)["values"][0],
+                    ),
+                )
+                con.commit()
 
             # set view_label message and color
             check_expired(self)
@@ -800,15 +829,26 @@ class App(tk.Tk):
             refresh(self)
 
         # delete item from database
+        @profile
         def delete_item():
-            id = self.tree.item(selected_item)["values"][0]
-            cur.execute(
-                """
-                DELETE FROM reminders
-                WHERE id = ?""",
-                (id,),
+            answer = YesNoMsgBox(
+                self,
+                "Delete Reminder",
+                "Are you sure you want to delete  \
+                    this reminder?",
             )
-            con.commit()
+            if not answer.get_response():
+                return
+            id = self.tree.item(selected_item)["values"][0]
+            with get_con() as con:
+                cur = con.cursor()
+                cur.execute(
+                    """
+                    DELETE FROM reminders
+                    WHERE id = ?""",
+                    (id,),
+                )
+                con.commit()
             refresh(self)
 
             # set view_label message and color
@@ -818,6 +858,7 @@ class App(tk.Tk):
             self.focus()
             self.tree.focus_set()
 
+        @profile
         def cancel():
             remove_toplevels(self)
 
@@ -834,11 +875,11 @@ class App(tk.Tk):
         )
 
 
-snapshot = tracemalloc.take_snapshot()
+""" snapshot = tracemalloc.take_snapshot()
 top_stats = snapshot.statistics("lineno")
 print("[ Top 10 ]")
 for stat in top_stats[:10]:
-    print(stat)
+    print(stat) """
 
 if __name__ == "__main__":
     app = App()
