@@ -1,4 +1,3 @@
-import gc
 import os
 import sqlite3
 import tkinter as tk
@@ -495,8 +494,6 @@ def get_user_data(self):  # noqa: PLR0915
 # notifications popup for upcoming items
 @profile
 def notifications_popup(self):
-    # garbage collection every 4 hours when notifications_popup activates
-    gc.collect()
     # remove existing notifications popups, if any exist
     for widget in self.winfo_children():
         if (
@@ -561,9 +558,9 @@ def notifications_popup(self):
                 for item in week_before_items:
                     messages += f"\u2022 Due in 7 days: {item[1]}\n"
 
-    # create notifications window only if there are messages
-    if len(messages) > 0:
-        # remove the last \n from messages
+    # if there are any messages, create a notifications popup
+    if messages:
+        # remove the trailing \n from messages
         messages = messages[:-1]
         notifications_win = NofificationsPopup(
             self,
@@ -593,6 +590,7 @@ def notifications_popup(self):
             else:
                 notifications_win.txt.insert("end", msg + "\n")
                 line_num += 1
+    # check every 4 hours whether a notifications popup is indicated.
     self.after(14400000, notifications_popup, self)
 
 
