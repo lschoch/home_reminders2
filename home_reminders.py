@@ -374,6 +374,13 @@ class App(tk.Tk):
             self.tree.focus(child_id)
         # self.tree.selection_set(child_id)
 
+        # initialize date_var to today's date if not set
+        if not self.date_var.get():
+            try:
+                self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
+            except Exception as e:
+                print(f"Error initializing date_var: {e}")
+
         notifications_popup(self)
         self.refresh_date()
 
@@ -384,9 +391,6 @@ class App(tk.Tk):
     # function to display current date and update treeview when date changes
     @profile
     def refresh_date(self):
-        # initialize date_var one time only
-        if len(self.date_var.get()) == 0:
-            self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
         # catch the date change at midnight
         if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
             self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
@@ -404,7 +408,7 @@ class App(tk.Tk):
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
         # refresh date periodically
-        self.after(10000, self.refresh_date)
+        # self.after(10000, self.refresh_date)
 
     # end function to display current date
     ###############################################################
