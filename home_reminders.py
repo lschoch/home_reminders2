@@ -13,8 +13,7 @@ from tkinter import END, Menu, ttk
 from memory_profiler import profile
 from PIL import Image, ImageTk
 
-from classes import InfoMsgBox, TopLvl, YesNoMsgBox
-from functions import (
+from business_logic import (
     appsupportdir,
     check_expired,
     create_tree_widget,
@@ -29,6 +28,7 @@ from functions import (
     remove_toplevels,
     valid_frequency,
 )
+from classes import InfoMsgBox, TopLvl, YesNoMsgBox
 
 # tracemalloc.start()
 
