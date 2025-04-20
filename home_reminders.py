@@ -2,9 +2,6 @@ import importlib
 import os
 import shutil
 import tkinter as tk
-
-# import tracemalloc
-# from colorama import Back, Style
 from datetime import date, datetime
 from tkinter import END, Menu, ttk
 
@@ -602,7 +599,7 @@ class App(tk.Tk):
         else:
             return
 
-    @profile
+    """ @profile
     def notifications(self):
         # initialize user table if empty
         initialize_user()
@@ -650,7 +647,7 @@ class App(tk.Tk):
                         x_offset=600,
                     )
                     if response4.get_response():
-                        get_user_data(self)
+                        get_user_data(self) """
 
     # manage row selection in treeview
     @profile
@@ -825,12 +822,6 @@ class App(tk.Tk):
             row=2, column=5, pady=(15, 0), sticky="w"
         )
 
-
-""" snapshot = tracemalloc.take_snapshot()
-top_stats = snapshot.statistics("lineno")
-print("[ Top 10 ]")
-for stat in top_stats[:10]:
-    print(stat) """
 
 if __name__ == "__main__":
     app = App()
