@@ -225,7 +225,7 @@ class App(tk.Tk):
         menubar.add_cascade(label="Data", menu=data_menu)
         data_menu.add_command(label="Backup", command=self.backup)
         data_menu.add_command(label="Restore", command=self.restore)
-        data_menu.add_command(label="Delete All", command=self.delete_all)
+        # data_menu.add_command(label="Delete All", command=self.delete_all)
         # end create menus
         ###############################################################
 
