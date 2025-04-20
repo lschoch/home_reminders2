@@ -1,7 +1,6 @@
 import importlib
 import os
 import shutil
-import sqlite3
 import sys
 import tkinter as tk
 
@@ -19,6 +18,7 @@ from business_logic import (
     create_tree_widget,
     date_next_calc,
     get_con,
+    get_data,
     get_date,
     get_user_data,
     initialize_user,
@@ -40,41 +40,14 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.close()
     print("Splash screen closed.")
 
-# connect to database and create cursor
+# create path to database and backup files
 dir_path = os.path.join(appsupportdir(), "Home Reminders")
 if not os.path.exists(dir_path):
     os.makedirs(dir_path)
 db_path = os.path.join(dir_path, "home_reminders.db")
 db_bak_path = os.path.join(dir_path, "home_reminders.bak")
-with sqlite3.connect(db_path) as con:
-    cur = con.cursor()
-
-    # create table to store user phone number and notification preferences
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user(
-            phone_number TEXT,
-            week_before INT,
-            day_before INT,
-            day_of INT,
-            last_notification_date TEXT)
-    """)
-
-    # create data table if it doesn't exist
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS reminders(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            description TEXT,
-            frequency TEXT,
-            period TEXT,
-            date_last TEXT,
-            date_next TEXT,
-            note TEXT)
-    """)
-    # retrieve data for display in treeview
-    data = cur.execute("""
-        SELECT * FROM reminders
-        ORDER BY date_next ASC, description ASC
-    """)
+# create database if it does not exist and retrieve data
+data = get_data(db_path)
 
 
 # create the main window
@@ -84,9 +57,7 @@ class App(tk.Tk):
 
         # get path to title bar icon
         base_dir = os.path.dirname(os.path.abspath(__file__))
-
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
-
         self.title("Home Reminders")
         # self.wm_overrideredirect(True)
         # self.wm_attributes('-type', 'splash')
@@ -117,7 +88,11 @@ class App(tk.Tk):
         def opt_in():
             # initialize user table if empty
             initialize_user()
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            with get_con() as con:
+                cur = con.cursor()
+                # check to see if user has a phone number; i.e., already
+                # receiving notifications
+                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
             if phone_number is None:
                 response = YesNoMsgBox(
                     self,
@@ -407,8 +382,6 @@ class App(tk.Tk):
             font=("Helvetica", 24),
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
-        # refresh date periodically
-        # self.after(10000, self.refresh_date)
 
     # end function to display current date
     ###############################################################

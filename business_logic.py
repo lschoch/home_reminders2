@@ -595,3 +595,37 @@ def notifications_popup(self):
 
 
 # end notifications popup for upcoming events
+
+
+# function to create database and table if they do not exist and retrieve data
+def get_data(db_path):
+    with sqlite3.connect(db_path) as con:
+        cur = con.cursor()
+
+        # create table to store user phone number and notification preferences
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user(
+                phone_number TEXT,
+                week_before INT,
+                day_before INT,
+                day_of INT,
+                last_notification_date TEXT)
+        """)
+
+        # create data table if it doesn't exist
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS reminders(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                description TEXT,
+                frequency TEXT,
+                period TEXT,
+                date_last TEXT,
+                date_next TEXT,
+                note TEXT)
+        """)
+        # retrieve data for display in treeview
+        data = cur.execute("""
+            SELECT * FROM reminders
+            ORDER BY date_next ASC, description ASC
+        """)
+    return data
