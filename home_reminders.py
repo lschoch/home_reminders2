@@ -1,7 +1,6 @@
 import importlib
 import os
 import shutil
-import sys
 import tkinter as tk
 
 # import tracemalloc
@@ -24,7 +23,9 @@ from business_logic import (
     initialize_user,
     insert_data,
     notifications_popup,
+    quit_program,
     refresh,
+    refresh_date,
     remove_toplevels,
     valid_frequency,
 )
@@ -236,9 +237,9 @@ class App(tk.Tk):
         self.btn = ttk.Button(
             self, text="New Item", command=self.create_new
         ).grid(row=1, column=0, padx=20, pady=(20, 0), sticky="n")
-        self.btn = ttk.Button(
-            self, text="Quit", command=self.quit_program
-        ).grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
+        self.btn = ttk.Button(self, text="Quit", command=quit_program).grid(
+            row=1, column=0, padx=20, pady=(60, 0), sticky="n"
+        )
         # end left side buttons
         ###############################################################
 
@@ -357,37 +358,10 @@ class App(tk.Tk):
                 print(f"Error initializing date_var: {e}")
 
         notifications_popup(self)
-        self.refresh_date()
+        refresh_date(self, data)
 
     # end init
     ###############################################################
-
-    ###############################################################
-    # function to display current date and update treeview when date changes
-    @profile
-    def refresh_date(self):
-        # catch the date change at midnight
-        if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
-            self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
-            # refresh all data
-            refresh(self)
-            check_expired(self)
-            insert_data(self, data)
-        # create widget
-        self.today_is_lbl = tk.Label(
-            self,
-            # textvariable=self.date_var,
-            text=f"Today is {self.date_var.get()}",
-            foreground="black",
-            font=("Helvetica", 24),
-        )
-        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
-
-    # end function to display current date
-    ###############################################################
-
-    def quit_program(self):
-        sys.exit()
 
     ###############################################################
     # commands for left side buttons

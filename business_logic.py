@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
@@ -629,3 +630,33 @@ def get_data(db_path):
             ORDER BY date_next ASC, description ASC
         """)
     return data
+
+
+###############################################################
+# function to display current date and update treeview when date changes
+@profile
+def refresh_date(self, data):
+    # catch the date change at midnight
+    if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
+        self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
+        # refresh all data
+        refresh(self)
+        check_expired(self)
+        insert_data(self, data)
+    # create widget
+    self.today_is_lbl = tk.Label(
+        self,
+        # textvariable=self.date_var,
+        text=f"Today is {self.date_var.get()}",
+        foreground="black",
+        font=("Helvetica", 24),
+    )
+    self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
+
+
+# end function to display current date
+###############################################################
+
+
+def quit_program():
+    sys.exit()
