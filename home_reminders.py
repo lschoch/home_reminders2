@@ -10,7 +10,6 @@ from PIL import Image, ImageTk
 
 from business_logic import (
     appsupportdir,
-    check_expired,
     create_tree_widget,
     date_next_calc,
     get_con,
@@ -340,8 +339,7 @@ class App(tk.Tk):
         # add data to treeview
         insert_data(self, data)
 
-        # set view_label message and color
-        check_expired(self)
+        refresh(self)
         if self.tree.get_children():
             child_id = self.tree.get_children()[0]
             self.tree.focus(child_id)
@@ -465,9 +463,6 @@ class App(tk.Tk):
                 con.commit()
             refresh(self)
 
-            # set view_label message and color
-            check_expired(self)
-
             save_btn.config(state="normal")
             top.destroy()
             self.tree.focus()
@@ -498,8 +493,7 @@ class App(tk.Tk):
             self.tree.delete(item)
         insert_data(self, data)
 
-        # set view_label message and color
-        check_expired(self)
+        refresh(self)
 
         remove_toplevels(self)
         self.refreshed = True
@@ -518,8 +512,7 @@ class App(tk.Tk):
             self.tree.delete(item)
         insert_data(self, data)
 
-        # set view_label message and color
-        check_expired(self)
+        refresh(self)
 
         remove_toplevels(self)
         self.refreshed = True
@@ -562,7 +555,6 @@ class App(tk.Tk):
         if answer.get_response():
             shutil.copy2(db_bak_path, db_path)
             refresh(self)
-            check_expired(self)
             InfoMsgBox(
                 self,
                 "Restore",
@@ -588,7 +580,6 @@ class App(tk.Tk):
                 cur.execute("DELETE FROM user")
                 con.commit()
             refresh(self)
-            check_expired(self)
             InfoMsgBox(
                 self,
                 "Delete All",
@@ -720,11 +711,9 @@ class App(tk.Tk):
                 )
                 con.commit()
 
-            # set view_label message and color
-            check_expired(self)
+            refresh(self)
 
             remove_toplevels(self)
-            refresh(self)
 
         # delete item from database
         @profile
@@ -748,9 +737,6 @@ class App(tk.Tk):
                 )
                 con.commit()
             refresh(self)
-
-            # set view_label message and color
-            check_expired(self)
 
             remove_toplevels(self)
             self.focus()

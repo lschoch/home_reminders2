@@ -159,22 +159,22 @@ def get_date(date_last_entry, top):
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
 
-# function to update treeview after a change to the database
+# function to update treeview and labels after a change to the database
 @profile
 def refresh(self):
     # connect to database and create cursor
     with get_con() as self.con:
         self.cur = self.con.cursor()
-        # select data depending on the current view (all vs future)
+        # select data depending on the current view
         if self.view_current:
-            data = self.cur.execute("""
+            refreshed_data = self.cur.execute("""
                 SELECT * FROM reminders
                 WHERE date_next >= DATE('now', 'localtime')
                                      OR date_next IS NULL
                 ORDER BY date_next ASC, description ASC
             """)
         else:
-            data = self.cur.execute("""
+            refreshed_data = self.cur.execute("""
                 SELECT * FROM reminders
                 ORDER BY date_next ASC, description ASC
             """)
@@ -182,8 +182,32 @@ def refresh(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        insert_data(self, data)
+        insert_data(self, refreshed_data)
         self.refreshed = True
+
+        if self.view_current:
+            view_msg = (
+                "Viewing pending items only. Select item to update or delete "
+            )
+        else:
+            view_msg = "Viewing all items.  Select item to update or delete"
+
+        # get nummber of past due items
+        number_past_due_items = len(
+            self.cur.execute("""
+                SELECT * FROM reminders
+                WHERE date_next < DATE('now', 'localtime')
+                                     OR date_next IS NULL
+            """).fetchall()
+        )
+
+        if number_past_due_items == 1:
+            expired_msg = f"{number_past_due_items} past due item"
+        else:
+            expired_msg = f"{number_past_due_items} past due items"
+        self.view_lbl_msg.set(view_msg)
+        self.view_lbl.config(background="#ececec")
+        self.expired_lbl_msg.set(expired_msg)
 
 
 # function to calculate date_next
@@ -229,31 +253,6 @@ def valid_frequency(input_data):
             return False
     else:
         return False
-
-
-@profile
-def check_expired(self):
-    with get_con() as self.con:
-        self.cur = self.con.cursor()
-        result = self.cur.execute("""
-            SELECT * FROM reminders
-            WHERE date_next < DATE('now', 'localtime')
-            ORDER BY date_next ASC
-        """).fetchall()
-        # if view_current is true, past due items are not shown
-        if self.view_current:
-            view_msg = (
-                "Viewing pending items only. Select item to update or delete "
-            )
-        else:
-            view_msg = "Viewing all items.  Select item to update or delete"
-        if len(result) == 1:
-            expired_msg = f"{len(result)} past due item"
-        else:
-            expired_msg = f"{len(result)} past due items"
-        self.view_lbl_msg.set(view_msg)
-        self.view_lbl.config(background="#ececec")
-        self.expired_lbl_msg.set(expired_msg)
 
 
 # function to create database connection
@@ -640,7 +639,6 @@ def refresh_date(self, data):
         self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
         # refresh all data
         refresh(self)
-        check_expired(self)
         insert_data(self, data)
     # create widget
     self.today_is_lbl = tk.Label(
