@@ -599,56 +599,6 @@ class App(tk.Tk):
         else:
             return
 
-    """ @profile
-    def notifications(self):
-        # initialize user table if empty
-        initialize_user()
-        # check to see if user has a phone number; i.e., already receiving
-        # notifications
-        with get_con() as con:
-            cur = con.cursor()
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-            if phone_number is None:
-                response = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="Would you like to to be notified by text "
-                    + "when your items are coming due?",
-                    x_offset=600,
-                )
-                # if user opts to receive notifications, get user data
-                if response.get_response():
-                    get_user_data(self)
-            # if user opts out of notifications, delete user's data
-            else:
-                response3 = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="Do you want to continue receiving text"
-                    + " notifications?",
-                    x_offset=600,
-                )
-                if not response3.get_response():
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "You have opted out of text notifications."
-                        + " Texts will no longer be sent.",
-                        x_offset=600,
-                    )
-                    cur.execute("DELETE FROM user")
-                    con.commit()
-                else:
-                    response4 = YesNoMsgBox(
-                        self,
-                        title="Notifications",
-                        message="Do you want to change the phone number or"
-                        + " notification frequency?",
-                        x_offset=600,
-                    )
-                    if response4.get_response():
-                        get_user_data(self) """
-
     # manage row selection in treeview
     @profile
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
