@@ -637,9 +637,9 @@ def refresh_date(self, data):
     # catch the date change at midnight
     if self.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
         self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
-        # refresh all data
+        """ # refresh all data
         refresh(self)
-        insert_data(self, data)
+        insert_data(self, data) """
     # create widget
     self.today_is_lbl = tk.Label(
         self,
