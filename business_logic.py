@@ -241,26 +241,19 @@ def check_expired(self):
             ORDER BY date_next ASC
         """).fetchall()
         # if view_current is true, past due items are not shown
-        if result and self.view_current:
-            msg = "Pending items - select item to update or delete "
-            self.view_lbl_msg.set(msg)
-            self.view_lbl_color.set("#ececec")
-            self.expired_lbl_msg.set(
-                f"{len(result)} past due items. Click <View> <All>"
+        if self.view_current:
+            view_msg = (
+                "Viewing pending items only. Select item to update or delete "
             )
-        elif self.view_current:
-            self.view_lbl_msg.set(
-                "Pending items - select item to update or delete"
-            )
-            self.view_lbl_color.set("#ececec")
-            self.expired_lbl_msg.set(f"{len(result)} past due items")
         else:
-            self.view_lbl_msg.set(
-                "All items - select item to update or delete"
-            )
-            self.view_lbl_color.set("#ececec")
-            self.expired_lbl_msg.set(f"{len(result)} past due items")
-        self.view_lbl.config(background=self.view_lbl_color.get())
+            view_msg = "Viewing all items.  Select item to update or delete"
+        if len(result) == 1:
+            expired_msg = f"{len(result)} past due item"
+        else:
+            expired_msg = f"{len(result)} past due items"
+        self.view_lbl_msg.set(view_msg)
+        self.view_lbl.config(background="#ececec")
+        self.expired_lbl_msg.set(expired_msg)
 
 
 # function to create database connection
