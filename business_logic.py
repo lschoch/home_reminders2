@@ -240,22 +240,27 @@ def check_expired(self):
             WHERE date_next < DATE('now', 'localtime')
             ORDER BY date_next ASC
         """).fetchall()
+        # if view_current is true, past due items are not shown
         if result and self.view_current:
             msg = "Pending items - select item to update or delete "
-            self.lbl_msg.set(msg)
-            self.lbl_color.set("#ececec")
-            self.expired_msg.set(
+            self.view_lbl_msg.set(msg)
+            self.view_lbl_color.set("#ececec")
+            self.expired_lbl_msg.set(
                 f"{len(result)} past due items. Click <View> <All>"
             )
         elif self.view_current:
-            self.lbl_msg.set("Pending items - select item to update or delete")
-            self.lbl_color.set("#ececec")
-            self.expired_msg.set(f"{len(result)} past due items")
+            self.view_lbl_msg.set(
+                "Pending items - select item to update or delete"
+            )
+            self.view_lbl_color.set("#ececec")
+            self.expired_lbl_msg.set(f"{len(result)} past due items")
         else:
-            self.lbl_msg.set("All items - select item to update or delete")
-            self.lbl_color.set("#ececec")
-            self.expired_msg.set(f"{len(result)} past due items")
-        self.view_lbl.config(background=self.lbl_color.get())
+            self.view_lbl_msg.set(
+                "All items - select item to update or delete"
+            )
+            self.view_lbl_color.set("#ececec")
+            self.expired_lbl_msg.set(f"{len(result)} past due items")
+        self.view_lbl.config(background=self.view_lbl_color.get())
 
 
 # function to create database connection
@@ -603,7 +608,8 @@ def get_data(db_path):
     with sqlite3.connect(db_path) as con:
         cur = con.cursor()
 
-        # create table to store user phone number and notification preferences
+        # create user table to store user phone number and notification
+        # preferences
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user(
                 phone_number TEXT,
@@ -613,7 +619,7 @@ def get_data(db_path):
                 last_notification_date TEXT)
         """)
 
-        # create data table if it doesn't exist
+        # create reminders table if it doesn't exist
         cur.execute("""
             CREATE TABLE IF NOT EXISTS reminders(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -637,8 +643,8 @@ def get_data(db_path):
 @profile
 def refresh_date(self, data):
     # catch the date change at midnight
-    if self.date_var.get() < datetime.now().strftime("%Y-%m-%d"):
-        self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
+    if self.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
+        self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
         # refresh all data
         refresh(self)
         check_expired(self)
@@ -646,8 +652,8 @@ def refresh_date(self, data):
     # create widget
     self.today_is_lbl = tk.Label(
         self,
-        # textvariable=self.date_var,
-        text=f"Today is {self.date_var.get()}",
+        # textvariable=self.todays_date_var,
+        text=f"Today is {self.todays_date_var.get()}",
         foreground="black",
         font=("Helvetica", 24),
     )

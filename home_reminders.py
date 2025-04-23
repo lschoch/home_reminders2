@@ -39,11 +39,11 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     print("Splash screen closed.")
 
 # create path to database and backup files
-dir_path = os.path.join(appsupportdir(), "Home Reminders")
-if not os.path.exists(dir_path):
-    os.makedirs(dir_path)
-db_path = os.path.join(dir_path, "home_reminders.db")
-db_bak_path = os.path.join(dir_path, "home_reminders.bak")
+db_path = os.path.join(appsupportdir(), "Home Reminders")
+if not os.path.exists(db_path):
+    os.makedirs(db_path)
+db_path = os.path.join(db_path, "home_reminders.db")
+db_bak_path = os.path.join(db_path, "home_reminders.bak")
 # create database if it does not exist and retrieve data
 data = get_data(db_path)
 
@@ -58,7 +58,6 @@ class App(tk.Tk):
         self.ico_path = os.path.join(base_dir, "images", "icons8-home-80.png")
         self.title("Home Reminders")
         # self.wm_overrideredirect(True)
-        # self.wm_attributes('-type', 'splash')
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
@@ -74,10 +73,10 @@ class App(tk.Tk):
         # flag to track whether coming from view_all or view_current
         self.view_current = False
 
-        self.lbl_msg = tk.StringVar()
-        self.lbl_color = tk.StringVar()
-        self.expired_msg = tk.StringVar()
-        self.date_var = tk.StringVar()
+        self.view_lbl_msg = tk.StringVar()
+        self.view_lbl_color = tk.StringVar()
+        self.expired_lbl_msg = tk.StringVar()
+        self.todays_date_var = tk.StringVar()
 
         ###############################################################
         # create menus
@@ -91,7 +90,7 @@ class App(tk.Tk):
                 # check to see if user has a phone number; i.e., already
                 # receiving notifications
                 phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-            if phone_number is None:
+            if not phone_number:
                 response = YesNoMsgBox(
                     self,
                     title="Notifications",
@@ -101,9 +100,9 @@ class App(tk.Tk):
                     y_offset=5,
                 )
                 # if user opts to receive notifications, get user data
-                if response.get_response() == 1:
+                if response.get_response():
                     get_user_data(self)
-                elif response.get_response == -1:
+                else:
                     InfoMsgBox(
                         self,
                         "Notifications",
@@ -112,6 +111,7 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
+                    # delete user data if user opts out
                     cur.execute("DELETE FROM user")
                     con.commit()
             # if user opts out of notifications, delete user's data
@@ -124,7 +124,7 @@ class App(tk.Tk):
                     x_offset=3,
                     y_offset=5,
                 )
-                if response1.get_response() == -1:
+                if not response1.get_response():
                     InfoMsgBox(
                         self,
                         "Notifications",
@@ -135,7 +135,7 @@ class App(tk.Tk):
                     )
                     cur.execute("DELETE FROM user")
                     con.commit()
-                elif response1.get_response() == 1:
+                elif response1.get_response():
                     response2 = YesNoMsgBox(
                         self,
                         title="Notifications",
@@ -144,7 +144,7 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    if response2.get_response() == 1:
+                    if response2.get_response():
                         get_user_data(self)
 
         def opt_out():
@@ -163,7 +163,7 @@ class App(tk.Tk):
                     x_offset=3,
                     y_offset=5,
                 )
-                if response.get_response() == 1:
+                if response.get_response():
                     InfoMsgBox(
                         self,
                         "Notifications",
@@ -193,7 +193,7 @@ class App(tk.Tk):
             with get_con() as con:
                 cur = con.cursor()
                 phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-            if phone_number is not None:
+            if phone_number:
                 get_user_data(self)
             else:
                 InfoMsgBox(
@@ -242,15 +242,15 @@ class App(tk.Tk):
 
         self.view_lbl = ttk.Label(
             self,
-            textvariable=self.lbl_msg,
-            background=self.lbl_color.get(),
+            textvariable=self.view_lbl_msg,
+            background=self.view_lbl_color.get(),
             font=("Arial", 18),
         )
         self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
         self.expired_lbl = tk.Label(
             self,
-            textvariable=self.expired_msg,
+            textvariable=self.expired_lbl_msg,
             background="yellow",
             borderwidth=1,
             relief="solid",
@@ -262,10 +262,10 @@ class App(tk.Tk):
         ###############################################################
         # insert image
         try:
-            img_l = ImageTk.PhotoImage(Image.open(self.ico_path))
-            self.img_lbl_l = tk.Label(self, image=img_l)
-            self.img_lbl_l.image = img_l
-            self.img_lbl_l.grid(row=0, column=0, sticky="ns")
+            house_img = ImageTk.PhotoImage(Image.open(self.ico_path))
+            self.house_img_lbl = tk.Label(self, image=house_img)
+            self.house_img_lbl.image = house_img
+            self.house_img_lbl.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
             pass
         ###############################################################
@@ -347,12 +347,12 @@ class App(tk.Tk):
             self.tree.focus(child_id)
         # self.tree.selection_set(child_id)
 
-        # initialize date_var to today's date if not set
-        if not self.date_var.get():
+        # initialize todays_date_var to today's date if not set
+        if not self.todays_date_var.get():
             try:
-                self.date_var.set(datetime.now().strftime("%Y-%m-%d"))
+                self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
             except Exception as e:
-                print(f"Error initializing date_var: {e}")
+                print(f"Error initializing todays_date_var: {e}")
 
         notifications_popup(self)
         refresh_date(self, data)
