@@ -370,12 +370,10 @@ class App(tk.Tk):
         top = TopLvl(self, "New Item")
         top.date_last_entry.insert(0, date.today())
 
-        # get_date_cmd calls get date (calendar pop-up)
-        def get_date_cmd(event):
-            get_date(top.date_last_entry, top)
-
-        # bind click in date_last_entry to get_date_cmd
-        top.date_last_entry.bind("<1>", get_date_cmd)
+        # bind click in date_last_entry to get_date
+        top.date_last_entry.bind(
+            "<1>", lambda e: get_date(top.date_last_entry, top)
+        )
 
         # function to save new item to database
         def save_item():
@@ -625,12 +623,10 @@ class App(tk.Tk):
         )
         top.note_entry.insert(0, self.tree.item(selected_item)["values"][6])
 
-        # get_date_cmd calls get date (calendar pop-up)
-        def get_date_cmd(self):
-            get_date(top.date_last_entry, top)
-
-        # bind click in date_last_entry to get_date_cmd
-        top.date_last_entry.bind("<1>", get_date_cmd)
+        # bind click in date_last_entry to get_date
+        top.date_last_entry.bind(
+            "<1>", lambda e: get_date(top.date_last_entry, top)
+        )
 
         # update database
         def update_item():
