@@ -588,6 +588,7 @@ def notifications_popup(self):
             else:
                 notifications_win.txt.insert("end", msg + "\n")
                 line_num += 1
+
     # check every 4 hours whether a notifications popup is indicated.
     self.after(14400000, notifications_popup, self)
 
@@ -674,7 +675,6 @@ def validate_inputs(self, top, new=False, id=None):
         return False
     # check for duplicate descriptions
     description = top.description_entry.get()
-    print(f"description = {description}")
     with get_con() as con:
         cur = con.cursor()
         result = cur.execute("""SELECT * FROM reminders""")
@@ -686,7 +686,6 @@ def validate_inputs(self, top, new=False, id=None):
                 original_description = item[1]
     else:
         original_description = None
-    print(f"original_description = {original_description}")
     for item in items:
         # item[1] is the item description in the database
         if item[1] == description:

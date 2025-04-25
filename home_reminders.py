@@ -42,8 +42,6 @@ if not os.path.exists(db_base_path):
     os.makedirs(db_base_path)
 db_path = os.path.join(db_base_path, "home_reminders.db")
 db_bak_path = os.path.join(db_base_path, "home_reminders.bak")
-print(f"Database path: {db_path}")
-print(f"Backup path: {db_bak_path}")
 # create database if it does not exist and retrieve data
 data = get_data(db_path)
 
