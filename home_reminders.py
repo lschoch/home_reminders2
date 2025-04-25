@@ -385,19 +385,17 @@ class App(tk.Tk):
                 return
 
             # calculate date_next
-            date_last = top.date_last_entry.get()
-            frequency = int(top.frequency_entry.get())
-            period = top.period_combobox.get()
-            date_next = date_next_calc(date_last, frequency, period)
-
+            date_next = date_next_calc(top)
+            # set frequency to 1 if period is "one-time"
             if top.period_combobox.get() == "one-time":
-                frequency = "1"
-
+                top.frequency_entry.delete(0, END)
+                top.frequency_entry.insert(0, "1")
+            # get data to insert into database
             data_get = (
                 top.description_entry.get(),
-                frequency,
+                top.frequency_entry.get(),
                 top.period_combobox.get(),
-                date_last,
+                top.date_last_entry.get(),
                 date_next,
                 top.note_entry.get(),
             )
@@ -593,15 +591,12 @@ class App(tk.Tk):
 
         # update database
         def update_item():
+            # validate inputs before saving, exit if validation fails
             validate = validate_inputs(self, top, new=False, id=id)
             if not validate:
                 return
-
             # calculate date_next
-            date_last = top.date_last_entry.get()
-            frequency = int(top.frequency_entry.get())
-            period = top.period_combobox.get()
-            date_next = date_next_calc(date_last, frequency, period)
+            date_next = date_next_calc(top)
             # set frequency to 1 if period is "one-time"
             if top.period_combobox.get() == "one-time":
                 top.frequency_entry.delete(0, END)

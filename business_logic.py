@@ -89,9 +89,6 @@ def insert_data(self, data):
 
 
 # function to select date from a calendar
-""
-
-
 def get_date(date_last_entry, top):
     # destroy calendar if it already exists
     # (prevents multiple overlying calendars on repeatedly clicking the entry)
@@ -215,11 +212,11 @@ def refresh(self):
         self.expired_lbl_msg.set(expired_msg)
 
 
-# function to calculate date_next
-""
-
-
-def date_next_calc(date_last, frequency, period):
+# function to calculate next date for an item based on frequency and period
+def date_next_calc(top):
+    date_last = top.date_last_entry.get()
+    frequency = int(top.frequency_entry.get())
+    period = top.period_combobox.get()
     match period:
         case "":
             date_next = ""
@@ -696,22 +693,17 @@ def validate_inputs(self, top, new=False, id=None):
             # alert if description already exists unless it's the
             # same item (ie, updating an existing item)
 
-            print(f"item[0] = {item[0]} id = {id} new = {new}")
-            print(f"{new or (not new and item[0] != id)}")
             # item[0] is the id in the database
             if new or (not new and item[0] != id):
-                print("Duplicate description found")
                 InfoMsgBox(
                     self,
                     "Duplicate Description",
                     "There is already an entry with this description."
                     + " Try again.",
                 )
-                print("Duplicate description found")
                 # if updating an existing item, reset original
                 # description
                 if not new:
-                    print("Not new")
                     top.description_entry.delete(0, tk.END)
                     top.description_entry.insert(0, original_description)
                 top.description_entry.focus_set()
