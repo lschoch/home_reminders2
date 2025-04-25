@@ -165,51 +165,60 @@ def get_date(date_last_entry, top):
 
 def refresh(self):
     # connect to database and create cursor
-    with get_con() as self.con:
-        self.cur = self.con.cursor()
-        # select data depending on the current view
-        if self.view_current:
-            refreshed_data = self.cur.execute("""
-                SELECT * FROM reminders
-                WHERE date_next >= DATE('now', 'localtime')
-                                     OR date_next IS NULL
-                ORDER BY date_next ASC, description ASC
-            """)
-        else:
-            refreshed_data = self.cur.execute("""
-                SELECT * FROM reminders
-                ORDER BY date_next ASC, description ASC
-            """)
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # select data depending on the current view
+            if self.view_current:
+                refreshed_data = cur.execute("""
+                    SELECT * FROM reminders
+                    WHERE date_next >= DATE('now', 'localtime')
+                                        OR date_next IS NULL
+                    ORDER BY date_next ASC, description ASC
+                """)
+            else:
+                refreshed_data = cur.execute("""
+                    SELECT * FROM reminders
+                    ORDER BY date_next ASC, description ASC
+                """)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
 
-        for item in self.tree.get_children():
-            self.tree.delete(item)
+    for item in self.tree.get_children():
+        self.tree.delete(item)
 
-        insert_data(self, refreshed_data)
-        self.refreshed = True
+    insert_data(self, refreshed_data)
+    self.refreshed = True
 
-        if self.view_current:
-            view_msg = (
-                "Viewing pending items only. Select item to update or delete "
-            )
-        else:
-            view_msg = "Viewing all items.  Select item to update or delete"
-
-        # get nummber of past due items
-        number_past_due_items = len(
-            self.cur.execute("""
-                SELECT * FROM reminders
-                WHERE date_next < DATE('now', 'localtime')
-                                     OR date_next IS NULL
-            """).fetchall()
+    if self.view_current:
+        view_msg = (
+            "Viewing pending items only. Select item to update or delete "
         )
+    else:
+        view_msg = "Viewing all items.  Select item to update or delete"
 
-        if number_past_due_items == 1:
-            expired_msg = f"{number_past_due_items} past due item"
-        else:
-            expired_msg = f"{number_past_due_items} past due items"
-        self.view_lbl_msg.set(view_msg)
-        self.view_lbl.config(background="#ececec")
-        self.expired_lbl_msg.set(expired_msg)
+    # get nummber of past due items
+    try:
+        with get_con() as con:
+            self.cur = con.cursor()
+            number_past_due_items = len(
+                self.cur.execute("""
+                    SELECT * FROM reminders
+                    WHERE date_next < DATE('now', 'localtime')
+                                        OR date_next IS NULL
+                """).fetchall()
+            )
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    if number_past_due_items == 1:
+        expired_msg = f"{number_past_due_items} past due item"
+    else:
+        expired_msg = f"{number_past_due_items} past due items"
+    self.view_lbl_msg.set(view_msg)
+    self.view_lbl.config(background="#ececec")
+    self.expired_lbl_msg.set(expired_msg)
 
 
 # function to calculate next date for an item based on frequency and period
@@ -296,23 +305,27 @@ def pathinappsupportdir(*paths, create=False):
 ""
 
 
-def initialize_user():
-    with get_con() as con:
-        cur = con.cursor()
-        empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchall()
-        if empty_check[0][0] == 0:
-            values = (0, 0, 0, "1970-01-01")
-            cur.execute(
-                """
-                INSERT INTO user (
-                    week_before,
-                    day_before,
-                    day_of,
-                    last_notification_date)
-                    VALUES (?, ?, ?, ?)""",
-                values,
-            )
-            con.commit()
+def initialize_user(self):
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchall()
+            if empty_check[0][0] == 0:
+                values = (0, 0, 0, "1970-01-01")
+                cur.execute(
+                    """
+                    INSERT INTO user (
+                        week_before,
+                        day_before,
+                        day_of,
+                        last_notification_date)
+                        VALUES (?, ?, ?, ?)""",
+                    values,
+                )
+                con.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
 
 
 # get/modify user preferences and store in user table
@@ -321,46 +334,47 @@ def initialize_user():
 
 def get_user_data(self):  # noqa: PLR0915
     def submit():
-        with get_con() as con:
-            cur = con.cursor()
-            num = entry.get()
-            no_options_selected = (
-                var1.get() == 0 and var2.get() == 0 and var3.get() == 0
+        num = entry.get()
+        no_options_selected = (
+            var1.get() == 0 and var2.get() == 0 and var3.get() == 0
+        )
+        # validate the entered phone number
+        if not num.isnumeric() or len(num) > 10 or len(num) < 10:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "Phone number must be a ten digit numeric.",
+                x_offset=100,
+                y_offset=15,
             )
-            # validate the entered phone number
-            if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-                InfoMsgBox(
-                    self,
-                    "Notifications",
-                    "Phone number must be a ten digit numeric.",
-                    x_offset=100,
-                    y_offset=15,
-                )
-                num_window.focus_set()
-                entry.focus_set()
-            # require at least one "when" option
-            elif no_options_selected:
-                txt = (
-                    "Please select at least one option for when "
-                    + "to be notified."
-                )
-                InfoMsgBox(
-                    self,
-                    "Notifications",
-                    txt,
-                    x_offset=100,
-                    y_offset=15,
-                )
-                num_window.focus_set()
-            else:
-                values = (
-                    num,  # phone number
-                    var1.get(),  # week before
-                    var2.get(),  # day before
-                    var3.get(),  # day of
-                    # last notification date:
-                    datetime.strftime(date.today(), "%Y-%m-%d"),
-                )
+            num_window.focus_set()
+            entry.focus_set()
+        # require at least one "when" option
+        elif no_options_selected:
+            txt = (
+                "Please select at least one option for when "
+                + "to be notified."
+            )
+            InfoMsgBox(
+                self,
+                "Notifications",
+                txt,
+                x_offset=100,
+                y_offset=15,
+            )
+            num_window.focus_set()
+        else:
+            values = (
+                num,  # phone number
+                var1.get(),  # week before
+                var2.get(),  # day before
+                var3.get(),  # day of
+                # last notification date:
+                datetime.strftime(date.today(), "%Y-%m-%d"),
+            )
+        try:
+            with get_con() as con:
+                cur = con.cursor()
                 cur.execute("DELETE FROM user")
                 cur.execute(
                     """INSERT INTO user (
@@ -372,30 +386,41 @@ def get_user_data(self):  # noqa: PLR0915
                     values,
                 )
                 con.commit()
-                num_window.destroy()
-                if user_exists:
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "Your data has been saved.",
-                        x_offset=100,
-                        y_offset=15,
-                    )
-                else:
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "You will now start receiving text notifications.",
-                        x_offset=100,
-                        y_offset=15,
-                    )
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            InfoMsgBox(
+                self, "Error", "Failed to retrieve data from the database."
+            )
+        num_window.destroy()
+        if user_exists:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "Your data has been saved.",
+                x_offset=100,
+                y_offset=15,
+            )
+        else:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "You will now start receiving text notifications.",
+                x_offset=100,
+                y_offset=15,
+            )
 
     # get existing user preferences, if present
-    with get_con() as con:
-        cur = con.cursor()
-        # initialize user table if it's empty
-        initialize_user()
-        user_data = cur.execute("SELECT * FROM user").fetchone()
+    # initialize user table if it's empty
+    initialize_user(self)
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # check if user table is empty
+            cur.execute("SELECT COUNT(*) FROM user")
+            user_data = cur.execute("SELECT * FROM user").fetchone()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     if user_data[0] is not None:
         user_exists = True
     else:
@@ -491,7 +516,7 @@ def get_user_data(self):  # noqa: PLR0915
 
 
 # notifications popup for upcoming items
-def notifications_popup(self):
+def notifications_popup(self):  # noqa: C901, PLR0912
     # remove existing notifications popups, if any exist
     for widget in self.winfo_children():
         if (
@@ -501,10 +526,12 @@ def notifications_popup(self):
             widget.destroy()
 
     # initialize user table if it's empty
-    initialize_user()
-    with get_con() as con:
-        cur = con.cursor()
-        user_data = cur.execute("SELECT * FROM user").fetchone()
+    initialize_user(self)
+    # check whether user has opted in to notifications
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            user_data = cur.execute("SELECT * FROM user").fetchone()
         # check whether user has entered a phone number (opted in)
         if user_data[0] is not None:
             # create a string to hold upcoming items
@@ -555,7 +582,9 @@ def notifications_popup(self):
                 ).fetchall()
                 for item in week_before_items:
                     messages += f"\u2022 Due in 7 days: {item[1]}\n"
-
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     # if there are any messages, create a notifications popup
     if messages:
         # remove the trailing \n from messages
@@ -675,10 +704,14 @@ def validate_inputs(self, top, new=False, id=None):
         return False
     # check for duplicate descriptions
     description = top.description_entry.get()
-    with get_con() as con:
-        cur = con.cursor()
-        result = cur.execute("""SELECT * FROM reminders""")
-        items = result.fetchall()
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            result = cur.execute("""SELECT * FROM reminders""")
+            items = result.fetchall()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     # get original description if updating an existing item
     if id:
         for item in items:

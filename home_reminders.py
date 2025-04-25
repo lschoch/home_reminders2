@@ -82,7 +82,7 @@ class App(tk.Tk):
 
         def opt_in():
             # initialize user table if empty
-            initialize_user()
+            initialize_user(self)
             with get_con() as con:
                 cur = con.cursor()
                 # check to see if user has a phone number; i.e., already
@@ -146,7 +146,7 @@ class App(tk.Tk):
                         get_user_data(self)
 
         def opt_out():
-            initialize_user()
+            initialize_user(self)
             with get_con() as con:
                 cur = con.cursor()
                 # check to see if user has a phone number; i.e., already
@@ -185,7 +185,7 @@ class App(tk.Tk):
                 )
 
         def preferences():
-            initialize_user()
+            initialize_user(self)
             # check to see if user has a phone number; i.e., already receiving
             # notifications
             with get_con() as con:
