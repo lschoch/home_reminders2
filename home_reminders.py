@@ -5,7 +5,6 @@ import tkinter as tk
 from datetime import date, datetime
 from tkinter import END, Menu, ttk
 
-from memory_profiler import profile
 from PIL import Image, ImageTk
 
 from business_logic import (
@@ -23,7 +22,7 @@ from business_logic import (
     refresh,
     refresh_date,
     remove_toplevels,
-    valid_frequency,
+    validate_inputs,
 )
 from classes import InfoMsgBox, TopLvl, YesNoMsgBox
 
@@ -43,6 +42,8 @@ if not os.path.exists(db_path):
     os.makedirs(db_path)
 db_path = os.path.join(db_path, "home_reminders.db")
 db_bak_path = os.path.join(db_path, "home_reminders.bak")
+print(f"Database path: {db_path}")
+print(f"Backup path: {db_bak_path}")
 # create database if it does not exist and retrieve data
 data = get_data(db_path)
 
@@ -361,7 +362,8 @@ class App(tk.Tk):
     ###############################################################
     # commands for left side buttons
     # create top level window for entry of data for new item
-    @profile
+    ""
+
     def create_new(self):
         # remove any existing toplevels
         remove_toplevels(self)
@@ -377,53 +379,9 @@ class App(tk.Tk):
 
         # function to save new item to database
         def save_item():
-            # save_btn.config(state="disabled")
-
-            # validate inputs
-            if not top.description_entry.get():
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Item cannot be blank.",
-                )
-                return
-
-            # check for duplicate item
-            with get_con() as con:
-                cur = con.cursor()
-                result = cur.execute("""SELECT * FROM reminders""")
-            for item in result.fetchall():
-                if item[1] == top.description_entry.get():
-                    InfoMsgBox(
-                        self,
-                        "Invalid Input",
-                        "There is already an item with that description."
-                        + " Try again.",
-                    )
-                    return
-
-            if not valid_frequency(top.frequency_entry.get()):
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Frequency requires a numeric input.",
-                )
-                return
-
-            if not top.date_last_entry.get():
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Please select a date for last.",
-                )
-                return
-
-            if not top.period_combobox.get():
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Please select a period.",
-                )
+            # validate inputs before saving, exit if validation fails
+            validate = validate_inputs(self, top, new=True)
+            if not validate:
                 return
 
             # calculate date_next
@@ -477,7 +435,8 @@ class App(tk.Tk):
             row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
         )
 
-    @profile
+    ""
+
     def pending(self):
         self.view_current = True
         with get_con() as con:
@@ -497,7 +456,8 @@ class App(tk.Tk):
         self.refreshed = True
         self.tree.focus()
 
-    @profile
+    ""
+
     def view_all(self):
         self.view_current = False
         with get_con() as con:
@@ -520,7 +480,8 @@ class App(tk.Tk):
     # end commands for left side buttons
     ###############################################################
 
-    @profile
+    ""
+
     def backup(self):
         answer = YesNoMsgBox(
             self,
@@ -541,7 +502,8 @@ class App(tk.Tk):
         else:
             return
 
-    @profile
+    ""
+
     def restore(self):
         answer = YesNoMsgBox(
             self,
@@ -563,7 +525,8 @@ class App(tk.Tk):
         else:
             return
 
-    @profile
+    ""
+
     def delete_all(self):
         answer = YesNoMsgBox(
             self,
@@ -589,7 +552,8 @@ class App(tk.Tk):
             return
 
     # manage row selection in treeview
-    @profile
+    ""
+
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:
@@ -600,9 +564,8 @@ class App(tk.Tk):
         # create toplevel
         top = TopLvl(self, "Edit Selection")
 
-        # capture id and description fields of the selected item
+        # capture id of the selected item
         id = self.tree.item(selected_item)["values"][0]
-        original_description = self.tree.item(selected_item)["values"][1]
 
         # populate entries with data from the selection
         top.description_entry.insert(
@@ -630,64 +593,21 @@ class App(tk.Tk):
 
         # update database
         def update_item():
-            # validate inputs
-            if not top.description_entry.get():
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Item cannot be blank.",
-                )
+            validate = validate_inputs(self, top, new=False, id=id)
+            if not validate:
                 return
 
-            if not valid_frequency(top.frequency_entry.get()):
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Frequency requires a numeric input.",
-                )
-                return
-
-            if not top.date_last_entry.get() or not top.period_combobox.get():
-                InfoMsgBox(
-                    self,
-                    "Invalid Input",
-                    "Please select a period and a last date.",
-                )
-                return
-
-            # check for duplicate description
+            # calculate date_next
+            date_last = top.date_last_entry.get()
+            frequency = int(top.frequency_entry.get())
+            period = top.period_combobox.get()
+            date_next = date_next_calc(date_last, frequency, period)
+            # set frequency to 1 if period is "one-time"
+            if top.period_combobox.get() == "one-time":
+                top.frequency_entry.delete(0, END)
+                top.frequency_entry.insert(0, "1")
             with get_con() as con:
                 cur = con.cursor()
-                result = cur.execute("""SELECT * FROM reminders""")
-                for item in result.fetchall():
-                    if (
-                        # item[1] is the selected description
-                        item[1] == top.description_entry.get()
-                        # duplicate OK if just changing other parameters
-                        # item[0] is the selected id
-                        and not item[0] == id
-                    ):
-                        # reset original description
-                        top.description_entry.delete(0, tk.END)
-                        top.description_entry.insert(0, original_description)
-                        InfoMsgBox(
-                            self,
-                            "Invalid Input",
-                            "There is already an item with that description."
-                            + " Try again.",
-                        )
-                        return
-
-                # calculate date_next
-                date_last = top.date_last_entry.get()
-                frequency = int(top.frequency_entry.get())
-                period = top.period_combobox.get()
-                date_next = date_next_calc(date_last, frequency, period)
-                # set frequency to 1 if period is "one-time"
-                if top.period_combobox.get() == "one-time":
-                    top.frequency_entry.delete(0, END)
-                    top.frequency_entry.insert(0, "1")
-
                 cur.execute(
                     """
                     UPDATE reminders
@@ -706,13 +626,12 @@ class App(tk.Tk):
                     ),
                 )
                 con.commit()
-
             refresh(self)
-
             remove_toplevels(self)
 
         # delete item from database
-        @profile
+        ""
+
         def delete_item():
             answer = YesNoMsgBox(
                 self,
@@ -733,12 +652,12 @@ class App(tk.Tk):
                 )
                 con.commit()
             refresh(self)
-
             remove_toplevels(self)
             self.focus()
             self.tree.focus_set()
 
-        @profile
+        ""
+
         def cancel():
             remove_toplevels(self)
 

@@ -335,7 +335,7 @@ class YesNoMsgBox(tk.Toplevel):
         self.var.set(1)
 
     def no(self):
-        # self.response = -1
+        self.response = 0
         self.destroy()
         self.var.set(1)
 

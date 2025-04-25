@@ -13,5 +13,6 @@ python_sms.py
 home_reminders2.code-workspace
 *.dat
 *.txt
+snippets*.*
 
 !requirements.txt

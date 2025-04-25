@@ -6,7 +6,6 @@ from datetime import date, datetime, timedelta
 from tkinter import ttk
 
 from dateutil.relativedelta import relativedelta
-from memory_profiler import profile
 from tkcalendar import Calendar
 
 from classes import InfoMsgBox, NofificationsPopup
@@ -70,7 +69,9 @@ def remove_toplevels(self):
 
 # function to insert data from database into the treeview,
 # use id as tag to color rows, item[5] is date_next
-@profile
+""
+
+
 def insert_data(self, data):
     for item in data:
         self.tree.insert("", tk.END, values=item, tags=item[0])
@@ -88,7 +89,9 @@ def insert_data(self, data):
 
 
 # function to select date from a calendar
-@profile
+""
+
+
 def get_date(date_last_entry, top):
     # destroy calendar if it already exists
     # (prevents multiple overlying calendars on repeatedly clicking the entry)
@@ -160,7 +163,9 @@ def get_date(date_last_entry, top):
 
 
 # function to update treeview and labels after a change to the database
-@profile
+""
+
+
 def refresh(self):
     # connect to database and create cursor
     with get_con() as self.con:
@@ -211,7 +216,9 @@ def refresh(self):
 
 
 # function to calculate date_next
-@profile
+""
+
+
 def date_next_calc(date_last, frequency, period):
     match period:
         case "":
@@ -242,21 +249,10 @@ def date_next_calc(date_last, frequency, period):
     return date_next
 
 
-# create a validation function
-@profile
-def valid_frequency(input_data):
-    if input_data:
-        try:
-            float(input_data)
-            return True
-        except ValueError:
-            return False
-    else:
-        return False
-
-
 # function to create database connection
-@profile
+""
+
+
 def get_con():
     dir_path = os.path.join(appsupportdir(), "Home Reminders")
     if not os.path.exists(dir_path):
@@ -265,7 +261,9 @@ def get_con():
     return sqlite3.connect(file_path)
 
 
-@profile
+""
+
+
 def appsupportdir():
     windows = r"%APPDATA%"
     windows = os.path.expandvars(windows)
@@ -285,7 +283,9 @@ def appsupportdir():
     return user_directory
 
 
-@profile
+""
+
+
 def pathinappsupportdir(*paths, create=False):
     location = os.path.join(appsupportdir(), *paths)
 
@@ -296,7 +296,9 @@ def pathinappsupportdir(*paths, create=False):
 
 
 # initialize user data if the table is empty
-@profile
+""
+
+
 def initialize_user():
     with get_con() as con:
         cur = con.cursor()
@@ -317,7 +319,9 @@ def initialize_user():
 
 
 # get/modify user preferences and store in user table
-@profile
+""
+
+
 def get_user_data(self):  # noqa: PLR0915
     def submit():
         with get_con() as con:
@@ -490,7 +494,6 @@ def get_user_data(self):  # noqa: PLR0915
 
 
 # notifications popup for upcoming items
-@profile
 def notifications_popup(self):
     # remove existing notifications popups, if any exist
     for widget in self.winfo_children():
@@ -632,7 +635,9 @@ def get_data(db_path):
 
 ###############################################################
 # function to display current date and update treeview when date changes
-@profile
+""
+
+
 def refresh_date(self, data):
     # catch the date change at midnight
     if self.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
@@ -657,3 +662,85 @@ def refresh_date(self, data):
 
 def quit_program():
     sys.exit()
+
+
+# function to validate inputs for new item and update item dialogs
+def validate_inputs(self, top, new=False, id=None):
+    # description is required
+    if not top.description_entry.get():
+        InfoMsgBox(
+            self,
+            "Invalid Input",
+            "Description cannot be blank.",
+        )
+        top.description_entry.focus_set()
+        return False
+    # check for duplicate descriptions
+    description = top.description_entry.get()
+    print(f"description = {description}")
+    with get_con() as con:
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM reminders""")
+        items = result.fetchall()
+    # get original description if updating an existing item
+    if id:
+        for item in items:
+            if item[0] == id:
+                original_description = item[1]
+    else:
+        original_description = None
+    print(f"original_description = {original_description}")
+    for item in items:
+        # item[1] is the item description in the database
+        if item[1] == description:
+            # alert if description already exists unless it's the
+            # same item (ie, updating an existing item)
+
+            print(f"item[0] = {item[0]} id = {id} new = {new}")
+            print(f"{new or (not new and item[0] != id)}")
+            # item[0] is the id in the database
+            if new or (not new and item[0] != id):
+                print("Duplicate description found")
+                InfoMsgBox(
+                    self,
+                    "Duplicate Description",
+                    "There is already an entry with this description."
+                    + " Try again.",
+                )
+                print("Duplicate description found")
+                # if updating an existing item, reset original
+                # description
+                if not new:
+                    print("Not new")
+                    top.description_entry.delete(0, tk.END)
+                    top.description_entry.insert(0, original_description)
+                top.description_entry.focus_set()
+                return False
+    # frequency is required and must be an integer
+    frequency = top.frequency_entry.get()
+    if not frequency or not int(frequency):
+        InfoMsgBox(
+            self,
+            "Invalid Input",
+            "Please enter frequency as integer.",
+        )
+        top.frequency_entry.focus_set()
+        return False
+    # period and date_last_entry are required
+    if not top.period_combobox.get():
+        InfoMsgBox(
+            self,
+            "Invalid Input",
+            "Please select the period.",
+        )
+        top.period_combobox.focus_set()
+        return False
+    if not top.date_last_entry.get():
+        InfoMsgBox(
+            self,
+            "Invalid Input",
+            "Please select the last date.",
+        )
+        top.date_last_entry.focus_set()
+        return False
+    return True
