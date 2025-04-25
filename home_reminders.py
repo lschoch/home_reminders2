@@ -37,11 +37,11 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     print("Splash screen closed.")
 
 # create path to database and backup files
-db_path = os.path.join(appsupportdir(), "Home Reminders")
-if not os.path.exists(db_path):
-    os.makedirs(db_path)
-db_path = os.path.join(db_path, "home_reminders.db")
-db_bak_path = os.path.join(db_path, "home_reminders.bak")
+db_base_path = os.path.join(appsupportdir(), "Home Reminders")
+if not os.path.exists(db_base_path):
+    os.makedirs(db_base_path)
+db_path = os.path.join(db_base_path, "home_reminders.db")
+db_bak_path = os.path.join(db_base_path, "home_reminders.bak")
 print(f"Database path: {db_path}")
 print(f"Backup path: {db_bak_path}")
 # create database if it does not exist and retrieve data
