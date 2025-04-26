@@ -192,9 +192,11 @@ def refresh(self):
     self.refreshed = True
 
     if self.view_current:
-        view_msg = "Viewing pending items only."
+        view_msg = (
+            "Viewing pending items only - select an item to edit or delete."
+        )
     else:
-        view_msg = "Viewing all items."
+        view_msg = "Viewing all items - select an item to edit or delete."
 
     # get nummber of past due items
     try:
