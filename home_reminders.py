@@ -12,6 +12,7 @@ from business_logic import (
     appsupportdir,
     create_tree_widget,
     date_next_calc,
+    delete_user_data,
     get_con,
     get_data,
     get_date,
@@ -119,18 +120,7 @@ class App(tk.Tk):
                         y_offset=5,
                     )
                     # delete user data if user opts out
-                    try:
-                        with get_con() as con:
-                            cur = con.cursor()
-                            cur.execute("DELETE FROM user")
-                            con.commit()
-                    except sqlite3.Error as e:
-                        print(f"Database error: {e}")
-                        InfoMsgBox(
-                            self,
-                            "Error",
-                            "Failed to retrieve data from the database.",
-                        )
+                    delete_user_data()
             # if user opts out of notifications, delete user's data
             else:
                 response1 = YesNoMsgBox(
@@ -151,18 +141,7 @@ class App(tk.Tk):
                         y_offset=5,
                     )
                     # delete user data if user opts out
-                    try:
-                        with get_con() as con:
-                            cur = con.cursor()
-                            cur.execute("DELETE FROM user")
-                            con.commit()
-                    except sqlite3.Error as e:
-                        print(f"Database error: {e}")
-                        InfoMsgBox(
-                            self,
-                            "Error",
-                            "Failed to retrieve data from the database.",
-                        )
+                    delete_user_data(self)
                 elif response1.get_response():
                     response2 = YesNoMsgBox(
                         self,
@@ -208,18 +187,7 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    try:
-                        with get_con() as con:
-                            cur = con.cursor()
-                            cur.execute("DELETE FROM user")
-                            con.commit()
-                    except sqlite3.Error as e:
-                        print(f"Database error: {e}")
-                        InfoMsgBox(
-                            self,
-                            "Error",
-                            "Failed to retrieve data from the database.",
-                        )
+                    delete_user_data(self)
             else:
                 InfoMsgBox(
                     self,
@@ -505,9 +473,7 @@ class App(tk.Tk):
                     con.commit()
             except sqlite3.Error as e:
                 print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
+                InfoMsgBox(self, "Error", "Failed to update the database.")
             refresh(self)
 
             save_btn.config(state="normal")
@@ -639,16 +605,7 @@ class App(tk.Tk):
             y_offset=5,
         )
         if answer.get_response():
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    cur.execute("DELETE FROM user")
-                    con.commit()
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
+            delete_user_data(self)
             refresh(self)
             InfoMsgBox(
                 self,
@@ -736,9 +693,7 @@ class App(tk.Tk):
                     con.commit()
             except sqlite3.Error as e:
                 print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
+                InfoMsgBox(self, "Error", "Failed to update the database.")
             refresh(self)
             remove_toplevels(self)
 
@@ -767,9 +722,7 @@ class App(tk.Tk):
                     con.commit()
             except sqlite3.Error as e:
                 print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
+                InfoMsgBox(self, "Error", "Failed to update the database.")
             refresh(self)
             remove_toplevels(self)
             self.focus()

@@ -325,7 +325,7 @@ def initialize_user(self):
                 con.commit()
     except sqlite3.Error as e:
         print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+        InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
 # get/modify user preferences and store in user table
@@ -388,9 +388,7 @@ def get_user_data(self):  # noqa: PLR0915
                 con.commit()
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-            InfoMsgBox(
-                self, "Error", "Failed to retrieve data from the database."
-            )
+            InfoMsgBox(self, "Error", "Failed to update the database.")
         num_window.destroy()
         if user_exists:
             InfoMsgBox(
@@ -768,3 +766,17 @@ def validate_inputs(self, top, new=False, id=None):
         top.date_last_entry.focus_set()
         return False
     return True
+
+
+# function to delete user data from the user table
+def delete_user_data(self):
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            cur.execute("DELETE FROM user")
+            con.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(
+            self, "Error", "Failed to delete user data from the database."
+        )
