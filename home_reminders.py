@@ -333,6 +333,10 @@ class App(tk.Tk):
                 values = self.tree.item(item, "values")
                 if query in str(values).lower():
                     self.tree.selection_set(item)
+                    # remove any existing toplevels
+                    remove_toplevels
+                    # scroll to the first matching item
+                    self.tree.see(item)
                     self.tree.focus(item)
                     break
 
