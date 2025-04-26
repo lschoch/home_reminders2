@@ -532,56 +532,56 @@ def notifications_popup(self):  # noqa: C901, PLR0912
         with get_con() as con:
             cur = con.cursor()
             user_data = cur.execute("SELECT * FROM user").fetchone()
-        # check whether user has entered a phone number (opted in)
-        if user_data[0] is not None:
-            # create a string to hold upcoming items
-            messages = ""
-            date = datetime.today().strftime("%Y-%m-%d")
-            # check whether user wants 'day of' notificatons
-            past_due_items = cur.execute(
-                """
-                SELECT * FROM reminders WHERE date_next < ?
-                ORDER BY date_next ASC""",
-                (date,),
-            ).fetchall()
-            for item in past_due_items:
-                messages += f"\u2022 Past due: {item[1]}\n"
-            if user_data[3]:
+            # check whether user has entered a phone number (opted in)
+            if user_data[0] is not None:
+                # create a string to hold upcoming items
+                messages = ""
                 date = datetime.today().strftime("%Y-%m-%d")
-                day_of_items = cur.execute(
+                # check whether user wants 'day of' notificatons
+                past_due_items = cur.execute(
                     """
-                    SELECT * FROM reminders WHERE date_next == ?
+                    SELECT * FROM reminders WHERE date_next < ?
                     ORDER BY date_next ASC""",
                     (date,),
                 ).fetchall()
-                for item in day_of_items:
-                    messages += f"\u2022 Due today: {item[1]}\n"
-            # check whether user wants 'day before' notificatons
-            if user_data[2]:
-                date = (datetime.today() + timedelta(days=1)).strftime(
-                    "%Y-%m-%d"
-                )
-                day_before_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next == ?
-                    ORDER BY date_next ASC""",
-                    (date,),
-                ).fetchall()
-                for item in day_before_items:
-                    messages += f"\u2022 Due tomorrow: {item[1]}\n"
-            # check whether user wants 'week before' notificatons
-            if user_data[1]:
-                date = (datetime.today() + timedelta(days=7)).strftime(
-                    "%Y-%m-%d"
-                )
-                week_before_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next == ?
-                    ORDER BY date_next ASC""",
-                    (date,),
-                ).fetchall()
-                for item in week_before_items:
-                    messages += f"\u2022 Due in 7 days: {item[1]}\n"
+                for item in past_due_items:
+                    messages += f"\u2022 Past due: {item[1]}\n"
+                if user_data[3]:
+                    date = datetime.today().strftime("%Y-%m-%d")
+                    day_of_items = cur.execute(
+                        """
+                        SELECT * FROM reminders WHERE date_next == ?
+                        ORDER BY date_next ASC""",
+                        (date,),
+                    ).fetchall()
+                    for item in day_of_items:
+                        messages += f"\u2022 Due today: {item[1]}\n"
+                # check whether user wants 'day before' notificatons
+                if user_data[2]:
+                    date = (datetime.today() + timedelta(days=1)).strftime(
+                        "%Y-%m-%d"
+                    )
+                    day_before_items = cur.execute(
+                        """
+                        SELECT * FROM reminders WHERE date_next == ?
+                        ORDER BY date_next ASC""",
+                        (date,),
+                    ).fetchall()
+                    for item in day_before_items:
+                        messages += f"\u2022 Due tomorrow: {item[1]}\n"
+                # check whether user wants 'week before' notificatons
+                if user_data[1]:
+                    date = (datetime.today() + timedelta(days=7)).strftime(
+                        "%Y-%m-%d"
+                    )
+                    week_before_items = cur.execute(
+                        """
+                        SELECT * FROM reminders WHERE date_next == ?
+                        ORDER BY date_next ASC""",
+                        (date,),
+                    ).fetchall()
+                    for item in week_before_items:
+                        messages += f"\u2022 Due in 7 days: {item[1]}\n"
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
