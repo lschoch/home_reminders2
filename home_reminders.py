@@ -434,8 +434,10 @@ class App(tk.Tk):
 
         notifications_popup(self)
         refresh_date(self, data)
-        # on startup, select the first item in the treeview
-        self.tree.selection_set(self.tree.get_children()[0])
+        # on startup, select the last item in the treeview - to get focus
+        # in treeview without interfering with item highlighting
+        last_index = len(self.tree.get_children()) - 1
+        self.tree.selection_set(self.tree.get_children()[last_index])
 
     # end init
     ###############################################################
