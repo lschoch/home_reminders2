@@ -1,6 +1,7 @@
 import importlib
 import os
 import shutil
+import sqlite3
 import tkinter as tk
 from datetime import date, datetime
 from tkinter import END, Menu, ttk
@@ -83,11 +84,19 @@ class App(tk.Tk):
         def opt_in():
             # initialize user table if empty
             initialize_user(self)
-            with get_con() as con:
-                cur = con.cursor()
-                # check to see if user has a phone number; i.e., already
-                # receiving notifications
-                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    # check to see if user has a phone number; i.e., already
+                    # receiving notifications
+                    phone_number = cur.execute(
+                        "SELECT * FROM user"
+                    ).fetchone()[0]
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
+                )
             if not phone_number:
                 response = YesNoMsgBox(
                     self,
@@ -110,8 +119,18 @@ class App(tk.Tk):
                         y_offset=5,
                     )
                     # delete user data if user opts out
-                    cur.execute("DELETE FROM user")
-                    con.commit()
+                    try:
+                        with get_con() as con:
+                            cur = con.cursor()
+                            cur.execute("DELETE FROM user")
+                            con.commit()
+                    except sqlite3.Error as e:
+                        print(f"Database error: {e}")
+                        InfoMsgBox(
+                            self,
+                            "Error",
+                            "Failed to retrieve data from the database.",
+                        )
             # if user opts out of notifications, delete user's data
             else:
                 response1 = YesNoMsgBox(
@@ -131,8 +150,19 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    cur.execute("DELETE FROM user")
-                    con.commit()
+                    # delete user data if user opts out
+                    try:
+                        with get_con() as con:
+                            cur = con.cursor()
+                            cur.execute("DELETE FROM user")
+                            con.commit()
+                    except sqlite3.Error as e:
+                        print(f"Database error: {e}")
+                        InfoMsgBox(
+                            self,
+                            "Error",
+                            "Failed to retrieve data from the database.",
+                        )
                 elif response1.get_response():
                     response2 = YesNoMsgBox(
                         self,
@@ -147,11 +177,19 @@ class App(tk.Tk):
 
         def opt_out():
             initialize_user(self)
-            with get_con() as con:
-                cur = con.cursor()
-                # check to see if user has a phone number; i.e., already
-                # receiving notifications
-                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    # check to see if user has a phone number; i.e., already
+                    # receiving notifications
+                    phone_number = cur.execute(
+                        "SELECT * FROM user"
+                    ).fetchone()[0]
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
+                )
             if phone_number is not None:
                 response = YesNoMsgBox(
                     self,
@@ -170,10 +208,18 @@ class App(tk.Tk):
                         x_offset=3,
                         y_offset=5,
                     )
-                    with get_con() as con:
-                        cur = con.cursor()
-                        cur.execute("DELETE FROM user")
-                        con.commit()
+                    try:
+                        with get_con() as con:
+                            cur = con.cursor()
+                            cur.execute("DELETE FROM user")
+                            con.commit()
+                    except sqlite3.Error as e:
+                        print(f"Database error: {e}")
+                        InfoMsgBox(
+                            self,
+                            "Error",
+                            "Failed to retrieve data from the database.",
+                        )
             else:
                 InfoMsgBox(
                     self,
@@ -188,9 +234,17 @@ class App(tk.Tk):
             initialize_user(self)
             # check to see if user has a phone number; i.e., already receiving
             # notifications
-            with get_con() as con:
-                cur = con.cursor()
-                phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    phone_number = cur.execute(
+                        "SELECT * FROM user"
+                    ).fetchone()[0]
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
+                )
             if phone_number:
                 get_user_data(self)
             else:
@@ -426,22 +480,28 @@ class App(tk.Tk):
                 date_next,
                 top.note_entry.get(),
             )
-            with get_con() as con:
-                cur = con.cursor()
-                # insert data into database
-                cur.execute(
-                    """
-                    INSERT INTO reminders (
-                        description,
-                        frequency,
-                        period,
-                        date_last,
-                        date_next,
-                        note)
-                    VALUES (?, ?, ?, ?, ?, ?)""",
-                    data_get,
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    # insert data into database
+                    cur.execute(
+                        """
+                        INSERT INTO reminders (
+                            description,
+                            frequency,
+                            period,
+                            date_last,
+                            date_next,
+                            note)
+                        VALUES (?, ?, ?, ?, ?, ?)""",
+                        data_get,
+                    )
+                    con.commit()
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
                 )
-                con.commit()
             refresh(self)
 
             save_btn.config(state="normal")
@@ -464,13 +524,19 @@ class App(tk.Tk):
 
     def pending(self):
         self.view_current = True
-        with get_con() as con:
-            cur = con.cursor()
-            data = cur.execute("""
-                SELECT * FROM reminders
-                WHERE date_next >= DATE('now', 'localtime')
-                ORDER BY date_next ASC, description ASC
-            """)
+        try:
+            with get_con() as con:
+                cur = con.cursor()
+                data = cur.execute("""
+                    SELECT * FROM reminders
+                    WHERE date_next >= DATE('now', 'localtime')
+                    ORDER BY date_next ASC, description ASC
+                """)
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            InfoMsgBox(
+                self, "Error", "Failed to retrieve data from the database."
+            )
         for item in self.tree.get_children():
             self.tree.delete(item)
         insert_data(self, data)
@@ -485,12 +551,18 @@ class App(tk.Tk):
 
     def view_all(self):
         self.view_current = False
-        with get_con() as con:
-            cur = con.cursor()
-            data = cur.execute("""
-                SELECT * FROM reminders
-                ORDER BY date_next ASC, description ASC
-            """)
+        try:
+            with get_con() as con:
+                cur = con.cursor()
+                data = cur.execute("""
+                    SELECT * FROM reminders
+                    ORDER BY date_next ASC, description ASC
+                """)
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            InfoMsgBox(
+                self, "Error", "Failed to retrieve data from the database."
+            )
         for item in self.tree.get_children():
             self.tree.delete(item)
         insert_data(self, data)
@@ -561,10 +633,16 @@ class App(tk.Tk):
             y_offset=5,
         )
         if answer.get_response():
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute("DELETE FROM user")
-                con.commit()
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    cur.execute("DELETE FROM user")
+                    con.commit()
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
+                )
             refresh(self)
             InfoMsgBox(
                 self,
@@ -628,26 +706,33 @@ class App(tk.Tk):
             if top.period_combobox.get() == "one-time":
                 top.frequency_entry.delete(0, END)
                 top.frequency_entry.insert(0, "1")
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute(
-                    """
-                    UPDATE reminders
-                    SET (
-                    description, frequency, period, date_last, date_next, note)
-                      = (?, ?, ?, ?, ?, ?)
-                    WHERE id = ? """,
-                    (
-                        top.description_entry.get(),
-                        top.frequency_entry.get(),
-                        top.period_combobox.get(),
-                        top.date_last_entry.get(),
-                        date_next,
-                        top.note_entry.get(),
-                        self.tree.item(selected_item)["values"][0],
-                    ),
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    cur.execute(
+                        """
+                        UPDATE reminders
+                        SET (
+                        description, frequency, period, date_last, date_next, \
+                            note)
+                        = (?, ?, ?, ?, ?, ?)
+                        WHERE id = ? """,
+                        (
+                            top.description_entry.get(),
+                            top.frequency_entry.get(),
+                            top.period_combobox.get(),
+                            top.date_last_entry.get(),
+                            date_next,
+                            top.note_entry.get(),
+                            self.tree.item(selected_item)["values"][0],
+                        ),
+                    )
+                    con.commit()
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
                 )
-                con.commit()
             refresh(self)
             remove_toplevels(self)
 
@@ -664,15 +749,21 @@ class App(tk.Tk):
             if not answer.get_response():
                 return
             id = self.tree.item(selected_item)["values"][0]
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute(
-                    """
-                    DELETE FROM reminders
-                    WHERE id = ?""",
-                    (id,),
+            try:
+                with get_con() as con:
+                    cur = con.cursor()
+                    cur.execute(
+                        """
+                        DELETE FROM reminders
+                        WHERE id = ?""",
+                        (id,),
+                    )
+                    con.commit()
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                InfoMsgBox(
+                    self, "Error", "Failed to retrieve data from the database."
                 )
-                con.commit()
             refresh(self)
             remove_toplevels(self)
             self.focus()
