@@ -246,7 +246,7 @@ class App(tk.Tk):
         )
         self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
-        self.expired_lbl = tk.Label(
+        """ self.expired_lbl = tk.Label(
             self,
             textvariable=self.expired_lbl_msg,
             background="yellow",
@@ -255,7 +255,34 @@ class App(tk.Tk):
         )
         self.expired_lbl.grid(
             row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
+        ) """
+
+        # add search bar to top of window
+        self.search_lbl = ttk.Label(
+            self,
+            text="Search:",
+            font=("Arial", 14),
+            background="#ececec",  # self.view_lbl_color.get(),
         )
+        self.search_lbl.grid(row=0, column=1, padx=315, pady=10, sticky="sw")
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(
+            self, textvariable=search_var, width=30, font=("Arial", 14)
+        )
+        search_entry.grid(
+            row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
+        )
+
+        def search_treeview():
+            query = search_var.get().lower()
+            for item in self.tree.get_children():
+                values = self.tree.item(item, "values")
+                if query in str(values).lower():
+                    self.tree.selection_set(item)
+                    self.tree.focus(item)
+                    break
+
+        search_entry.bind("<Return>", lambda e: search_treeview())
 
         ###############################################################
         # insert image
@@ -353,6 +380,8 @@ class App(tk.Tk):
 
         notifications_popup(self)
         refresh_date(self, data)
+        # on startup, select the first item in the treeview
+        self.tree.selection_set(self.tree.get_children()[0])
 
     # end init
     ###############################################################
