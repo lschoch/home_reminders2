@@ -22,7 +22,6 @@ from business_logic import (
     notifications_popup,
     quit_program,
     refresh,
-    refresh_date,
     remove_toplevels,
     validate_inputs,
 )
@@ -260,6 +259,18 @@ class App(tk.Tk):
         # end left side buttons
         ###############################################################
 
+        # set value of today's date variable
+        self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
+        # create today's date label and set value to today_date_var
+        self.today_is_lbl = tk.Label(
+            self,
+            text=f"Today is {self.todays_date_var.get()}",
+            foreground="black",
+            font=("Helvetica", 24),
+        )
+        self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
+
+        # create view label and set value
         self.view_lbl = ttk.Label(
             self,
             textvariable=self.view_lbl_msg,
@@ -405,7 +416,7 @@ class App(tk.Tk):
                 print(f"Error initializing todays_date_var: {e}")
 
         notifications_popup(self)
-        refresh_date(self, data)
+
         # on startup, select the last item in the treeview - to get focus
         # in treeview without interfering with item highlighting
         last_index = len(self.tree.get_children()) - 1
@@ -416,10 +427,9 @@ class App(tk.Tk):
 
     ###############################################################
     # commands for left side buttons
-    # create top level window for entry of data for new item
-    ""
 
     def create_new(self):
+        """create top level window for entry of data for new item"""
         # remove any existing toplevels
         remove_toplevels(self)
 
@@ -548,8 +558,6 @@ class App(tk.Tk):
 
     # end commands for left side buttons
     ###############################################################
-
-    ""
 
     def backup(self):
         answer = YesNoMsgBox(
@@ -748,4 +756,20 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     app = App()
+
+    def date_check():
+        """
+        Check if the current date has changed, and if so, update the
+        todays_date_var to the current date. This is used to ensure that
+        the date displayed in the app is always up-to-date, especially if
+        the app is left open overnight or for an extended period.
+        This function is called every second to check for date changes.
+        """
+        if app.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
+            app.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
+            # refresh data in treeview so that highlighting remains accurate
+            app.refresh()
+
+    app.after(1000, date_check)  # check for date change every second
+
     app.mainloop()

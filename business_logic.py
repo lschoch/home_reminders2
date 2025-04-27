@@ -159,11 +159,8 @@ def get_date(date_last_entry, top):
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
 
-# function to update treeview and labels after a change to the database
-""
-
-
 def refresh(self):
+    """function to update treeview and labels after a change to the database"""
     # connect to database and create cursor
     try:
         with get_con() as con:
@@ -656,33 +653,6 @@ def get_data(db_path):
             ORDER BY date_next ASC, description ASC
         """)
     return data
-
-
-###############################################################
-# function to display current date and update treeview when date changes
-""
-
-
-def refresh_date(self, data):
-    # catch the date change at midnight
-    if self.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
-        self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
-        # refresh all data
-        refresh(self)
-        # insert_data(self, data)
-    # create widget
-    self.today_is_lbl = tk.Label(
-        self,
-        # textvariable=self.todays_date_var,
-        text=f"Today is {self.todays_date_var.get()}",
-        foreground="black",
-        font=("Helvetica", 24),
-    )
-    self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
-
-
-# end function to display current date
-###############################################################
 
 
 def quit_program():
