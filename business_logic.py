@@ -1,6 +1,6 @@
 import os
+import shutil
 import sqlite3
-import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
@@ -8,7 +8,7 @@ from tkinter import ttk
 from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
 
-from classes import InfoMsgBox, NofificationsPopup
+from classes import InfoMsgBox, NofificationsPopup, YesNoMsgBox
 
 
 # create treeview to display data from database
@@ -655,10 +655,6 @@ def get_data(db_path):
     return data
 
 
-def quit_program():
-    sys.exit()
-
-
 # function to validate inputs for new item and update item dialogs
 def validate_inputs(self, top, new=False, id=None):
     # description is required
@@ -750,3 +746,272 @@ def delete_user_data(self):
         InfoMsgBox(
             self, "Error", "Failed to delete user data from the database."
         )
+
+
+def opt_in(self):
+    """function to opt in to notifications and get user data"""
+    # initialize user table if empty
+    initialize_user(self)
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # check to see if user has a phone number; i.e., already
+            # receiving notifications
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    if not phone_number:
+        response = YesNoMsgBox(
+            self,
+            title="Notifications",
+            message="Would you like to to be notified by text "
+            + "when your items are coming due?",
+            x_offset=3,
+            y_offset=5,
+        )
+        # if user opts to receive notifications, get user data
+        if response.get_response():
+            get_user_data(self)
+        else:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "You have opted out of text notifications."
+                + " Texts will no longer be sent.",
+                x_offset=3,
+                y_offset=5,
+            )
+            # delete user data if user opts out
+            delete_user_data()
+    # if user opts out of notifications, delete user's data
+    else:
+        response1 = YesNoMsgBox(
+            self,
+            title="Notifications",
+            message="You are already receiving text"
+            + " notifications? Do want to continue receiving them?",
+            x_offset=3,
+            y_offset=5,
+        )
+        if not response1.get_response():
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "You have opted out of text notifications."
+                + " Texts will no longer be sent.",
+                x_offset=3,
+                y_offset=5,
+            )
+            # delete user data if user opts out
+            delete_user_data(self)
+        elif response1.get_response():
+            response2 = YesNoMsgBox(
+                self,
+                title="Notifications",
+                message="""Do you want to change your notification
+                    phone number or notification frequency?""",
+                x_offset=3,
+                y_offset=5,
+            )
+            if response2.get_response():
+                get_user_data(self)
+
+
+def opt_out(self):
+    initialize_user(self)
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # check to see if user has a phone number; i.e., already
+            # receiving notifications
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    if phone_number is not None:
+        response = YesNoMsgBox(
+            self,
+            title="Notifications",
+            message="""Do you want to stop receiving
+                text notifications?""",
+            x_offset=3,
+            y_offset=5,
+        )
+        if response.get_response():
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "You have opted out of text notifications."
+                + " Texts will no longer be sent.",
+                x_offset=3,
+                y_offset=5,
+            )
+            delete_user_data(self)
+    else:
+        InfoMsgBox(
+            self,
+            "Notifications",
+            "You are not currently receiving text notifications. "
+            + "Click opt-in to start.",
+            x_offset=3,
+            y_offset=5,
+        )
+
+
+def preferences(self):
+    initialize_user(self)
+    # check to see if user has a phone number; i.e., already receiving
+    # notifications
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    if phone_number:
+        get_user_data(self)
+    else:
+        InfoMsgBox(
+            self,
+            "Notifications",
+            "You are not currently receiving text notifications. "
+            + "Click opt-in to start.",
+            x_offset=3,
+            y_offset=5,
+        )
+
+
+def view_pending(self):
+    self.view_current = True
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            data = cur.execute("""
+                SELECT * FROM reminders
+                WHERE date_next >= DATE('now', 'localtime')
+                ORDER BY date_next ASC, description ASC
+            """)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    for item in self.tree.get_children():
+        self.tree.delete(item)
+    insert_data(self, data)
+    refresh(self)
+    remove_toplevels(self)
+    self.refreshed = True
+    self.tree.focus()
+
+
+def view_all(self):
+    self.view_current = False
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            data = cur.execute("""
+                SELECT * FROM reminders
+                ORDER BY date_next ASC, description ASC
+            """)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    for item in self.tree.get_children():
+        self.tree.delete(item)
+    insert_data(self, data)
+    refresh(self)
+    remove_toplevels(self)
+    self.refreshed = True
+    self.focus_set()
+    self.tree.focus_set()
+
+
+def get_db_paths():
+    # create path to database and backup files
+    db_base_path = os.path.join(appsupportdir(), "Home Reminders")
+    if not os.path.exists(db_base_path):
+        os.makedirs(db_base_path)
+    db_path = os.path.join(db_base_path, "home_reminders.db")
+    db_bak_path = os.path.join(db_base_path, "home_reminders.bak")
+    return (db_path, db_bak_path)
+
+
+def backup(self):
+    answer = YesNoMsgBox(
+        self,
+        "Backup",
+        "The current backup will be overwritten. Are you sure?",
+        x_offset=3,
+        y_offset=5,
+    )
+    if answer.get_response():
+        paths = get_db_paths()
+        db_path = paths[0]
+        db_bak_path = paths[1]
+        shutil.copy2(db_path, db_bak_path)
+        InfoMsgBox(
+            self,
+            "Backup",
+            "Backup completed.",
+            x_offset=3,
+            y_offset=5,
+        )
+    else:
+        return
+
+
+def restore(self):
+    answer = YesNoMsgBox(
+        self,
+        "Restore",
+        "All current data will be overwritten. Are you sure?",
+        x_offset=3,
+        y_offset=5,
+    )
+    if answer.get_response():
+        paths = get_db_paths()
+        db_path = paths[0]
+        db_bak_path = paths[1]
+        shutil.copy2(db_bak_path, db_path)
+        refresh(self)
+        InfoMsgBox(
+            self,
+            "Restore",
+            "Data restored.",
+            x_offset=3,
+            y_offset=5,
+        )
+    else:
+        return
+
+
+def delete_all(self):
+    answer = YesNoMsgBox(
+        self,
+        "Delete All",
+        "This will delete all data. Are you sure?",
+        x_offset=3,
+        y_offset=5,
+    )
+    if answer.get_response():
+        try:
+            with get_con() as con:
+                cur = con.cursor()
+                cur.execute("DELETE FROM reminders")
+                con.commit()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            InfoMsgBox(
+                self, "Error", "Failed to delete user data from the database."
+            )
+        refresh(self)
+        InfoMsgBox(
+            self,
+            "Delete All",
+            "Data has been deleted.",
+            x_offset=3,
+            y_offset=5,
+        )
+    else:
+        return

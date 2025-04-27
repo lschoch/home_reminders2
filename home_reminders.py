@@ -1,31 +1,27 @@
 import importlib
 import os
-import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime
-from tkinter import END, Menu, ttk
+from tkinter import END, ttk
 
 from PIL import Image, ImageTk
 
 from business_logic import (
-    appsupportdir,
     create_tree_widget,
     date_next_calc,
-    delete_user_data,
     get_con,
     get_data,
     get_date,
-    get_user_data,
-    initialize_user,
+    get_db_paths,
     insert_data,
     notifications_popup,
-    quit_program,
     refresh,
     remove_toplevels,
     validate_inputs,
 )
 from classes import InfoMsgBox, TopLvl, YesNoMsgBox
+from ui_logic import create_legend, create_menu_bar
 
 # tracemalloc.start()
 
@@ -37,14 +33,9 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.close()
     print("Splash screen closed.")
 
-# create path to database and backup files
-db_base_path = os.path.join(appsupportdir(), "Home Reminders")
-if not os.path.exists(db_base_path):
-    os.makedirs(db_base_path)
-db_path = os.path.join(db_base_path, "home_reminders.db")
-db_bak_path = os.path.join(db_base_path, "home_reminders.bak")
+paths = get_db_paths()  # get paths to database files
 # create database if it does not exist and retrieve data
-data = get_data(db_path)
+data = get_data(paths[0])
 
 
 # create the main window
@@ -77,185 +68,15 @@ class App(tk.Tk):
         self.expired_lbl_msg = tk.StringVar()
         self.todays_date_var = tk.StringVar()
 
-        ###############################################################
-        # create menus
-        self.option_add("*tearOff", False)
-
-        def opt_in():
-            # initialize user table if empty
-            initialize_user(self)
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    # check to see if user has a phone number; i.e., already
-                    # receiving notifications
-                    phone_number = cur.execute(
-                        "SELECT * FROM user"
-                    ).fetchone()[0]
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
-            if not phone_number:
-                response = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="Would you like to to be notified by text "
-                    + "when your items are coming due?",
-                    x_offset=3,
-                    y_offset=5,
-                )
-                # if user opts to receive notifications, get user data
-                if response.get_response():
-                    get_user_data(self)
-                else:
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "You have opted out of text notifications."
-                        + " Texts will no longer be sent.",
-                        x_offset=3,
-                        y_offset=5,
-                    )
-                    # delete user data if user opts out
-                    delete_user_data()
-            # if user opts out of notifications, delete user's data
-            else:
-                response1 = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="You are already receiving text"
-                    + " notifications? Do want to continue receiving them?",
-                    x_offset=3,
-                    y_offset=5,
-                )
-                if not response1.get_response():
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "You have opted out of text notifications."
-                        + " Texts will no longer be sent.",
-                        x_offset=3,
-                        y_offset=5,
-                    )
-                    # delete user data if user opts out
-                    delete_user_data(self)
-                elif response1.get_response():
-                    response2 = YesNoMsgBox(
-                        self,
-                        title="Notifications",
-                        message="""Do you want to change your notification
-                         phone number or notification frequency?""",
-                        x_offset=3,
-                        y_offset=5,
-                    )
-                    if response2.get_response():
-                        get_user_data(self)
-
-        def opt_out():
-            initialize_user(self)
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    # check to see if user has a phone number; i.e., already
-                    # receiving notifications
-                    phone_number = cur.execute(
-                        "SELECT * FROM user"
-                    ).fetchone()[0]
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
-            if phone_number is not None:
-                response = YesNoMsgBox(
-                    self,
-                    title="Notifications",
-                    message="""Do you want to stop receiving
-                     text notifications?""",
-                    x_offset=3,
-                    y_offset=5,
-                )
-                if response.get_response():
-                    InfoMsgBox(
-                        self,
-                        "Notifications",
-                        "You have opted out of text notifications."
-                        + " Texts will no longer be sent.",
-                        x_offset=3,
-                        y_offset=5,
-                    )
-                    delete_user_data(self)
-            else:
-                InfoMsgBox(
-                    self,
-                    "Notifications",
-                    "You are not currently receiving text notifications. "
-                    + "Click opt-in to start.",
-                    x_offset=3,
-                    y_offset=5,
-                )
-
-        def preferences():
-            initialize_user(self)
-            # check to see if user has a phone number; i.e., already receiving
-            # notifications
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    phone_number = cur.execute(
-                        "SELECT * FROM user"
-                    ).fetchone()[0]
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(
-                    self, "Error", "Failed to retrieve data from the database."
-                )
-            if phone_number:
-                get_user_data(self)
-            else:
-                InfoMsgBox(
-                    self,
-                    "Notifications",
-                    "You are not currently receiving text notifications. "
-                    + "Click opt-in to start.",
-                    x_offset=3,
-                    y_offset=5,
-                )
-
-        menubar = Menu(self)
-        self.config(menu=menubar)
-
-        notifications_menu = Menu(menubar)
-        menubar.add_cascade(label="Notifications", menu=notifications_menu)
-        notifications_menu.add_command(label="Opt-in", command=opt_in)
-        notifications_menu.add_command(label="Opt-out", command=opt_out)
-        notifications_menu.add_command(
-            label="Preferences", command=preferences
-        )
-
-        view_menu = Menu(menubar)
-        menubar.add_cascade(label="View", menu=view_menu)
-        view_menu.add_command(label="Pending", command=self.pending)
-        view_menu.add_command(label="All", command=self.view_all)
-
-        data_menu = Menu(menubar)
-        menubar.add_cascade(label="Data", menu=data_menu)
-        data_menu.add_command(label="Backup", command=self.backup)
-        data_menu.add_command(label="Restore", command=self.restore)
-        # data_menu.add_command(label="Delete All", command=self.delete_all)
-        # end create menus
-        ###############################################################
+        create_menu_bar(self)
 
         ###############################################################
         # add left side buttons
         self.btn = ttk.Button(
             self, text="New Item", command=self.create_new
         ).grid(row=1, column=0, padx=20, pady=(20, 0), sticky="n")
-        self.btn = ttk.Button(self, text="Quit", command=quit_program).grid(
-            row=1, column=0, padx=20, pady=(60, 0), sticky="n"
-        )
+        self.btn = ttk.Button(self, text="Quit", command=self.destroy)
+        self.btn.grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
         # end left side buttons
         ###############################################################
 
@@ -321,7 +142,6 @@ class App(tk.Tk):
 
         search_entry.bind("<Return>", lambda e: search_treeview())
 
-        ###############################################################
         # insert image
         try:
             house_img = ImageTk.PhotoImage(Image.open(self.ico_path))
@@ -330,83 +150,14 @@ class App(tk.Tk):
             self.house_img_lbl.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
             pass
-        ###############################################################
 
-        ###############################################################
-        # create legend
-        self.legend_frame = tk.Frame(self)
-        self.legend_frame.grid(row=1, column=0, pady=(0, 20), sticky="s")
-
-        tk.Label(
-            self.legend_frame,
-            text="Legend:",
-            justify="center",
-            font=("Arial", 14),
-            foreground="black",
-            background="#ececec",
-        ).grid(row=0, column=0, pady=(5, 0), columnspan=2)
-
-        tk.Label(
-            self.legend_frame,
-            text="  ",
-            width=2,
-            background="lime",
-            borderwidth=1,
-            relief="solid",
-        ).grid(
-            row=1,
-            column=1,
-            pady=(5, 0),
-        )
-        ttk.Label(
-            self.legend_frame, text="due today - ", background="#ececec"
-        ).grid(row=1, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
-
-        tk.Label(
-            self.legend_frame,
-            text="  ",
-            width=2,
-            background="yellow",
-            borderwidth=1,
-            relief="solid",
-        ).grid(
-            row=2,
-            column=1,
-            pady=(5, 0),
-        )
-        ttk.Label(
-            self.legend_frame, text="past due - ", background="#ececec"
-        ).grid(row=2, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
-
-        tk.Label(
-            self.legend_frame,
-            text="  ",
-            width=2,
-            background="white",
-            borderwidth=1,
-            relief="solid",
-        ).grid(
-            row=3,
-            column=1,
-            pady=(5, 0),
-        )
-        ttk.Label(
-            self.legend_frame, text="pending - ", background="#ececec"
-        ).grid(row=3, column=0, padx=(5, 0), pady=(5, 0), sticky="e")
-        # end legend
-        ###############################################################
-
+        # create legend for colors in treeview
+        create_legend(self)
         # create treeview to display data
         self.tree = create_tree_widget(self)
-
         # add data to treeview
         insert_data(self, data)
-
         refresh(self)
-        if self.tree.get_children():
-            child_id = self.tree.get_children()[0]
-            self.tree.focus(child_id)
-        # self.tree.selection_set(child_id)
 
         # initialize todays_date_var to today's date if not set
         if not self.todays_date_var.get():
@@ -502,128 +253,8 @@ class App(tk.Tk):
             row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
         )
 
-    ""
-
-    def pending(self):
-        self.view_current = True
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                data = cur.execute("""
-                    SELECT * FROM reminders
-                    WHERE date_next >= DATE('now', 'localtime')
-                    ORDER BY date_next ASC, description ASC
-                """)
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(
-                self, "Error", "Failed to retrieve data from the database."
-            )
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        insert_data(self, data)
-
-        refresh(self)
-
-        remove_toplevels(self)
-        self.refreshed = True
-        self.tree.focus()
-
-    ""
-
-    def view_all(self):
-        self.view_current = False
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                data = cur.execute("""
-                    SELECT * FROM reminders
-                    ORDER BY date_next ASC, description ASC
-                """)
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(
-                self, "Error", "Failed to retrieve data from the database."
-            )
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        insert_data(self, data)
-
-        refresh(self)
-
-        remove_toplevels(self)
-        self.refreshed = True
-        self.focus_set()
-        self.tree.focus_set()
-
     # end commands for left side buttons
     ###############################################################
-
-    def backup(self):
-        answer = YesNoMsgBox(
-            self,
-            "Backup",
-            "The current backup will be overwritten. Are you sure?",
-            x_offset=3,
-            y_offset=5,
-        )
-        if answer.get_response():
-            shutil.copy2(db_path, db_bak_path)
-            InfoMsgBox(
-                self,
-                "Backup",
-                "Backup completed.",
-                x_offset=3,
-                y_offset=5,
-            )
-        else:
-            return
-
-    ""
-
-    def restore(self):
-        answer = YesNoMsgBox(
-            self,
-            "Restore",
-            "All current data will be overwritten. Are you sure?",
-            x_offset=3,
-            y_offset=5,
-        )
-        if answer.get_response():
-            shutil.copy2(db_bak_path, db_path)
-            refresh(self)
-            InfoMsgBox(
-                self,
-                "Restore",
-                "Data restored.",
-                x_offset=3,
-                y_offset=5,
-            )
-        else:
-            return
-
-    ""
-
-    def delete_all(self):
-        answer = YesNoMsgBox(
-            self,
-            "Delete All",
-            "This will delete all data. Are you sure?",
-            x_offset=3,
-            y_offset=5,
-        )
-        if answer.get_response():
-            delete_user_data(self)
-            refresh(self)
-            InfoMsgBox(
-                self,
-                "Delete All",
-                "Data has been deleted.",
-                x_offset=3,
-                y_offset=5,
-            )
-        else:
-            return
 
     # manage row selection in treeview
     ""
