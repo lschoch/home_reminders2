@@ -622,11 +622,31 @@ def notifications_popup(self):  # noqa: C901, PLR0912
     self.after(14400000, notifications_popup, self)
 
 
-# end notifications popup for upcoming events
+def date_check(self):
+    """
+    Check if the current date has changed, and if so, update the today_is_lbl
+    to the current date and refresh treeview so that highlighting remains
+    accurate. This is done because the app is meant to remain open for extended
+    periods. This function is called every second to monitor for a date change.
+    """
+    # check if the current date has changed
+    if self.todays_date_var.get() == datetime.now().strftime("%Y-%m-%d"):
+        # update the label to show today's date
+        self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
+        self.today_is_lbl.config(
+            text=f"Today is {self.todays_date_var.get()}",
+        )
+        # refresh data in treeview so that highlighting remains accurate
+        refresh(self)
+
+    self.after(1000, date_check, self)
 
 
-# function to create database and table if they do not exist and retrieve data
 def get_data(db_path):
+    """
+    Function to create database if it does not exist and retrieve data for
+    display in treeview.
+    """
     with sqlite3.connect(db_path) as con:
         cur = con.cursor()
 

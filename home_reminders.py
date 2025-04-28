@@ -5,10 +5,12 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import END, ttk
 
+from icecream import ic  # noqa: F401
 from PIL import Image, ImageTk
 
 from business_logic import (
     create_tree_widget,
+    date_check,
     date_next_calc,
     get_con,
     get_data,
@@ -144,6 +146,7 @@ class App(tk.Tk):
         insert_data(self, data)
         refresh(self)
         notifications_popup(self)
+        date_check(self)
 
         # on startup, select the last item in the treeview - to get focus
         # in treeview without interfering with item highlighting
@@ -282,20 +285,4 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     app = App()
-
-    def date_check():
-        """
-        Check if the current date has changed, and if so, update the
-        todays_date_var to the current date. This is used to ensure that
-        the date displayed in the app is always up-to-date, especially if
-        the app is left open overnight or for an extended period.
-        This function is called every second to check for date changes.
-        """
-        if app.todays_date_var.get() < datetime.now().strftime("%Y-%m-%d"):
-            app.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
-            # refresh data in treeview so that highlighting remains accurate
-            app.refresh()
-
-    app.after(1000, date_check)  # check for date change every second
-
     app.mainloop()
