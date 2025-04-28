@@ -330,11 +330,16 @@ def initialize_user(self):
         InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
-# get/modify user preferences and store in user table
-""
-
-
 def get_user_data(self):  # noqa: PLR0915
+    """
+    Function to get user data for notifications preferences. It creates a
+    window for the user to input their phone number and notification
+    preferences. It validates the input and updates the database with the
+    user's preferences. If the user already exists, it updates their data.
+    It also checks if the user has already opted in to notifications and
+    initializes the user table if it is empty. It does not return anything.
+    """
+
     def submit():
         num = entry.get()
         no_options_selected = (
@@ -515,8 +520,15 @@ def get_user_data(self):  # noqa: PLR0915
     entry.focus_set()
 
 
-# notifications popup for upcoming items
-def notifications_popup(self):  # noqa: C901, PLR0912
+def notifications_popup(self):  # noqa: C901, PLR0912, PLR0915
+    """
+    Function to check for upcoming items and create a notifications popup if
+    there are any. It checks for items that are past due, due today, due
+    tomorrow, or due in 7 days, depending on user preferences. It runs every
+    4 hours to check for upcoming items. It also removes any existing
+    notifications popups to prevent multiple popups from accumulating. Does not
+    return anything.
+    """
     # remove existing notifications popups, if any exist
     for widget in self.winfo_children():
         if (
@@ -624,10 +636,11 @@ def notifications_popup(self):  # noqa: C901, PLR0912
 
 def date_check(self):
     """
-    Check if the current date has changed, and if so, update the today_is_lbl
-    to the current date and refresh treeview so that highlighting remains
-    accurate. This is done because the app is meant to remain open for extended
-    periods. This function is called every second to monitor for a date change.
+    Takes self as a parameter and checks if the current date has changed.
+    If it has, updates the today_is_lbl to the current date and refreshes
+    treeview so that highlighting remains accurate. This is done because the
+    app is meant to remain open for extended periods. This function calls
+    itself every second to monitor for date change. Does not return anything.
     """
     # check if the current date has changed
     if self.todays_date_var.get() == datetime.now().strftime("%Y-%m-%d"):
@@ -645,7 +658,8 @@ def date_check(self):
 def get_data(db_path):
     """
     Function to create database if it does not exist and retrieve data for
-    display in treeview.
+    display in treeview. Takes the database path as parameter and returns a
+    cursor object with data retrieved from the reminders table.
     """
     with sqlite3.connect(db_path) as con:
         cur = con.cursor()
@@ -680,8 +694,11 @@ def get_data(db_path):
     return data
 
 
-# function to validate inputs for new item and update item dialogs
 def validate_inputs(self, top, new=False, id=None):
+    """
+    Function to validate inputs for a new item and update item dialogs.
+    Returns True if inputs are valid, False otherwise.
+    """
     # description is required
     if not top.description_entry.get():
         InfoMsgBox(
