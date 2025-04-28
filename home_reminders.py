@@ -2,7 +2,7 @@ import importlib
 import os
 import sqlite3
 import tkinter as tk
-from datetime import date, datetime
+from datetime import datetime
 from tkinter import END, ttk
 
 from PIL import Image, ImageTk
@@ -21,7 +21,11 @@ from business_logic import (
     validate_inputs,
 )
 from classes import InfoMsgBox, TopLvl, YesNoMsgBox
-from ui_logic import create_legend, create_menu_bar
+from ui_logic import (
+    create_left_side_buttons,
+    create_legend,
+    create_menu_bar,
+)
 
 # tracemalloc.start()
 
@@ -33,7 +37,8 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.close()
     print("Splash screen closed.")
 
-paths = get_db_paths()  # get paths to database files
+# get paths to database files
+paths = get_db_paths()
 # create database if it does not exist and retrieve data
 data = get_data(paths[0])
 
@@ -69,16 +74,7 @@ class App(tk.Tk):
         self.todays_date_var = tk.StringVar()
 
         create_menu_bar(self)
-
-        ###############################################################
-        # add left side buttons
-        self.btn = ttk.Button(
-            self, text="New Item", command=self.create_new
-        ).grid(row=1, column=0, padx=20, pady=(20, 0), sticky="n")
-        self.btn = ttk.Button(self, text="Quit", command=self.destroy)
-        self.btn.grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
-        # end left side buttons
-        ###############################################################
+        create_left_side_buttons(self)
 
         # set value of today's date variable
         self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
@@ -91,7 +87,7 @@ class App(tk.Tk):
         )
         self.today_is_lbl.grid(row=0, column=1, pady=(10, 0), sticky="n")
 
-        # create view label and set value
+        # create viewing label and set text
         self.view_lbl = ttk.Label(
             self,
             textvariable=self.view_lbl_msg,
@@ -100,18 +96,7 @@ class App(tk.Tk):
         )
         self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
-        """ self.expired_lbl = tk.Label(
-            self,
-            textvariable=self.expired_lbl_msg,
-            background="yellow",
-            borderwidth=1,
-            relief="solid",
-        )
-        self.expired_lbl.grid(
-            row=0, column=1, ipadx=4, ipady=4, pady=(10), sticky="s"
-        ) """
-
-        # add search bar to top of window
+        # add search bar
         self.search_lbl = ttk.Label(
             self,
             text="Search:",
@@ -158,14 +143,6 @@ class App(tk.Tk):
         # add data to treeview
         insert_data(self, data)
         refresh(self)
-
-        # initialize todays_date_var to today's date if not set
-        if not self.todays_date_var.get():
-            try:
-                self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
-            except Exception as e:
-                print(f"Error initializing todays_date_var: {e}")
-
         notifications_popup(self)
 
         # on startup, select the last item in the treeview - to get focus
@@ -176,89 +153,7 @@ class App(tk.Tk):
     # end init
     ###############################################################
 
-    ###############################################################
-    # commands for left side buttons
-
-    def create_new(self):
-        """create top level window for entry of data for new item"""
-        # remove any existing toplevels
-        remove_toplevels(self)
-
-        # create new toplevel
-        top = TopLvl(self, "New Item")
-        top.date_last_entry.insert(0, date.today())
-
-        # bind click in date_last_entry to get_date
-        top.date_last_entry.bind(
-            "<1>", lambda e: get_date(top.date_last_entry, top)
-        )
-
-        # function to save new item to database
-        def save_item():
-            # validate inputs before saving, exit if validation fails
-            validate = validate_inputs(self, top, new=True)
-            if not validate:
-                return
-
-            # calculate date_next
-            date_next = date_next_calc(top)
-            # set frequency to 1 if period is "one-time"
-            if top.period_combobox.get() == "one-time":
-                top.frequency_entry.delete(0, END)
-                top.frequency_entry.insert(0, "1")
-            # get data to insert into database
-            data_get = (
-                top.description_entry.get(),
-                top.frequency_entry.get(),
-                top.period_combobox.get(),
-                top.date_last_entry.get(),
-                date_next,
-                top.note_entry.get(),
-            )
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    # insert data into database
-                    cur.execute(
-                        """
-                        INSERT INTO reminders (
-                            description,
-                            frequency,
-                            period,
-                            date_last,
-                            date_next,
-                            note)
-                        VALUES (?, ?, ?, ?, ?, ?)""",
-                        data_get,
-                    )
-                    con.commit()
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(self, "Error", "Failed to update the database.")
-            refresh(self)
-
-            save_btn.config(state="normal")
-            top.destroy()
-            self.tree.focus()
-
-        def cancel():
-            # remove_toplevels(self)
-            top.destroy()
-            self.tree.focus()
-
-        save_btn = ttk.Button(top, text="Save", command=save_item)
-        save_btn.grid(row=2, column=1, padx=(33, 0), pady=(15, 0), sticky="w")
-
-        ttk.Button(top, text="Cancel", command=cancel).grid(
-            row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
-        )
-
-    # end commands for left side buttons
-    ###############################################################
-
     # manage row selection in treeview
-    ""
-
     def on_treeview_selection_changed(self, event):  # noqa: PLR0915
         # abort if the selection change was after a refresh
         if self.refreshed:

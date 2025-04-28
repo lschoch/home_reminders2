@@ -3,12 +3,17 @@ import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta
-from tkinter import ttk
+from tkinter import END, ttk
 
 from dateutil.relativedelta import relativedelta
 from tkcalendar import Calendar
 
-from classes import InfoMsgBox, NofificationsPopup, YesNoMsgBox
+from classes import (
+    InfoMsgBox,
+    NofificationsPopup,
+    TopLvl,
+    YesNoMsgBox,
+)
 
 
 # create treeview to display data from database
@@ -1015,3 +1020,78 @@ def delete_all(self):
         )
     else:
         return
+
+
+def create_new(self):
+    """create top level window for entry of data for new item"""
+    # remove any existing toplevels
+    remove_toplevels(self)
+
+    # create new toplevel
+    top = TopLvl(self, "New Item")
+    top.date_last_entry.insert(0, date.today())
+
+    # bind click in date_last_entry to get_date
+    top.date_last_entry.bind(
+        "<1>", lambda e: get_date(top.date_last_entry, top)
+    )
+
+    # function to save new item to database
+    def save_item():
+        # validate inputs before saving, exit if validation fails
+        validate = validate_inputs(self, top, new=True)
+        if not validate:
+            return
+
+        # calculate date_next
+        date_next = date_next_calc(top)
+        # set frequency to 1 if period is "one-time"
+        if top.period_combobox.get() == "one-time":
+            top.frequency_entry.delete(0, END)
+            top.frequency_entry.insert(0, "1")
+        # get data to insert into database
+        data_get = (
+            top.description_entry.get(),
+            top.frequency_entry.get(),
+            top.period_combobox.get(),
+            top.date_last_entry.get(),
+            date_next,
+            top.note_entry.get(),
+        )
+        try:
+            with get_con() as con:
+                cur = con.cursor()
+                # insert data into database
+                cur.execute(
+                    """
+                    INSERT INTO reminders (
+                        description,
+                        frequency,
+                        period,
+                        date_last,
+                        date_next,
+                        note)
+                    VALUES (?, ?, ?, ?, ?, ?)""",
+                    data_get,
+                )
+                con.commit()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            InfoMsgBox(self, "Error", "Failed to update the database.")
+        refresh(self)
+
+        save_btn.config(state="normal")
+        top.destroy()
+        self.tree.focus()
+
+    def cancel():
+        # remove_toplevels(self)
+        top.destroy()
+        self.tree.focus()
+
+    save_btn = ttk.Button(top, text="Save", command=save_item)
+    save_btn.grid(row=2, column=1, padx=(33, 0), pady=(15, 0), sticky="w")
+
+    ttk.Button(top, text="Cancel", command=cancel).grid(
+        row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
+    )

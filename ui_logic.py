@@ -3,6 +3,7 @@ from tkinter import Menu, ttk
 
 from business_logic import (
     backup,
+    create_new,
     delete_all,
     opt_in,
     opt_out,
@@ -103,3 +104,13 @@ def create_legend(self):
     ttk.Label(self.legend_frame, text="pending - ", background="#ececec").grid(
         row=3, column=0, padx=(5, 0), pady=(5, 0), sticky="e"
     )
+
+
+def create_left_side_buttons(self):
+    """create left side buttons for the main window"""
+    self.btn_new = ttk.Button(
+        self, text="New Item", command=lambda: create_new(self)
+    )
+    self.btn_new.grid(row=1, column=0, padx=20, pady=(20, 0), sticky="n")
+    self.btn_quit = ttk.Button(self, text="Quit", command=self.destroy)
+    self.btn_quit.grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
