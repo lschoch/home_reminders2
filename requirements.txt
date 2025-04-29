@@ -21,6 +21,7 @@ pyinstaller==6.11.0
 pyinstaller-hooks-contrib==2024.9
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
+schedule==1.2.2
 setuptools==75.3.0
 six==1.16.0
 tkcalendar==1.6.1
