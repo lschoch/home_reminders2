@@ -357,7 +357,7 @@ def get_user_data(self):  # noqa: PLR0915
                 x_offset=100,
                 y_offset=15,
             )
-            num_window.focus_set()
+            preferences_window.focus_set()
             entry.focus_set()
         # require at least one "when" option
         elif no_options_selected:
@@ -372,7 +372,7 @@ def get_user_data(self):  # noqa: PLR0915
                 x_offset=100,
                 y_offset=15,
             )
-            num_window.focus_set()
+            preferences_window.focus_set()
         else:
             values = (
                 num,  # phone number
@@ -399,7 +399,7 @@ def get_user_data(self):  # noqa: PLR0915
         except sqlite3.Error as e:
             print(f"Database error: {e}")
             InfoMsgBox(self, "Error", "Failed to update the database.")
-        num_window.destroy()
+        preferences_window.destroy()
         if user_exists:
             InfoMsgBox(
                 self,
@@ -435,26 +435,26 @@ def get_user_data(self):  # noqa: PLR0915
         user_exists = False
 
     # create window for user to input/modify preferences
-    num_window = tk.Toplevel(self)
-    num_window.title("Notifications")
-    num_window.configure(background="#ececec")  # "#ffc49c")
-    num_window.geometry("300x185+100+50")
-    num_window.resizable(False, False)
-    num_window.wm_transient(self)
-    num_window.wait_visibility()
-    num_window.grab_set()
-    num_window.grid_columnconfigure(0, weight=1)
-    num_window.grid_columnconfigure(1, weight=1)
+    preferences_window = tk.Toplevel(self)
+    preferences_window.title("Notifications")
+    preferences_window.configure(background="#ececec")  # "#ffc49c")
+    preferences_window.geometry("300x185+100+50")
+    preferences_window.resizable(False, False)
+    preferences_window.wm_transient(self)
+    preferences_window.wait_visibility()
+    preferences_window.grab_set()
+    preferences_window.grid_columnconfigure(0, weight=1)
+    preferences_window.grid_columnconfigure(1, weight=1)
 
     # create widgets for the window
     ttk.Label(
-        num_window,
+        preferences_window,
         text="Enter your ten digit phone number:",
         anchor="center",
-        background="#ececec",  # "#ececec",
+        background="#ececec",
         font=("Helvetica", 13),
     ).grid(row=0, column=0, columnspan=2, pady=(15, 7))
-    entry = ttk.Entry(num_window, font=("Helvetica", 13), width=10)
+    entry = ttk.Entry(preferences_window, font=("Helvetica", 13), width=10)
     entry.grid(row=1, column=0, columnspan=2)
 
     var1 = tk.IntVar()
@@ -462,25 +462,25 @@ def get_user_data(self):  # noqa: PLR0915
     var3 = tk.IntVar()
 
     ttk.Label(
-        num_window,
+        preferences_window,
         text="Notify when? Select all that apply:",
         anchor="center",
-        background="#ececec",  # "#ececec",
+        background="#ececec",
         font=("Helvetica", 13),
     ).grid(row=2, column=0, columnspan=2, pady=(18, 2))
 
     c1 = tk.Checkbutton(
-        num_window,
+        preferences_window,
         text="Week before",
         font=("Helvetica", 12),
         variable=var1,
         onvalue=1,
         offvalue=0,
-        background="#ececec",  # "#ececec",
+        background="#ececec",
     )
     c1.grid(row=3, column=0, columnspan=2, padx=(20, 0), sticky="w")
     c2 = tk.Checkbutton(
-        num_window,
+        preferences_window,
         text="Day before",
         font=("Helvetica", 12),
         variable=var2,
@@ -496,7 +496,7 @@ def get_user_data(self):  # noqa: PLR0915
     )
 
     c3 = tk.Checkbutton(
-        num_window,
+        preferences_window,
         text="Day of",
         font=("Helvetica", 12),
         variable=var3,
@@ -506,11 +506,14 @@ def get_user_data(self):  # noqa: PLR0915
     )
     c3.grid(row=3, column=0, columnspan=2, padx=(0, 25), sticky="e")
 
-    ttk.Button(num_window, text="Submit", width=6, command=submit).grid(
-        row=4, column=0, padx=(0, 15), pady=15, sticky="e"
-    )
     ttk.Button(
-        num_window, text="Cancel", width=6, command=num_window.destroy
+        preferences_window, text="Submit", width=6, command=submit
+    ).grid(row=4, column=0, padx=(0, 15), pady=15, sticky="e")
+    ttk.Button(
+        preferences_window,
+        text="Cancel",
+        width=6,
+        command=preferences_window.destroy,
     ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
 
     # insert pre-existing phone number and notification frequencies, if present
