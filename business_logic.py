@@ -78,6 +78,12 @@ def remove_toplevels(self):
 
 
 def insert_data(self, data):
+    """
+    Function to insert data into the treeview. It takes a cursor object
+    as a parameter and iterates through the data, inserting each item into
+    the treeview. It uses the first item in each tuple as a tag to color
+    (highlight) the row based on the date_next value.
+    """
     for item in data:
         self.tree.insert("", tk.END, values=item, tags=item[0])
         if item[5] is None:
@@ -262,6 +268,12 @@ def date_next_calc(top):
 
 
 def get_con():
+    """Function to create a connection to the SQLite database. It checks if the
+    path to the database exists, and if not, creates the necessary directories.
+    It returns a connection object to the database file located in the "Home
+    Reminders" directory within the Application Support directory of the user's
+    home directory.
+    """
     dir_path = os.path.join(appsupportdir(), "Home Reminders")
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -269,10 +281,13 @@ def get_con():
     return sqlite3.connect(file_path)
 
 
-""
-
-
 def appsupportdir():
+    """
+    Function to get the Application Support directory based on the user's
+    operating system. It checks for the existence of the Application Support
+    directory in macOS and Linux, and the AppData directory in Windows. If
+    none of these directories exist, it returns the user's home directory.
+    """
     windows = r"%APPDATA%"
     windows = os.path.expandvars(windows)
     if "APPDATA" not in windows:
@@ -291,23 +306,11 @@ def appsupportdir():
     return user_directory
 
 
-""
-
-
-def pathinappsupportdir(*paths, create=False):
-    location = os.path.join(appsupportdir(), *paths)
-
-    if create:
-        os.makedirs(location)
-
-    return location
-
-
-# initialize user data if the table is empty
-""
-
-
 def initialize_user(self):
+    """
+    Function to initialize the user table if it is empty. Does not return
+    anything.
+    """
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -643,7 +646,7 @@ def date_check(self):
     itself every second to monitor for date change. Does not return anything.
     """
     # check if the current date has changed
-    if self.todays_date_var.get() == datetime.now().strftime("%Y-%m-%d"):
+    if self.todays_date_var.get() != datetime.now().strftime("%Y-%m-%d"):
         # update the label to show today's date
         self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
         self.today_is_lbl.config(
