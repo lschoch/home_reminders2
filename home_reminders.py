@@ -234,10 +234,10 @@ class App(tk.Tk):
             refresh(self)
             remove_toplevels(self)
 
-        # delete item from database
-        ""
-
         def delete_item():
+            """
+            Function to delete item from database. Does not return anything.
+            """
             answer = YesNoMsgBox(
                 self,
                 "Delete Reminder",
@@ -264,8 +264,6 @@ class App(tk.Tk):
             remove_toplevels(self)
             self.focus()
             self.tree.focus_set()
-
-        ""
 
         def cancel():
             remove_toplevels(self)
