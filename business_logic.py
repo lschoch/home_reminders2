@@ -107,17 +107,6 @@ def get_date(date_last_entry, top):
         if isinstance(child, tk.Toplevel):
             child.destroy()
 
-    """ # update date_last_entry after date is selected with OK button
-    def cal_done():
-        date_last_entry.delete(0, tk.END)
-        date_last_entry.insert(0, cal.selection_get())
-        top2.wm_overrideredirect(False)
-        top2.destroy() """
-
-    def cal_cancel():
-        top2.wm_overrideredirect(False)
-        top2.destroy()
-
     # function to set date_last_entry from calendar click
     def on_cal_selection_changed(event):
         date_last_entry.delete(0, tk.END)
@@ -161,7 +150,7 @@ def get_date(date_last_entry, top):
         cal.selection_set(top.date_last_entry.get())
     cal.grid(row=0, column=0)
 
-    ttk.Button(top2, text="cancel", width=6, command=cal_cancel).grid(
+    ttk.Button(top2, text="cancel", width=6, command=top2.destroy).grid(
         row=1, column=0
     )
 
