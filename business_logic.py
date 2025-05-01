@@ -162,7 +162,7 @@ def get_date(date_last_entry, top):
     cal.grid(row=0, column=0)
 
     ttk.Button(top2, text="cancel", width=6, command=cal_cancel).grid(
-        row=1, column=0, sticky="center"
+        row=1, column=0
     )
 
     # bind CalendarSelected event to function that sets date_last_entry
