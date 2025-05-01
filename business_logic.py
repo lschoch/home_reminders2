@@ -72,11 +72,6 @@ def remove_toplevels(self):
             widget.destroy()
 
 
-# function to insert data from database into the treeview,
-# use id as tag to color rows, item[5] is date_next
-""
-
-
 def insert_data(self, data):
     """
     Function to insert data into the treeview. It takes a cursor object
@@ -101,18 +96,23 @@ def insert_data(self, data):
 
 # function to select date from a calendar
 def get_date(date_last_entry, top):
-    # destroy calendar if it already exists
-    # (prevents multiple overlying calendars on repeatedly clicking the entry)
+    """
+    Function to select a date from the calendar. Takes date_last_entry and top
+    as paramteters. Default selection is the date_last_entry provided as
+    paramter. Resets date_last_entry to the clicked date.
+    """
+    # destroy calendar if it already exists (prevents multiple overlying
+    # calendars from repeatedly clicking the entry)
     for child in top.winfo_children():
         if isinstance(child, tk.Toplevel):
             child.destroy()
 
-    # update date_last_entry after date is selected with OK button
+    """ # update date_last_entry after date is selected with OK button
     def cal_done():
         date_last_entry.delete(0, tk.END)
         date_last_entry.insert(0, cal.selection_get())
         top2.wm_overrideredirect(False)
-        top2.destroy()
+        top2.destroy() """
 
     def cal_cancel():
         top2.wm_overrideredirect(False)
@@ -155,17 +155,16 @@ def get_date(date_last_entry, top):
         selectforeground="red",
         selectbackground="#dbdbdb",
     )
+
     # if date_last_entry is not empty, set calendar to date_last_entry
     if top.date_last_entry.get():
         cal.selection_set(top.date_last_entry.get())
-
     cal.grid(row=0, column=0)
-    ttk.Button(top2, text="ok", width=3, command=cal_done).grid(
-        row=1, column=0, padx=(80, 0), pady=3, sticky="w"
-    )
+
     ttk.Button(top2, text="cancel", width=6, command=cal_cancel).grid(
-        row=1, column=0, padx=(0, 80), sticky="e"
+        row=1, column=0, sticky="center"
     )
+
     # bind CalendarSelected event to function that sets date_last_entry
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
