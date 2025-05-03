@@ -12,6 +12,8 @@ kiwisolver==1.4.8
 macholib==1.16.3
 matplotlib==3.10.0
 memory-profiler==0.61.0
+mypy==1.15.0
+mypy_extensions==1.1.0
 numpy==2.2.2
 packaging==24.1
 pillow==11.0.0
@@ -26,4 +28,5 @@ setuptools==75.3.0
 six==1.16.0
 tkcalendar==1.6.1
 tkmacosx==1.0.5
+typing_extensions==4.13.2
 tzdata==2024.2
