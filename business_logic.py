@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import END, ttk
+from typing import Any, Optional, Tuple  # noqa: F401
 
-from dateutil.relativedelta import relativedelta
-from tkcalendar import Calendar
+from dateutil.relativedelta import relativedelta  # type: ignore
+from tkcalendar import Calendar  # type: ignore
 
 from classes import (
     InfoMsgBox,
@@ -16,8 +19,11 @@ from classes import (
 )
 
 
-# create treeview to display data from database
 def create_tree_widget(self):
+    """
+    Function to create treeview to display the list of reminder items retrieved
+    from the database. Returns tkinter.ttk,.Treeview object.
+    """
     columns = (
         "id",
         "description",
@@ -61,45 +67,47 @@ def create_tree_widget(self):
     scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
     tree.configure(yscroll=scrollbar.set)
     scrollbar.grid(row=1, column=2, pady=(0, 0), sticky="ns")
-
+    print(f"+++++++++++++++++++++++++++++ {type(tree)}")
     return tree
 
 
-# function to destroy existing toplevels to prevent them from accumulating.
-def remove_toplevels(self):
+def remove_toplevels(self) -> Any:
+    """
+    Function to destroy existing toplevels to prevent them from accumulating.
+    """
     for widget in self.winfo_children():
         if isinstance(widget, tk.Toplevel):
             widget.destroy()
 
 
-def insert_data(self, data):
+def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
     """
     Function to insert data into the treeview. It takes a cursor object
     as a parameter and iterates through the data, inserting each item into
     the treeview. It uses the first item in each tuple as a tag to color
     (highlight) the row based on the date_next value.
     """
-    for item in data:
-        self.tree.insert("", tk.END, values=item, tags=item[0])
-        if item[5] is None:
-            self.tree.tag_configure(item[0], background="#ececec")
-        else:
-            dat_nxt = datetime.strptime(item[5], "%Y-%m-%d").date()
-            if dat_nxt < date.today():
-                self.tree.tag_configure(item[0], background="yellow")
-            elif dat_nxt == date.today():
-                self.tree.tag_configure(item[0], background="lime")
+    if data:
+        for item in data:
+            self.tree.insert("", tk.END, values=item, tags=item[0])
+            if item[5] is None:
+                self.tree.tag_configure(item[0], background="#ececec")
             else:
-                self.tree.tag_configure(item[0], background="white")
-        # self.tree.tag_configure(item[0], font=("Helvetica", 13))
+                dat_nxt = datetime.strptime(item[5], "%Y-%m-%d").date()
+                if dat_nxt < date.today():
+                    self.tree.tag_configure(item[0], background="yellow")
+                elif dat_nxt == date.today():
+                    self.tree.tag_configure(item[0], background="lime")
+                else:
+                    self.tree.tag_configure(item[0], background="white")
+            # self.tree.tag_configure(item[0], font=("Helvetica", 13))
 
 
-# function to select date from a calendar
-def get_date(date_last_entry, top):
+def get_date(date_last_entry: date, top) -> Any:
     """
     Function to select a date from the calendar. Takes date_last_entry and top
     as paramteters. Default selection is the date_last_entry provided as
-    paramter. Resets date_last_entry to the clicked date.
+    parameter. Sets date_last_entry to the clicked date.
     """
     # destroy calendar if it already exists (prevents multiple overlying
     # calendars from repeatedly clicking the entry)
@@ -158,8 +166,8 @@ def get_date(date_last_entry, top):
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
 
-def refresh(self):
-    """function to update treeview and labels after a change to the database"""
+def refresh(self) -> Any:
+    """Function to update treeview and labels after a change to the database"""
     # connect to database and create cursor
     try:
         with get_con() as con:
@@ -217,8 +225,10 @@ def refresh(self):
     self.expired_lbl_msg.set(expired_msg)
 
 
-# function to calculate next date for an item based on frequency and period
-def date_next_calc(top):
+def date_next_calc(top) -> str:
+    """
+    Function to calculate next date for an item based on frequency and period,
+    """
     date_last = top.date_last_entry.get()
     frequency = int(top.frequency_entry.get())
     period = top.period_combobox.get()
@@ -226,36 +236,35 @@ def date_next_calc(top):
         case "":
             date_next = ""
         case "one-time":
-            date_next = datetime.strptime(date_last, "%Y-%m-%d").date()
-            date_next = date_next.strftime("%Y-%m-%d")
+            date_next = (
+                datetime.strptime(date_last, "%Y-%m-%d")
+                .date()
+                .strftime("%Y-%m-%d")
+            )
         case "days":
-            date_next = datetime.strptime(
-                date_last, "%Y-%m-%d"
-            ).date() + timedelta(days=frequency)
-            date_next = date_next.strftime("%Y-%m-%d")
+            date_next = (
+                datetime.strptime(date_last, "%Y-%m-%d").date()
+                + timedelta(days=frequency)
+            ).strftime("%Y-%m-%d")
         case "weeks":
-            date_next = datetime.strptime(
-                date_last, "%Y-%m-%d"
-            ).date() + timedelta(weeks=frequency)
-            date_next = date_next.strftime("%Y-%m-%d")
+            date_next = (
+                datetime.strptime(date_last, "%Y-%m-%d").date()
+                + timedelta(weeks=frequency)
+            ).strftime("%Y-%m-%d")
         case "months":
-            date_next = datetime.strptime(
-                date_last, "%Y-%m-%d"
-            ).date() + relativedelta(months=frequency)
-            date_next = date_next.strftime("%Y-%m-%d")
+            date_next = (
+                datetime.strptime(date_last, "%Y-%m-%d").date()
+                + relativedelta(months=frequency)
+            ).strftime("%Y-%m-%d")
         case "years":
-            date_next = datetime.strptime(
-                date_last, "%Y-%m-%d"
-            ).date() + relativedelta(years=frequency)
-            date_next = date_next.strftime("%Y-%m-%d")
+            date_next = (
+                datetime.strptime(date_last, "%Y-%m-%d").date()
+                + relativedelta(years=frequency)
+            ).strftime("%Y-%m-%d")
     return date_next
 
 
-# function to create database connection
-""
-
-
-def get_con():
+def get_con() -> sqlite3.Connection:
     """Function to create a connection to the SQLite database. It checks if the
     path to the database exists, and if not, creates the necessary directories.
     It returns a connection object to the database file located in the "Home
@@ -269,7 +278,7 @@ def get_con():
     return sqlite3.connect(file_path)
 
 
-def appsupportdir():
+def appsupportdir() -> str | os.PathLike:
     """
     Function to get the Application Support directory based on the user's
     operating system. It checks for the existence of the Application Support
@@ -294,7 +303,7 @@ def appsupportdir():
     return user_directory
 
 
-def initialize_user(self):
+def initialize_user(self) -> Any:
     """
     Function to initialize the user table if it is empty. Does not return
     anything.
@@ -303,7 +312,7 @@ def initialize_user(self):
         with get_con() as con:
             cur = con.cursor()
             empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchall()
-            if empty_check[0][0] == 0:
+            if empty_check[0][0] == 0:  # phone number is 0, initialize
                 values = (0, 0, 0, "1970-01-01")
                 cur.execute(
                     """
@@ -321,7 +330,7 @@ def initialize_user(self):
         InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
-def get_user_data(self):  # noqa: PLR0915
+def get_user_data(self) -> Any:  # noqa: PLR0915
     """
     Function to get user data for notifications preferences. It creates a
     window for the user to input their phone number and notification
@@ -331,7 +340,12 @@ def get_user_data(self):  # noqa: PLR0915
     initializes the user table if it is empty. It does not return anything.
     """
 
-    def submit():
+    def submit() -> Any:
+        """
+        Function to save user preferences to the database. User enters
+        preferences in popup window and clicks submit button to write this data
+        to the user table of the database. Does not return anything.
+        """
         num = entry.get()
         no_options_selected = (
             var1.get() == 0 and var2.get() == 0 and var3.get() == 0
@@ -405,9 +419,9 @@ def get_user_data(self):  # noqa: PLR0915
                 y_offset=15,
             )
 
-    # get existing user preferences, if present
     # initialize user table if it's empty
     initialize_user(self)
+    # get existing user preferences
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -514,7 +528,7 @@ def get_user_data(self):  # noqa: PLR0915
     entry.focus_set()
 
 
-def notifications_popup(self):  # noqa: C901, PLR0912, PLR0915
+def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     """
     Function to check for upcoming items and create a notifications popup if
     there are any. It checks for items that are past due, due today, due
@@ -628,7 +642,7 @@ def notifications_popup(self):  # noqa: C901, PLR0912, PLR0915
     self.after(14400000, notifications_popup, self)
 
 
-def date_check(self):
+def date_check(self) -> Any:
     """
     Takes self as a parameter and checks if the current date has changed.
     If it has, updates the today_is_lbl to the current date and refreshes
@@ -649,7 +663,7 @@ def date_check(self):
     self.after(1000, date_check, self)
 
 
-def get_data(db_path):
+def get_data(db_path: str | os.PathLike) -> Optional[sqlite3.Cursor]:
     """
     Function to create database if it does not exist and retrieve data for
     display in treeview. Takes the database path as parameter and returns a
@@ -688,7 +702,9 @@ def get_data(db_path):
     return data
 
 
-def validate_inputs(self, top, new=False, id=None):
+def validate_inputs(
+    self, top, new: bool = False, id: int | None = None
+) -> bool:
     """
     Function to validate inputs for a new item and update item dialogs.
     Returns True if inputs are valid, False otherwise.
@@ -771,7 +787,10 @@ def validate_inputs(self, top, new=False, id=None):
 
 
 # function to delete user data from the user table
-def delete_user_data(self):
+def delete_user_data(self) -> Any:
+    """
+    Function to delete user data from the user table.
+    """
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -784,7 +803,7 @@ def delete_user_data(self):
         )
 
 
-def opt_in(self):
+def opt_in(self) -> Any:
     """function to opt in to notifications and get user data"""
     # initialize user table if empty
     initialize_user(self)
@@ -819,7 +838,7 @@ def opt_in(self):
                 y_offset=5,
             )
             # delete user data if user opts out
-            delete_user_data()
+            delete_user_data(self)
     # if user opts out of notifications, delete user's data
     else:
         response1 = YesNoMsgBox(
@@ -854,7 +873,11 @@ def opt_in(self):
                 get_user_data(self)
 
 
-def opt_out(self):
+def opt_out(self) -> Any:
+    """
+    Function giving user the choice to opt out of notifications. Does not
+    return anything,
+    """
     initialize_user(self)
     try:
         with get_con() as con:
@@ -895,7 +918,11 @@ def opt_out(self):
         )
 
 
-def preferences(self):
+def preferences(self) -> Any:
+    """
+    Function giving user the option to modify their notification preferences.
+    Does not return anything.
+    """
     initialize_user(self)
     # check to see if user has a phone number; i.e., already receiving
     # notifications
@@ -919,7 +946,11 @@ def preferences(self):
         )
 
 
-def view_pending(self):
+def view_pending(self) -> Any:
+    """
+    Changes the treeview to include only items due today or in the future.
+    Does not return anything.
+    """
     self.view_current = True
     try:
         with get_con() as con:
@@ -941,7 +972,11 @@ def view_pending(self):
     self.tree.focus()
 
 
-def view_all(self):
+def view_all(self) -> Any:
+    """
+    Changes the treeview to include all items, including thise that are past
+    due. Does not return anything.
+    """
     self.view_current = False
     try:
         with get_con() as con:
@@ -963,8 +998,11 @@ def view_all(self):
     self.tree.focus_set()
 
 
-def get_db_paths():
-    # create path to database and backup files
+def get_db_paths() -> tuple[str | os.PathLike, str | os.PathLike]:
+    """
+    Returns a two tuple: the first element is the path to the database and
+    the second element is the path to the database backup.
+    """
     db_base_path = os.path.join(appsupportdir(), "Home Reminders")
     if not os.path.exists(db_base_path):
         os.makedirs(db_base_path)
@@ -973,7 +1011,11 @@ def get_db_paths():
     return (db_path, db_bak_path)
 
 
-def backup(self):
+def backup(self) -> Any:
+    """
+    Gives user the option to create a new database backup by copying the
+    database file to a backup file. Does not return anything.
+    """
     answer = YesNoMsgBox(
         self,
         "Backup",
@@ -997,7 +1039,11 @@ def backup(self):
         return
 
 
-def restore(self):
+def restore(self) -> Any:
+    """
+    Gives user the option to restore the database file by copying the backup
+    file to the database file. Does not return anything.
+    """
     answer = YesNoMsgBox(
         self,
         "Restore",
@@ -1022,7 +1068,11 @@ def restore(self):
         return
 
 
-def delete_all(self):
+def delete_all(self) -> Any:
+    """
+    Gives user the option to delete the database file. Does not return
+    anything.
+    """
     answer = YesNoMsgBox(
         self,
         "Delete All",
@@ -1053,8 +1103,11 @@ def delete_all(self):
         return
 
 
-def create_new(self):
-    """create top level window for entry of data for new item"""
+def create_new(self) -> Any:
+    """
+    Function to create top level window for entry of new item. Does not return
+    anything.
+    """
     # remove any existing toplevels
     remove_toplevels(self)
 
