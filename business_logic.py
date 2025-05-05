@@ -330,45 +330,7 @@ def initialize_user(self) -> Any:
         InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
-def submit(self, preferences_window, new_values) -> Any:
-    ic("start submit", new_values)
-    num = self.entry.get()  # new_values[0]
-    var1 = new_values[1]
-    var2 = new_values[2]
-    var3 = new_values[3]
-    none_selected = not any([var1, var2, var3])
-    # validate the entered phone number
-    if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-        InfoMsgBox(
-            self,
-            "Notifications",
-            "Phone number must be a ten digit numeric.",
-            x_offset=100,
-            y_offset=15,
-        )
-        preferences_window.focus_set()
-        new_values[0].focus_set()
-    # require at least one "when" option
-    elif none_selected:
-        txt = "Please select at least one option for when " + "to be notified."
-        InfoMsgBox(
-            self,
-            "Notifications",
-            txt,
-            x_offset=100,
-            y_offset=15,
-        )
-        preferences_window.focus_set()
-    else:
-        values = (
-            num,  # phone number
-            var1,  # week before
-            var2,  # day before
-            var3,  # day of
-            # last notification date:
-            datetime.strftime(date.today(), "%Y-%m-%d"),
-        )
-
+def save_prefs(self, values) -> Any:
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -388,7 +350,7 @@ def submit(self, preferences_window, new_values) -> Any:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to update the database.")
     # If there was a pre-existing phone number, there was a pre-existing user.
-    if new_values[0]:
+    if values[0]:
         InfoMsgBox(
             self,
             "Notifications",
@@ -404,13 +366,57 @@ def submit(self, preferences_window, new_values) -> Any:
             x_offset=100,
             y_offset=15,
         )
-    preferences_window.destroy()
 
 
 def create_preferences_window(self):
     """
-    Create window for user to input/modify preferences
+    Create window for users to input/modify their notification preferences.
     """
+
+    def submit():
+        week_before = self.var1.get()
+        day_before = self.var2.get()
+        day_of = self.var3.get()
+        none_selected = not any([week_before, day_before, day_of])
+        num = entry.get()
+        # validate the entered phone number
+        if not num.isnumeric() or len(num) > 10 or len(num) < 10:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "Phone number must be a ten digit numeric.",
+                x_offset=100,
+                y_offset=15,
+            )
+            entry.focus_set()
+            return
+        # require at least one "when" option
+        elif none_selected:
+            txt = (
+                "Please select at least one option for when "
+                + "to be notified."
+            )
+            InfoMsgBox(
+                self,
+                "Notifications",
+                txt,
+                x_offset=100,
+                y_offset=15,
+            )
+            preferences_window.focus_set()
+            return
+        else:
+            values = (
+                num,  # phone number
+                week_before,  # week before
+                day_before,  # day before
+                day_of,  # day of
+                # last notification date:
+                datetime.strftime(date.today(), "%Y-%m-%d"),
+            )
+            save_prefs(self, values)
+            preferences_window.destroy()
+
     preferences_window = tk.Toplevel(self)
     preferences_window.title("Notifications")
     preferences_window.configure(background="#ececec")  # "#ffc49c")
@@ -481,7 +487,7 @@ def create_preferences_window(self):
         preferences_window,
         text="Submit",
         width=6,
-        command=lambda: submit(self, preferences_window, new_values),
+        command=submit,
     ).grid(row=4, column=0, padx=(0, 15), pady=15, sticky="e")
     ttk.Button(
         preferences_window,
@@ -490,27 +496,16 @@ def create_preferences_window(self):
         command=preferences_window.destroy,
     ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
 
-    # TODO - error handling
-    # Get existing user preferences from the user table.
-    with get_con() as con:
-        cur = con.cursor()
-        user_data = cur.execute("SELECT * FROM user").fetchone()
-
-    # Insert existing user prefs, if present, into the preferences window.
-    if user_data[0]:
+    # Get existing preferences, if present, and insert into preferences window.
+    user_data = get_user_data(self)
+    if user_data[
+        0
+    ]:  # user_data[0] = phone number. Indicates that user exists.
         entry.insert(0, user_data[0])
-        self.var1.set(user_data[1])
-        self.var2.set(user_data[2])
-        self.var3.set(user_data[3])
+        self.var1.set(user_data[1])  # week_before
+        self.var2.set(user_data[2])  # day_before
+        self.var3.set(user_data[3])  # day_of
 
-    new_values = (
-        entry.get(),
-        self.var1.get(),
-        self.var2.get(),
-        self.var3.get(),
-        user_data[4],
-    )
-    ic("create_prefs_window", new_values)
     entry.focus_set()
 
 
@@ -1165,3 +1160,14 @@ def create_new(self) -> Any:
     ttk.Button(top, text="Cancel", command=cancel).grid(
         row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
     )
+
+
+def get_user_data(self):
+    # Get existing user preferences from the user table.
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            return cur.execute("SELECT * FROM user").fetchone()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
