@@ -9,6 +9,7 @@ from tkinter import END, ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
+from icecream import ic  # noqa: F401
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
@@ -67,7 +68,6 @@ def create_tree_widget(self):
     scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
     tree.configure(yscroll=scrollbar.set)
     scrollbar.grid(row=1, column=2, pady=(0, 0), sticky="ns")
-    print(f"+++++++++++++++++++++++++++++ {type(tree)}")
     return tree
 
 
@@ -330,113 +330,87 @@ def initialize_user(self) -> Any:
         InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
-def get_user_data(self) -> Any:  # noqa: PLR0915
-    """
-    Function to get user data for notifications preferences. It creates a
-    window for the user to input their phone number and notification
-    preferences. It validates the input and updates the database with the
-    user's preferences. If the user already exists, it updates their data.
-    It also checks if the user has already opted in to notifications and
-    initializes the user table if it is empty. It does not return anything.
-    """
-
-    def submit() -> Any:
-        """
-        Function to save user preferences to the database. User enters
-        preferences in popup window and clicks submit button to write this data
-        to the user table of the database. Does not return anything.
-        """
-        num = entry.get()
-        no_options_selected = (
-            var1.get() == 0 and var2.get() == 0 and var3.get() == 0
+def submit(self, preferences_window, new_values) -> Any:
+    ic("start submit", new_values)
+    num = self.entry.get()  # new_values[0]
+    var1 = new_values[1]
+    var2 = new_values[2]
+    var3 = new_values[3]
+    none_selected = not any([var1, var2, var3])
+    # validate the entered phone number
+    if not num.isnumeric() or len(num) > 10 or len(num) < 10:
+        InfoMsgBox(
+            self,
+            "Notifications",
+            "Phone number must be a ten digit numeric.",
+            x_offset=100,
+            y_offset=15,
         )
-        # validate the entered phone number
-        if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-            InfoMsgBox(
-                self,
-                "Notifications",
-                "Phone number must be a ten digit numeric.",
-                x_offset=100,
-                y_offset=15,
-            )
-            preferences_window.focus_set()
-            entry.focus_set()
-        # require at least one "when" option
-        elif no_options_selected:
-            txt = (
-                "Please select at least one option for when "
-                + "to be notified."
-            )
-            InfoMsgBox(
-                self,
-                "Notifications",
-                txt,
-                x_offset=100,
-                y_offset=15,
-            )
-            preferences_window.focus_set()
-        else:
-            values = (
-                num,  # phone number
-                var1.get(),  # week before
-                var2.get(),  # day before
-                var3.get(),  # day of
-                # last notification date:
-                datetime.strftime(date.today(), "%Y-%m-%d"),
-            )
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute("DELETE FROM user")
-                cur.execute(
-                    """INSERT INTO user (
-                    phone_number,
-                    week_before,
-                    day_before,
-                    day_of,
-                    last_notification_date) VALUES(?, ?, ?, ?, ?)""",
-                    values,
-                )
-                con.commit()
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(self, "Error", "Failed to update the database.")
-        preferences_window.destroy()
-        if user_exists:
-            InfoMsgBox(
-                self,
-                "Notifications",
-                "Your data has been saved.",
-                x_offset=100,
-                y_offset=15,
-            )
-        else:
-            InfoMsgBox(
-                self,
-                "Notifications",
-                "You will now start receiving text notifications.",
-                x_offset=100,
-                y_offset=15,
-            )
+        preferences_window.focus_set()
+        new_values[0].focus_set()
+    # require at least one "when" option
+    elif none_selected:
+        txt = "Please select at least one option for when " + "to be notified."
+        InfoMsgBox(
+            self,
+            "Notifications",
+            txt,
+            x_offset=100,
+            y_offset=15,
+        )
+        preferences_window.focus_set()
+    else:
+        values = (
+            num,  # phone number
+            var1,  # week before
+            var2,  # day before
+            var3,  # day of
+            # last notification date:
+            datetime.strftime(date.today(), "%Y-%m-%d"),
+        )
 
-    # initialize user table if it's empty
-    initialize_user(self)
-    # get existing user preferences
     try:
         with get_con() as con:
             cur = con.cursor()
-            # check if user table is empty
-            cur.execute("SELECT COUNT(*) FROM user")
-            user_data = cur.execute("SELECT * FROM user").fetchone()
+            cur.execute("DELETE FROM user")
+            # Write new user data to user table.
+            cur.execute(
+                """INSERT INTO user (
+                phone_number,
+                week_before,
+                day_before,
+                day_of,
+                last_notification_date) VALUES(?, ?, ?, ?, ?)""",
+                values,
+            )
+            con.commit()
     except sqlite3.Error as e:
         print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    if user_data[0] is not None:
-        user_exists = True
+        InfoMsgBox(self, "Error", "Failed to update the database.")
+    # If there was a pre-existing phone number, there was a pre-existing user.
+    if new_values[0]:
+        InfoMsgBox(
+            self,
+            "Notifications",
+            "Your data has been saved.",
+            x_offset=100,
+            y_offset=15,
+        )
     else:
-        user_exists = False
+        InfoMsgBox(
+            self,
+            "Notifications",
+            "You will now start receiving text notifications.",
+            x_offset=100,
+            y_offset=15,
+        )
+    preferences_window.destroy()
 
-    # create window for user to input/modify preferences
+
+def create_preferences_window(self):
+    """
+    Create window for user to input/modify preferences
+    """
     preferences_window = tk.Toplevel(self)
     preferences_window.title("Notifications")
     preferences_window.configure(background="#ececec")  # "#ffc49c")
@@ -459,9 +433,9 @@ def get_user_data(self) -> Any:  # noqa: PLR0915
     entry = ttk.Entry(preferences_window, font=("Helvetica", 13), width=10)
     entry.grid(row=1, column=0, columnspan=2)
 
-    var1 = tk.IntVar()
-    var2 = tk.IntVar()
-    var3 = tk.IntVar()
+    self.var1 = tk.IntVar()
+    self.var2 = tk.IntVar()
+    self.var3 = tk.IntVar()
 
     ttk.Label(
         preferences_window,
@@ -475,7 +449,7 @@ def get_user_data(self) -> Any:  # noqa: PLR0915
         preferences_window,
         text="Week before",
         font=("Helvetica", 12),
-        variable=var1,
+        variable=self.var1,
         onvalue=1,
         offvalue=0,
         background="#ececec",
@@ -485,23 +459,18 @@ def get_user_data(self) -> Any:  # noqa: PLR0915
         preferences_window,
         text="Day before",
         font=("Helvetica", 12),
-        variable=var2,
+        variable=self.var2,
         onvalue=1,
         offvalue=0,
         background="#ececec",  # "#ececec",
     )
-    c2.grid(
-        row=3,
-        column=0,
-        columnspan=2,
-        padx=(25, 0),
-    )
+    c2.grid(row=3, column=0, columnspan=2, padx=(25, 0))
 
     c3 = tk.Checkbutton(
         preferences_window,
         text="Day of",
         font=("Helvetica", 12),
-        variable=var3,
+        variable=self.var3,
         onvalue=1,
         offvalue=0,
         background="#ececec",  # "#ececec",
@@ -509,7 +478,10 @@ def get_user_data(self) -> Any:  # noqa: PLR0915
     c3.grid(row=3, column=0, columnspan=2, padx=(0, 25), sticky="e")
 
     ttk.Button(
-        preferences_window, text="Submit", width=6, command=submit
+        preferences_window,
+        text="Submit",
+        width=6,
+        command=lambda: submit(self, preferences_window, new_values),
     ).grid(row=4, column=0, padx=(0, 15), pady=15, sticky="e")
     ttk.Button(
         preferences_window,
@@ -518,13 +490,27 @@ def get_user_data(self) -> Any:  # noqa: PLR0915
         command=preferences_window.destroy,
     ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
 
-    # insert pre-existing phone number and notification frequencies, if present
-    if user_data[0] is not None:
-        entry.insert(0, user_data[0])
-        var1.initialize(user_data[1])
-        var2.initialize(user_data[2])
-        var3.initialize(user_data[3])
+    # TODO - error handling
+    # Get existing user preferences from the user table.
+    with get_con() as con:
+        cur = con.cursor()
+        user_data = cur.execute("SELECT * FROM user").fetchone()
 
+    # Insert existing user prefs, if present, into the preferences window.
+    if user_data[0]:
+        entry.insert(0, user_data[0])
+        self.var1.set(user_data[1])
+        self.var2.set(user_data[2])
+        self.var3.set(user_data[3])
+
+    new_values = (
+        entry.get(),
+        self.var1.get(),
+        self.var2.get(),
+        self.var3.get(),
+        user_data[4],
+    )
+    ic("create_prefs_window", new_values)
     entry.focus_set()
 
 
@@ -827,7 +813,7 @@ def opt_in(self) -> Any:
         )
         # if user opts to receive notifications, get user data
         if response.get_response():
-            get_user_data(self)
+            create_preferences_window(self)
         else:
             InfoMsgBox(
                 self,
@@ -870,7 +856,7 @@ def opt_in(self) -> Any:
                 y_offset=5,
             )
             if response2.get_response():
-                get_user_data(self)
+                create_preferences_window(self)
 
 
 def opt_out(self) -> Any:
@@ -934,7 +920,7 @@ def preferences(self) -> Any:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     if phone_number:
-        get_user_data(self)
+        create_preferences_window(self)
     else:
         InfoMsgBox(
             self,
