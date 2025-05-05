@@ -331,6 +331,11 @@ def initialize_user(self) -> Any:
 
 
 def save_prefs(self, values) -> Any:
+    """
+    Function to save user preferences to database. Called from the submit
+    button of the user preferences window. Takes values parameter which is a
+    5 tuple: phone number, 3 check box settings, and 1 date_last. No return.
+    """
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -644,7 +649,7 @@ def delete_user_data(self) -> Any:
 
 
 def opt_in(self) -> Any:
-    """function to opt in to notifications and get user data"""
+    """Function to opt in to notifications and get user data"""
     # The following import was deferred to avoid circular imports.
     from ui_logic import create_preferences_window
 
@@ -1027,8 +1032,11 @@ def create_new(self) -> Any:
     )
 
 
-def get_user_data(self):
-    # Get existing user preferences from the user table.
+def get_user_data(self) -> Any:
+    """
+    Function to get existing user preferences from the user table. Doesn't
+    return anything.
+    """
     try:
         with get_con() as con:
             cur = con.cursor()
