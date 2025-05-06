@@ -360,8 +360,6 @@ def create_edit_window(self, selected_item):
             InfoMsgBox(self, "Error", "Failed to update the database.")
         refresh(self)
         remove_toplevels(self)
-        self.focus()
-        self.tree.focus_set()
 
     def cancel():
         remove_toplevels(self)

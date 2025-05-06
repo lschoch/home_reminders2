@@ -643,7 +643,6 @@ def opt_in(self) -> Any:
             )
             # delete user data if user opts out
             delete_user_data(self)
-    # if user opts out of notifications, delete user's data
     else:
         response1 = YesNoMsgBox(
             self,
