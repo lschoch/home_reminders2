@@ -125,64 +125,23 @@ def get_date(date_last_entry: date, top) -> Any:
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
 
-# TODO: separate ui_logic from business_logic.
 def refresh(self) -> Any:
     """Function to update treeview and labels after a change to the database"""
-    # connect to database and create cursor
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            # select data depending on the current view
-            if self.view_current:
-                refreshed_data = cur.execute("""
-                    SELECT * FROM reminders
-                    WHERE date_next >= DATE('now', 'localtime')
-                                        OR date_next IS NULL
-                    ORDER BY date_next ASC, description ASC
-                """)
-            else:
-                refreshed_data = cur.execute("""
-                    SELECT * FROM reminders
-                    ORDER BY date_next ASC, description ASC
-                """)
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-
+    # Fetch fresh set of reminders and insert into treeview.
+    refreshed_data = fetch_reminders(self)
     for item in self.tree.get_children():
         self.tree.delete(item)
-
     insert_data(self, refreshed_data)
     self.refreshed = True
-
+    # Update label messages.
     if self.view_current:
         view_msg = (
             "Viewing pending items only - select an item to edit or delete."
         )
     else:
         view_msg = "Viewing all items - select an item to edit or delete."
-
-    # get nummber of past due items
-    try:
-        with get_con() as con:
-            self.cur = con.cursor()
-            number_past_due_items = len(
-                self.cur.execute("""
-                    SELECT * FROM reminders
-                    WHERE date_next < DATE('now', 'localtime')
-                                        OR date_next IS NULL
-                """).fetchall()
-            )
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    if number_past_due_items == 1:
-        expired_msg = f"{number_past_due_items} past due item"
-    else:
-        expired_msg = f"{number_past_due_items} past due items"
     self.view_lbl_msg.set(view_msg)
     self.view_lbl.config(background="#ececec")
-    self.expired_lbl_msg.set(expired_msg)
 
 
 def date_next_calc(top) -> str:
@@ -923,3 +882,31 @@ def get_user_data(self) -> Any:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
+
+
+def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
+    """
+    Function to retrieve reminders from database. Fetches  pending reminders
+    or all reminders depending on the value of the parameter view_current.
+    Returns cursor object containing the retrieved reminders.
+    """
+    # connect to database and create cursor
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # retrieve and return data depending on the current view
+            if self.view_current:
+                return cur.execute("""
+                    SELECT * FROM reminders
+                    WHERE date_next >= DATE('now', 'localtime')
+                                        OR date_next IS NULL
+                    ORDER BY date_next ASC, description ASC
+                """)
+            else:
+                return cur.execute("""
+                    SELECT * FROM reminders
+                    ORDER BY date_next ASC, description ASC
+                """)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
