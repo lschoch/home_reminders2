@@ -1,32 +1,26 @@
 import importlib
 import os
-import sqlite3
 import tkinter as tk
 from datetime import datetime
-from tkinter import END, ttk
+from tkinter import ttk
 
 from icecream import ic  # noqa: F401
 from PIL import Image, ImageTk
 
 from business_logic import (
-    create_tree_widget,
     date_check,
-    date_next_calc,
-    get_con,
     get_data,
-    get_date,
     get_db_paths,
     insert_data,
     notifications_popup,
     refresh,
-    remove_toplevels,
-    validate_inputs,
 )
-from classes import InfoMsgBox, TopLvl, YesNoMsgBox
 from ui_logic import (
     create_left_side_buttons,
     create_legend,
     create_menu_bar,
+    create_tree_widget,
+    remove_toplevels,
 )
 
 # tracemalloc.start()
@@ -155,130 +149,6 @@ class App(tk.Tk):
 
     # end init
     ###############################################################
-
-    # manage row selection in treeview
-    def on_treeview_selection_changed(self, event):  # noqa: PLR0915
-        # abort if the selection change was after a refresh
-        if self.refreshed:
-            self.refreshed = False
-            return
-        selected_item = self.tree.focus()
-        remove_toplevels(self)
-        # create toplevel
-        top = TopLvl(self, "Edit Selection")
-
-        # capture id of the selected item
-        id = self.tree.item(selected_item)["values"][0]
-
-        # populate entries with data from the selection
-        top.description_entry.insert(
-            0, self.tree.item(selected_item)["values"][1]
-        )
-        top.frequency_entry.insert(
-            0, self.tree.item(selected_item)["values"][2]
-        )
-
-        # use index function to determine index of the period_combobox value
-        indx = top.period_list.index(
-            self.tree.item(selected_item)["values"][3]
-        )
-        # set the combobox value using current function
-        top.period_combobox.current(indx)
-        top.date_last_entry.insert(
-            0, self.tree.item(selected_item)["values"][4]
-        )
-        top.note_entry.insert(0, self.tree.item(selected_item)["values"][6])
-
-        # bind click in date_last_entry to get_date
-        top.date_last_entry.bind(
-            "<1>", lambda e: get_date(top.date_last_entry, top)
-        )
-
-        # update database
-        def update_item():
-            # validate inputs before saving, exit if validation fails
-            validate = validate_inputs(self, top, new=False, id=id)
-            if not validate:
-                return
-            # calculate date_next
-            date_next = date_next_calc(top)
-            # set frequency to 1 if period is "one-time"
-            if top.period_combobox.get() == "one-time":
-                top.frequency_entry.delete(0, END)
-                top.frequency_entry.insert(0, "1")
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    cur.execute(
-                        """
-                        UPDATE reminders
-                        SET (
-                        description, frequency, period, date_last, date_next, \
-                            note)
-                        = (?, ?, ?, ?, ?, ?)
-                        WHERE id = ? """,
-                        (
-                            top.description_entry.get(),
-                            top.frequency_entry.get(),
-                            top.period_combobox.get(),
-                            top.date_last_entry.get(),
-                            date_next,
-                            top.note_entry.get(),
-                            self.tree.item(selected_item)["values"][0],
-                        ),
-                    )
-                    con.commit()
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(self, "Error", "Failed to update the database.")
-            refresh(self)
-            remove_toplevels(self)
-
-        def delete_item():
-            """
-            Function to delete item from database. Does not return anything.
-            """
-            answer = YesNoMsgBox(
-                self,
-                "Delete Reminder",
-                "Are you sure you want to delete  \
-                    this reminder?",
-            )
-            if not answer.get_response():
-                return
-            id = self.tree.item(selected_item)["values"][0]
-            try:
-                with get_con() as con:
-                    cur = con.cursor()
-                    cur.execute(
-                        """
-                        DELETE FROM reminders
-                        WHERE id = ?""",
-                        (id,),
-                    )
-                    con.commit()
-            except sqlite3.Error as e:
-                print(f"Database error: {e}")
-                InfoMsgBox(self, "Error", "Failed to update the database.")
-            refresh(self)
-            remove_toplevels(self)
-            self.focus()
-            self.tree.focus_set()
-
-        def cancel():
-            remove_toplevels(self)
-
-        ttk.Button(top, text="Update", command=update_item).grid(
-            row=2, column=1, pady=(15, 0), sticky="w"
-        )
-
-        ttk.Button(top, text="Delete", command=delete_item).grid(
-            row=2, column=3, pady=(15, 0), sticky="w"
-        )
-
-        ttk.Button(top, text="Cancel", command=cancel).grid(
-            row=2, column=5, pady=(15, 0), sticky="w"
-        )
 
 
 if __name__ == "__main__":

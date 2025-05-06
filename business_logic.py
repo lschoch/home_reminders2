@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import importlib
 import os
 import shutil
 import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta
-from tkinter import END, ttk
+from tkinter import ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
@@ -15,69 +16,27 @@ from tkcalendar import Calendar  # type: ignore
 from classes import (
     InfoMsgBox,
     NofificationsPopup,
-    TopLvl,
     YesNoMsgBox,
 )
 
 
-def create_tree_widget(self):
+def on_treeview_selection_changed(self, event) -> Any:
     """
-    Function to create treeview to display the list of reminder items retrieved
-    from the database. Returns tkinter.ttk,.Treeview object.
+    Function to manage row selection in treeview. Creates window to edit/delete
+    the selected item. Populates the window with the selected item's data. Does
+    not return anything.
     """
-    columns = (
-        "id",
-        "description",
-        "frequency",
-        "period",
-        "date_last",
-        "date_next",
-        "note",
-    )
-    tree = ttk.Treeview(self, columns=columns, show="headings")
-
-    # define headings and columns
-    tree.heading("id", text="Id")
-    tree.heading("description", text="Item", anchor="w")
-    tree.heading("frequency", text="Frequency")
-    tree.heading("period", text="Period", anchor="w")
-    tree.heading("date_last", text="Last")
-    tree.heading("date_next", text="Next")
-    tree.heading("note", text="Note", anchor="w")
-    tree.column("id", width=50, anchor="center")
-    tree.column("description", width=250, anchor="w")
-    tree.column("frequency", width=65, anchor="center")
-    tree.column("period", width=75, anchor="w")
-    tree.column("date_last", width=100, anchor="center")
-    tree.column("date_next", width=100, anchor="center")
-    tree.column("note", width=350, anchor="w")
-    displaycolumns = (
-        "description",
-        "frequency",
-        "period",
-        "date_last",
-        "date_next",
-        "note",
-    )
-    tree["displaycolumns"] = displaycolumns
-
-    tree.bind("<<TreeviewSelect>>", self.on_treeview_selection_changed)
-    tree.grid(row=1, column=1)
-
-    # add a scrollbar
-    scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
-    tree.configure(yscroll=scrollbar.set)
-    scrollbar.grid(row=1, column=2, pady=(0, 0), sticky="ns")
-    return tree
-
-
-def remove_toplevels(self) -> Any:
-    """
-    Function to destroy existing toplevels to prevent them from accumulating.
-    """
-    for widget in self.winfo_children():
-        if isinstance(widget, tk.Toplevel):
-            widget.destroy()
+    # abort if the selection change was after a refresh
+    if self.refreshed:
+        self.refreshed = False
+        return
+    selected_item = self.tree.focus()
+    # Import ui_logic using importlib.import_module(). This will avoid circular
+    # import conflict with business_logic.
+    module = importlib.import_module("ui_logic")
+    # Create window to edit the selected item. Populate with the selected item
+    # data.
+    module.create_edit_window(self, selected_item)
 
 
 def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
@@ -166,6 +125,7 @@ def get_date(date_last_entry: date, top) -> Any:
     cal.bind("<<CalendarSelected>>", on_cal_selection_changed)
 
 
+# TODO: separate ui_logic from business_logic.
 def refresh(self) -> Any:
     """Function to update treeview and labels after a change to the database"""
     # connect to database and create cursor
@@ -547,24 +507,22 @@ def get_data(db_path: str | os.PathLike) -> Optional[sqlite3.Cursor]:
     return data
 
 
-def validate_inputs(
-    self, top, new: bool = False, id: int | None = None
-) -> bool:
+def validate_inputs(self, top, id: int | None = None) -> bool:
     """
     Function to validate inputs for a new item and update item dialogs.
     Returns True if inputs are valid, False otherwise.
     """
     # description is required
-    if not top.description_entry.get():
+    description = top.description_entry.get()
+    if not description:
         InfoMsgBox(
             self,
             "Invalid Input",
             "Description cannot be blank.",
         )
-        top.description_entry.focus_set()
+        description.focus_set()
         return False
     # check for duplicate descriptions
-    description = top.description_entry.get()
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -574,33 +532,30 @@ def validate_inputs(
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     # get original description if updating an existing item
+    original_description = None
     if id:
         for item in items:
-            if item[0] == id:
-                original_description = item[1]
-    else:
-        original_description = None
+            if item[0] == id:  # item[0] is the id in the database
+                original_description = item[1]  # item[1] is the description in
+                # the database
     for item in items:
-        # item[1] is the item description in the database
         if item[1] == description:
-            # alert if description already exists unless it's the
-            # same item (ie, updating an existing item)
-
-            # item[0] is the id in the database
-            if new or (not new and item[0] != id):
-                InfoMsgBox(
-                    self,
-                    "Duplicate Description",
-                    "There is already an entry with this description."
-                    + " Try again.",
-                )
-                # if updating an existing item, reset original
-                # description
-                if not new:
-                    top.description_entry.delete(0, tk.END)
-                    top.description_entry.insert(0, original_description)
-                top.description_entry.focus_set()
-                return False
+            # It's not a duplicate if updating an existing item and not
+            # changing the description.
+            if original_description:
+                break
+            InfoMsgBox(
+                self,
+                "Duplicate Description",
+                "There is already an entry with this description."
+                + " Try again.",
+            )
+            # if updating an existing item, reset original description
+            if id == item[0]:
+                description.delete(0, tk.END)
+                description.insert(0, original_description)
+                description.focus_set()
+            return False
     # frequency is required and must be an integer
     frequency = top.frequency_entry.get()
     if not frequency or not int(frequency):
@@ -818,7 +773,8 @@ def view_pending(self) -> Any:
         self.tree.delete(item)
     insert_data(self, data)
     refresh(self)
-    remove_toplevels(self)
+    module = importlib.import_module("ui_logic")
+    module.remove_toplevels(self)
     self.refreshed = True
     self.tree.focus()
 
@@ -843,7 +799,8 @@ def view_all(self) -> Any:
         self.tree.delete(item)
     insert_data(self, data)
     refresh(self)
-    remove_toplevels(self)
+    module = importlib.import_module("ui_logic")
+    module.remove_toplevels(self)
     self.refreshed = True
     self.focus_set()
     self.tree.focus_set()
@@ -952,84 +909,6 @@ def delete_all(self) -> Any:
         )
     else:
         return
-
-
-def create_new(self) -> Any:
-    """
-    Function to create top level window for entry of new item. Does not return
-    anything.
-    """
-    # remove any existing toplevels
-    remove_toplevels(self)
-
-    # create new toplevel
-    top = TopLvl(self, "New Item")
-    top.date_last_entry.insert(0, date.today())
-
-    # bind click in date_last_entry to get_date
-    top.date_last_entry.bind(
-        "<1>", lambda e: get_date(top.date_last_entry, top)
-    )
-
-    # function to save new item to database
-    def save_item():
-        # validate inputs before saving, exit if validation fails
-        validate = validate_inputs(self, top, new=True)
-        if not validate:
-            return
-
-        # calculate date_next
-        date_next = date_next_calc(top)
-        # set frequency to 1 if period is "one-time"
-        if top.period_combobox.get() == "one-time":
-            top.frequency_entry.delete(0, END)
-            top.frequency_entry.insert(0, "1")
-        # get data to insert into database
-        data_get = (
-            top.description_entry.get(),
-            top.frequency_entry.get(),
-            top.period_combobox.get(),
-            top.date_last_entry.get(),
-            date_next,
-            top.note_entry.get(),
-        )
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                # insert data into database
-                cur.execute(
-                    """
-                    INSERT INTO reminders (
-                        description,
-                        frequency,
-                        period,
-                        date_last,
-                        date_next,
-                        note)
-                    VALUES (?, ?, ?, ?, ?, ?)""",
-                    data_get,
-                )
-                con.commit()
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(self, "Error", "Failed to update the database.")
-        refresh(self)
-
-        save_btn.config(state="normal")
-        top.destroy()
-        self.tree.focus()
-
-    def cancel():
-        # remove_toplevels(self)
-        top.destroy()
-        self.tree.focus()
-
-    save_btn = ttk.Button(top, text="Save", command=save_item)
-    save_btn.grid(row=2, column=1, padx=(33, 0), pady=(15, 0), sticky="w")
-
-    ttk.Button(top, text="Cancel", command=cancel).grid(
-        row=2, column=3, padx=(0, 48), pady=(15, 0), sticky="e"
-    )
 
 
 def get_user_data(self) -> Any:
