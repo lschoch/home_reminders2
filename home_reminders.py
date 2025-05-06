@@ -143,7 +143,7 @@ class App(tk.Tk):
         date_check(self)
 
         # on startup, select the last item in the treeview - to get focus
-        # in treeview without interfering with item highlighting
+        # into the treeview without interfering with item highlighting.
         last_index = len(self.tree.get_children()) - 1
         self.tree.selection_set(self.tree.get_children()[last_index])
 

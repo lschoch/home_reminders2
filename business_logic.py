@@ -422,7 +422,7 @@ def date_check(self) -> Any:
             text=f"Today is {self.todays_date_var.get()}",
         )
         # refresh data in treeview so that highlighting remains accurate
-        refresh(self)
+        # refresh(self)
 
     self.after(1000, date_check, self)
 
@@ -910,3 +910,23 @@ def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+
+
+def delete_item_from_database(self, id) -> Any:
+    """
+    Function to delete a reminder item from the database. Takes the id of the
+    item to delete as a parameter. Does not return anything.
+    """
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            cur.execute(
+                """
+                DELETE FROM reminders
+                WHERE id = ?""",
+                (id,),
+            )
+            con.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to update the database.")

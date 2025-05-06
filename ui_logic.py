@@ -10,6 +10,7 @@ from business_logic import (
     backup,
     date_next_calc,
     delete_all,
+    delete_item_from_database,
     get_con,
     get_date,
     get_user_data,
@@ -292,7 +293,11 @@ def create_edit_window(self, selected_item):
     )
 
     # update database
-    def update_item():
+    def update_item() -> Any:
+        """
+        Function to save the new data to the database after a reminder item has
+        been edited. Does not return anything.
+        """
         id = self.tree.item(selected_item)["values"][0]
         # validate inputs before saving, exit if validation fails
         validate = validate_inputs(self, top, id)
@@ -332,9 +337,10 @@ def create_edit_window(self, selected_item):
         refresh(self)
         remove_toplevels(self)
 
-    def delete_item():
+    def delete_item() -> Any:
         """
-        Function to delete item from database. Does not return anything.
+        Function to delete the selected reminder item from the database. Does
+        not return anything.
         """
         answer = YesNoMsgBox(
             self,
@@ -345,23 +351,8 @@ def create_edit_window(self, selected_item):
         if not answer.get_response():
             return
         id = self.tree.item(selected_item)["values"][0]
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute(
-                    """
-                    DELETE FROM reminders
-                    WHERE id = ?""",
-                    (id,),
-                )
-                con.commit()
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(self, "Error", "Failed to update the database.")
+        delete_item_from_database(self, id)
         refresh(self)
-        remove_toplevels(self)
-
-    def cancel():
         remove_toplevels(self)
 
     ttk.Button(top, text="Update", command=update_item).grid(
@@ -372,9 +363,9 @@ def create_edit_window(self, selected_item):
         row=2, column=3, pady=(15, 0), sticky="w"
     )
 
-    ttk.Button(top, text="Cancel", command=cancel).grid(
-        row=2, column=5, pady=(15, 0), sticky="w"
-    )
+    ttk.Button(
+        top, text="Cancel", command=lambda: remove_toplevels(self)
+    ).grid(row=2, column=5, pady=(15, 0), sticky="w")
 
 
 def create_new(self) -> Any:
