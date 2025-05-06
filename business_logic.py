@@ -522,7 +522,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
         )
         description.focus_set()
         return False
-    # check for duplicate descriptions
+    # Get list of existing items from the database reminders table.
     try:
         with get_con() as con:
             cur = con.cursor()
@@ -531,16 +531,17 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    # get original description if updating an existing item
+    # If updating an existing item, get the pre-edit description. Item[0] is
+    # the id in the database, item[1] is the description in the database.
     original_description = None
     if id:
         for item in items:
-            if item[0] == id:  # item[0] is the id in the database
-                original_description = item[1]  # item[1] is the description in
-                # the database
+            if item[0] == id:
+                original_description = item[1]
+    # Check for duplicate description.
     for item in items:
         if item[1] == description:
-            # It's not a duplicate if updating an existing item and not
+            # It's not a duplicate if updating an existing item, and not
             # changing the description.
             if original_description:
                 break
