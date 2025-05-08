@@ -10,7 +10,8 @@ from tkinter import ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-from icecream import ic  # noqa: F401
+
+#  from icecream import ic  # noqa: F401
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
@@ -253,7 +254,7 @@ def save_prefs(self, values) -> Any:
     """
     Function to save user preferences to database. Called from the submit
     button of the user preferences window. Takes values parameter which is a
-    5 tuple: phone number, 3 check box settings, and 1 date_last. No return.
+    5 tuple: phone number, 3 check box settings, and date_last. No return.
     """
     try:
         with get_con() as con:
@@ -910,6 +911,7 @@ def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    return None
 
 
 def delete_item_from_database(self, id) -> Any:
@@ -930,3 +932,77 @@ def delete_item_from_database(self, id) -> Any:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to update the database.")
+
+
+def save_database_item(
+    self, values: Tuple[str, str, str, str, str, str]
+) -> Any:
+    """
+    Saves a new reminder item to the database.
+
+    Args:
+        values (tuple):  A 6 tuple containing reminder item data.
+    Returns:
+        None
+    """
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # insert data into database
+            cur.execute(
+                """
+                INSERT INTO reminders (
+                    description,
+                    frequency,
+                    period,
+                    date_last,
+                    date_next,
+                    note)
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                values,
+            )
+            con.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(
+            self, "Error", "Failed to save new reminder item to the database."
+        )
+    refresh(self)
+    return None
+
+
+def update_database_item(
+    self, values: Tuple[str, str, str, str, str, str, int]
+) -> Any:
+    """
+    Updates selected reminder item in the database.
+
+    Args:
+        values (tuple): a 7 tuple containing the edited data of the selected
+        reminder item, the last element of which is the reminder item id.
+    Returns:
+        None
+    """
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            cur.execute(
+                """
+                UPDATE reminders
+                SET (
+                description, frequency, period, date_last, date_next, note)
+                = (?, ?, ?, ?, ?, ?)
+                WHERE id = ? """,
+                (values),
+            )
+            con.commit()
+            refresh(self)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(
+            self,
+            "Error",
+            "Failed to update selected reminder item in the database.",
+        )
+    refresh(self)
+    return None

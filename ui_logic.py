@@ -1,17 +1,14 @@
-import sqlite3
 import tkinter as tk
 from datetime import date, datetime
 from tkinter import END, Menu, ttk
 from typing import Any
 
-from icecream import ic  # noqa: F401
-
+# from icecream import ic  # noqa: F401
 from business_logic import (
     backup,
     date_next_calc,
     delete_all,
     delete_item_from_database,
-    get_con,
     get_date,
     get_user_data,
     on_treeview_selection_changed,
@@ -20,7 +17,9 @@ from business_logic import (
     preferences,
     refresh,
     restore,
+    save_database_item,
     save_prefs,
+    update_database_item,
     validate_inputs,
     view_all,
     view_pending,
@@ -292,11 +291,10 @@ def create_edit_window(self, selected_item):
         "<1>", lambda e: get_date(top.date_last_entry, top)
     )
 
-    # update database
     def update_item() -> Any:
         """
-        Function to save the new data to the database after a reminder item has
-        been edited. Does not return anything.
+        Function to validate the data after a reminder item has been edited
+        and send it for saving to the database. Does not return anything.
         """
         id = self.tree.item(selected_item)["values"][0]
         # validate inputs before saving, exit if validation fails
@@ -309,31 +307,16 @@ def create_edit_window(self, selected_item):
         if top.period_combobox.get() == "one-time":
             top.frequency_entry.delete(0, END)
             top.frequency_entry.insert(0, "1")
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                cur.execute(
-                    """
-                    UPDATE reminders
-                    SET (
-                    description, frequency, period, date_last, date_next, \
-                        note)
-                    = (?, ?, ?, ?, ?, ?)
-                    WHERE id = ? """,
-                    (
-                        top.description_entry.get(),
-                        top.frequency_entry.get(),
-                        top.period_combobox.get(),
-                        top.date_last_entry.get(),
-                        date_next,
-                        top.note_entry.get(),
-                        self.tree.item(selected_item)["values"][0],
-                    ),
-                )
-                con.commit()
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(self, "Error", "Failed to update the database.")
+        values = (
+            top.description_entry.get(),
+            top.frequency_entry.get(),
+            top.period_combobox.get(),
+            top.date_last_entry.get(),
+            date_next,
+            top.note_entry.get(),
+            self.tree.item(selected_item)["values"][0],
+        )
+        update_database_item(self, values)
         refresh(self)
         remove_toplevels(self)
 
@@ -385,8 +368,11 @@ def create_new(self) -> Any:
         "<1>", lambda e: get_date(top.date_last_entry, top)
     )
 
-    # function to save new item to database
     def save_item():
+        """
+        Function to validate the input data for a new reminder item and send it
+        be saved to the database. Does not return anything.
+        """
         # validate inputs before saving, exit if validation fails
         validate = validate_inputs(self, top)
         if not validate:
@@ -399,7 +385,7 @@ def create_new(self) -> Any:
             top.frequency_entry.delete(0, END)
             top.frequency_entry.insert(0, "1")
         # get data to insert into database
-        data_get = (
+        values = (
             top.description_entry.get(),
             top.frequency_entry.get(),
             top.period_combobox.get(),
@@ -407,28 +393,7 @@ def create_new(self) -> Any:
             date_next,
             top.note_entry.get(),
         )
-        try:
-            with get_con() as con:
-                cur = con.cursor()
-                # insert data into database
-                cur.execute(
-                    """
-                    INSERT INTO reminders (
-                        description,
-                        frequency,
-                        period,
-                        date_last,
-                        date_next,
-                        note)
-                    VALUES (?, ?, ?, ?, ?, ?)""",
-                    data_get,
-                )
-                con.commit()
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            InfoMsgBox(self, "Error", "Failed to update the database.")
-        refresh(self)
-
+        save_database_item(self, values)
         save_btn.config(state="normal")
         top.destroy()
         self.tree.focus()
