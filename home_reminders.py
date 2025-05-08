@@ -1,10 +1,9 @@
-import importlib
 import os
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk
 
-from icecream import ic  # noqa: F401
+# from icecream import ic  # noqa: F401
 from PIL import Image, ImageTk
 
 from business_logic import (
@@ -25,13 +24,13 @@ from ui_logic import (
 
 # tracemalloc.start()
 
-# create splash screen
+""" # create splash screen
 if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     import pyi_splash  # type: ignore
 
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
-    print("Splash screen closed.")
+    print("Splash screen closed.") """
 
 # get paths to database files
 paths = get_db_paths()
