@@ -10,12 +10,12 @@ from tkinter import ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-from icecream import ic  # noqa: F401
+
+# from icecream import ic  # noqa: F401
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
     InfoMsgBox,
-    NofificationsPopup,
     YesNoMsgBox,
 )
 
@@ -316,77 +316,19 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
             # user_data[0] is phone number. If present, user has opted to
             # receive notifications.
             if user_data[0]:
-                reminders = fetch_reminders(self).fetchall()
+                reminders = fetch_reminders(self)
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    # Create lists of reminders categorized by due date
-    (
-        past_due_reminders,
-        day_of_reminders,
-        day_before_reminders,
-        week_before_reminders,
-    ) = [], [], [], []
-    for r in reminders:
-        due_date = datetime.strptime(r[5], "%Y-%m-%d").date()
-        today = datetime.today().date()
-        if due_date < today:
-            past_due_reminders.append(r)
-        if due_date == today:
-            day_of_reminders.append(r)
-        if due_date == (datetime.today() + timedelta(days=1)).date():
-            day_before_reminders.append(r)
-        if due_date == (datetime.today() + timedelta(days=7)).date():
-            week_before_reminders.append(r)
-
-    # Create a string to hold reminders for notification.
-    messages = ""
-    # Create the list of notification messages starting with past due.
-    for r in past_due_reminders:
-        messages += f"\u2022 Past due: {r[1]}\n"
-    # Get 'day of' notificatons, if opted for.
-    if user_data[3]:
-        for r in day_of_reminders:
-            messages += f"\u2022 Due today: {r[1]}\n"
-    # Get 'day before' notificatons, if opted for.
-    if user_data[2]:
-        for r in day_before_reminders:
-            messages += f"\u2022 Due tomorrow: {r[1]}\n"
-    # Get 'week before' notificatons, if opted for.
-    if user_data[1]:
-        for r in week_before_reminders:
-            messages += f"\u2022 Due in 7 days: {r[1]}\n"
-
-    # If there are any messages, create the notifications popup.
-    if messages:
-        # Remove the trailing \n from messages.
-        messages = messages[:-1]
-        notifications_win = NofificationsPopup(
-            self,
-            title="Notifications",
-            message="",
-            x_offset=310,
-            y_offset=400,
-        )
-        # Add highlighting to messages.
-        message_list = messages.split("\n")
-        line_num = 1
-        for ndx, msg in enumerate(message_list):
-            line_num = ndx + 1  # ndx starts at 0, lin_num starts at 1
-            if msg.startswith("\u2022 Past due"):
-                notifications_win.txt.insert("end", msg + "\n")
-                indx_start = str(line_num) + ".0"
-                indx_end = str(line_num + 1) + ".0"
-                notifications_win.txt.tag_add("yellow", indx_start, indx_end)
-                notifications_win.txt.tag_config("yellow", background="yellow")
-            elif msg.startswith("\u2022 Due today"):
-                notifications_win.txt.insert("end", msg + "\n")
-                indx_start = str(line_num) + ".0"
-                indx_end = str(line_num + 1) + ".0"
-                notifications_win.txt.tag_add("lime", indx_start, indx_end)
-                notifications_win.txt.tag_config("lime", background="lime")
-            else:
-                notifications_win.txt.insert("end", msg + "\n")
+    # Categorize reminders, if any, by due date.
+    if reminders:
+        reminders_by_category = categorize_reminders(reminders)
+        # Create string of notifications messages.
+        messages = create_message_string(user_data, reminders_by_category)
+        # If there are any messages, create a notifications popup.
+        if messages:
+            module = importlib.import_module("ui_logic")
+            module.create_notifications_popup(self, messages)
 
     # Check for notifications every 4 hours.
     self.after(14400000, notifications_popup, self)
@@ -1006,3 +948,59 @@ def update_database_item(
         )
     refresh(self)
     return None
+
+
+def categorize_reminders(
+    reminders: Optional[sqlite3.Cursor],
+) -> Tuple[list[str], list[str], list[str], list[str]]:
+    """
+    Creates lists of notification reminders categorized by due date. Returns a
+    4 tuple containing notifications that are past due, notifications that are
+    due today, notifications that are due tomorrow, and notifications that are
+    due in one week.
+    """
+    (
+        past_due_reminders,
+        day_of_reminders,
+        day_before_reminders,
+        week_before_reminders,
+    ) = [], [], [], []
+    if reminders:
+        for r in reminders:
+            due_date = datetime.strptime(r[5], "%Y-%m-%d").date()
+            today = datetime.today().date()
+            if due_date < today:
+                past_due_reminders.append(r)
+            if due_date == today:
+                day_of_reminders.append(r)
+            if due_date == (datetime.today() + timedelta(days=1)).date():
+                day_before_reminders.append(r)
+            if due_date == (datetime.today() + timedelta(days=7)).date():
+                week_before_reminders.append(r)
+    return (
+        past_due_reminders,
+        day_of_reminders,
+        day_before_reminders,
+        week_before_reminders,
+    )
+
+
+def create_message_string(user_data, reminders_by_category) -> str:
+    # Create a string to hold reminders for notification.
+    messages = ""
+    # Create the list of notification messages starting with past due.
+    for r in reminders_by_category[0]:
+        messages += f"\u2022 Past due: {r[1]}\n"
+    # Get 'day of' notificatons, if opted for.
+    if user_data[3]:
+        for r in reminders_by_category[1]:
+            messages += f"\u2022 Due today: {r[1]}\n"
+    # Get 'day before' notificatons, if opted for.
+    if user_data[2]:
+        for r in reminders_by_category[2]:
+            messages += f"\u2022 Due tomorrow: {r[1]}\n"
+    # Get 'week before' notificatons, if opted for.
+    if user_data[1]:
+        for r in reminders_by_category[3]:
+            messages += f"\u2022 Due in 7 days: {r[1]}\n"
+    return messages
