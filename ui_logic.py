@@ -472,3 +472,16 @@ def remove_toplevels(self) -> Any:
     for widget in self.winfo_children():
         if isinstance(widget, tk.Toplevel):
             widget.destroy()
+
+
+def remove_notifications_popups(self) -> Any:
+    """
+    Removes any pre-existing notifications popups that haven't been closed.
+    Doesn't return anything.
+    """
+    for widget in self.winfo_children():
+        if (
+            isinstance(widget, tk.Toplevel)
+            and widget.title() == "Notifications"
+        ):
+            widget.destroy()

@@ -301,16 +301,13 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     notifications popups to prevent multiple popups from accumulating. Does not
     return anything.
     """
-    # remove existing notifications popups, if any exist
-    for widget in self.winfo_children():
-        if (
-            isinstance(widget, tk.Toplevel)
-            and widget.title() == "Notifications"
-        ):
-            widget.destroy()
 
     # Initialize user table in case it's empty.
     initialize_user(self)
+    # Remove any pre-existing notifications popups that havent' been closed by
+    # the user.
+    module = importlib.import_module("ui_logic")
+    module.remove_notifications_popups(self)
     # Fetch reminders if user has opted to receive notifiications.
     try:
         with get_con() as con:
