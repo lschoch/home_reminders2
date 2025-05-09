@@ -129,7 +129,7 @@ def get_date(date_last_entry: date, top) -> Any:
 def refresh(self) -> Any:
     """Function to update treeview and labels after a change to the database"""
     # Fetch fresh set of reminders and insert into treeview.
-    refreshed_data = fetch_reminders(self)
+    refreshed_data = fetch_reminders_all_or_pending(self)
     for item in self.tree.get_children():
         self.tree.delete(item)
     insert_data(self, refreshed_data)
@@ -310,69 +310,42 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
         ):
             widget.destroy()
 
-    # initialize user table if it's empty
+    # Initialize user table in case it's empty.
     initialize_user(self)
-    # check whether user has opted in to notifications
+    # Fetch reminders if user has opted to receive notifiications.
     try:
         with get_con() as con:
             cur = con.cursor()
             user_data = cur.execute("SELECT * FROM user").fetchone()
-            # check whether user has entered a phone number (opted in)
-            if user_data[0] is not None:
-                # create a string to hold upcoming items
-                messages = ""
-                date = datetime.today().strftime("%Y-%m-%d")
-                # check whether user wants 'day of' notificatons
-                past_due_items = cur.execute(
-                    """
-                    SELECT * FROM reminders WHERE date_next < ?
-                    ORDER BY date_next ASC""",
-                    (date,),
-                ).fetchall()
-                for item in past_due_items:
-                    messages += f"\u2022 Past due: {item[1]}\n"
-                if user_data[3]:
-                    date = datetime.today().strftime("%Y-%m-%d")
-                    day_of_items = cur.execute(
-                        """
-                        SELECT * FROM reminders WHERE date_next == ?
-                        ORDER BY date_next ASC""",
-                        (date,),
-                    ).fetchall()
-                    for item in day_of_items:
-                        messages += f"\u2022 Due today: {item[1]}\n"
-                # check whether user wants 'day before' notificatons
-                if user_data[2]:
-                    date = (datetime.today() + timedelta(days=1)).strftime(
-                        "%Y-%m-%d"
-                    )
-                    day_before_items = cur.execute(
-                        """
-                        SELECT * FROM reminders WHERE date_next == ?
-                        ORDER BY date_next ASC""",
-                        (date,),
-                    ).fetchall()
-                    for item in day_before_items:
-                        messages += f"\u2022 Due tomorrow: {item[1]}\n"
-                # check whether user wants 'week before' notificatons
-                if user_data[1]:
-                    date = (datetime.today() + timedelta(days=7)).strftime(
-                        "%Y-%m-%d"
-                    )
-                    week_before_items = cur.execute(
-                        """
-                        SELECT * FROM reminders WHERE date_next == ?
-                        ORDER BY date_next ASC""",
-                        (date,),
-                    ).fetchall()
-                    for item in week_before_items:
-                        messages += f"\u2022 Due in 7 days: {item[1]}\n"
+            # user_data[0] is phone number. If present, user has opted to
+            # receive notifications.
+            if user_data[0]:
+                reminders = fetch_reminders(self).fetchall()
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    # if there are any messages, create a notifications popup
+    # Create a string to hold past due and upcoming reminders.
+    messages = ""
+    # Create lists of reminders categorized by due date
+    (
+        past_due_reminders,
+        day_of_reminders,
+        day_before_reminders,
+        week_before_reminders,
+    ) = [], [], [], []
+    for r in reminders:
+        due_date = datetime.strptime(r[5], "%Y-%m-%d")
+        if due_date < datetime.today():
+            past_due_reminders.append(r)
+        if due_date == datetime.today():
+            day_of_reminders.append(r)
+        if due_date == datetime.today() + timedelta(days=1):
+            day_before_reminders.append(r)
+        if due_date == datetime.today() + timedelta(days=7):
+            week_before_reminders.append(r)
+    # If there are any messages, create a notifications popup.
     if messages:
-        # remove the trailing \n from messages
+        # Remove the trailing \n from messages.
         messages = messages[:-1]
         notifications_win = NofificationsPopup(
             self,
@@ -381,7 +354,7 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
             x_offset=310,
             y_offset=400,
         )
-        # add color to messages
+        # Add highlighting to messages.
         message_list = messages.split("\n")
         line_num = 1
         for msg in message_list:
@@ -403,7 +376,7 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
                 notifications_win.txt.insert("end", msg + "\n")
                 line_num += 1
 
-    # check every 4 hours whether a notifications popup is indicated.
+    # Check every 4 hours whether a notifications popup is indicated.
     self.after(14400000, notifications_popup, self)
 
 
@@ -428,48 +401,63 @@ def date_check(self) -> Any:
     self.after(1000, date_check, self)
 
 
-def get_data(db_path: str | os.PathLike) -> Optional[sqlite3.Cursor]:
+def create_database(self) -> Any:
     """
-    Function to create database if it does not exist and retrieve data for
-    display in treeview. Takes the database path as parameter and returns a
-    cursor object with data retrieved from the reminders table.
+    Function to create database if it does not exist. Does not return anything.
     """
-    with sqlite3.connect(db_path) as con:
-        cur = con.cursor()
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # Create user table to store user phone number and notifications
+            # preferences, if it doesn't exist.
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS user(
+                    phone_number TEXT,
+                    week_before INT,
+                    day_before INT,
+                    day_of INT,
+                    last_notification_date TEXT)
+            """)
+            # Create reminders table to store reminders, if it doesn't exist
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS reminders(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    description TEXT,
+                    frequency TEXT,
+                    period TEXT,
+                    date_last TEXT,
+                    date_next TEXT,
+                    note TEXT)
+            """)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(self, "Error", "Failed to create the database.")
 
-        # create user table to store user phone number and notification
-        # preferences
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS user(
-                phone_number TEXT,
-                week_before INT,
-                day_before INT,
-                day_of INT,
-                last_notification_date TEXT)
-        """)
 
-        # create reminders table if it doesn't exist
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS reminders(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                description TEXT,
-                frequency TEXT,
-                period TEXT,
-                date_last TEXT,
-                date_next TEXT,
-                note TEXT)
-        """)
-        # retrieve data for display in treeview
-        data = cur.execute("""
-            SELECT * FROM reminders
-            ORDER BY date_next ASC, description ASC
-        """)
-    return data
+def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
+    """
+    Function to retrieve data from the database. Returns a cursor object
+    containing all the reminders in the reminders table.
+    """
+    try:
+        with get_con() as con:
+            cur = con.cursor()
+            # retrieve all reminders
+            data = cur.execute("""
+                SELECT * FROM reminders
+                ORDER BY date_next ASC, description ASC
+            """)
+        return data
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        InfoMsgBox(
+            self, "Error", "Failed to retrieve reminders from the database."
+        )
 
 
 def validate_inputs(self, top, id: int | None = None) -> bool:
     """
-    Function to validate inputs for a new item and update item dialogs.
+    Function to validate inputs for new and edited reminder items.
     Returns True if inputs are valid, False otherwise.
     """
     # description is required
@@ -885,11 +873,11 @@ def get_user_data(self) -> Any:
         InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
 
 
-def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
+def fetch_reminders_all_or_pending(self) -> Optional[sqlite3.Cursor]:
     """
-    Function to retrieve reminders from database. Fetches  pending reminders
-    or all reminders depending on the value of the parameter view_current.
-    Returns cursor object containing the retrieved reminders.
+    Function to retrieve reminders from database. Fetches either the pending
+    reminders or all reminders depending on the value of the parameter
+    view_current. Returns cursor object containing the retrieved reminders.
     """
     # connect to database and create cursor
     try:

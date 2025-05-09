@@ -7,11 +7,11 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 
 from business_logic import (
+    create_database,
     date_check,
-    get_data,
-    get_db_paths,
+    fetch_reminders,
     insert_data,
-    notifications_popup,
+    notifications_popup,  # noqa: F401
     refresh,
 )
 from ui_logic import (
@@ -32,10 +32,8 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.close()
     print("Splash screen closed.") """
 
-# get paths to database files
-paths = get_db_paths()
-# create database if it does not exist and retrieve data
-data = get_data(paths[0])
+""" # get paths to database files
+paths = get_db_paths() """
 
 
 # create the main window
@@ -55,6 +53,10 @@ class App(tk.Tk):
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=140)
+
+        # create database if it does not exist and retrieve data
+        create_database(self)
+        data = fetch_reminders(self)
 
         # create variable to prevent calling treeview_on_selection_changed
         # after refresh
