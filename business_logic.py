@@ -10,8 +10,7 @@ from tkinter import ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-
-#  from icecream import ic  # noqa: F401
+from icecream import ic  # noqa: F401
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
@@ -324,8 +323,6 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    # Create a string to hold past due and upcoming reminders.
-    messages = ""
     # Create lists of reminders categorized by due date
     (
         past_due_reminders,
@@ -334,16 +331,36 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
         week_before_reminders,
     ) = [], [], [], []
     for r in reminders:
-        due_date = datetime.strptime(r[5], "%Y-%m-%d")
-        if due_date < datetime.today():
+        due_date = datetime.strptime(r[5], "%Y-%m-%d").date()
+        today = datetime.today().date()
+        if due_date < today:
             past_due_reminders.append(r)
-        if due_date == datetime.today():
+        if due_date == today:
             day_of_reminders.append(r)
-        if due_date == datetime.today() + timedelta(days=1):
+        if due_date == (datetime.today() + timedelta(days=1)).date():
             day_before_reminders.append(r)
-        if due_date == datetime.today() + timedelta(days=7):
+        if due_date == (datetime.today() + timedelta(days=7)).date():
             week_before_reminders.append(r)
-    # If there are any messages, create a notifications popup.
+
+    # Create a string to hold reminders for notification.
+    messages = ""
+    # Create the list of notification messages starting with past due.
+    for r in past_due_reminders:
+        messages += f"\u2022 Past due: {r[1]}\n"
+    # Get 'day of' notificatons, if opted for.
+    if user_data[3]:
+        for r in day_of_reminders:
+            messages += f"\u2022 Due today: {r[1]}\n"
+    # Get 'day before' notificatons, if opted for.
+    if user_data[2]:
+        for r in day_before_reminders:
+            messages += f"\u2022 Due tomorrow: {r[1]}\n"
+    # Get 'week before' notificatons, if opted for.
+    if user_data[1]:
+        for r in week_before_reminders:
+            messages += f"\u2022 Due in 7 days: {r[1]}\n"
+
+    # If there are any messages, create the notifications popup.
     if messages:
         # Remove the trailing \n from messages.
         messages = messages[:-1]
@@ -357,26 +374,24 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
         # Add highlighting to messages.
         message_list = messages.split("\n")
         line_num = 1
-        for msg in message_list:
+        for ndx, msg in enumerate(message_list):
+            line_num = ndx + 1  # ndx starts at 0, lin_num starts at 1
             if msg.startswith("\u2022 Past due"):
                 notifications_win.txt.insert("end", msg + "\n")
                 indx_start = str(line_num) + ".0"
                 indx_end = str(line_num + 1) + ".0"
                 notifications_win.txt.tag_add("yellow", indx_start, indx_end)
                 notifications_win.txt.tag_config("yellow", background="yellow")
-                line_num += 1
             elif msg.startswith("\u2022 Due today"):
                 notifications_win.txt.insert("end", msg + "\n")
                 indx_start = str(line_num) + ".0"
                 indx_end = str(line_num + 1) + ".0"
                 notifications_win.txt.tag_add("lime", indx_start, indx_end)
                 notifications_win.txt.tag_config("lime", background="lime")
-                line_num += 1
             else:
                 notifications_win.txt.insert("end", msg + "\n")
-                line_num += 1
 
-    # Check every 4 hours whether a notifications popup is indicated.
+    # Check for notifications every 4 hours.
     self.after(14400000, notifications_popup, self)
 
 

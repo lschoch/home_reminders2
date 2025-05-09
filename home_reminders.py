@@ -8,7 +8,6 @@ from PIL import Image, ImageTk
 
 from business_logic import (
     create_database,
-    date_check,
     fetch_reminders,
     insert_data,
     notifications_popup,  # noqa: F401
@@ -141,7 +140,7 @@ class App(tk.Tk):
         insert_data(self, data)
         refresh(self)
         notifications_popup(self)
-        date_check(self)
+        # date_check(self)
 
         # on startup, select the last item in the treeview - to get focus
         # into the treeview without interfering with item highlighting.
