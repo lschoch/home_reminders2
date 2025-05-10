@@ -353,16 +353,14 @@ def date_check(self) -> Any:
     Returns:
         None
     """
-    # check if the current date has changed
+    # Check if the date has changed.
     if self.todays_date_var.get() != datetime.now().strftime("%Y-%m-%d"):
         # update the label to show today's date
         self.todays_date_var.set(datetime.now().strftime("%Y-%m-%d"))
         self.today_is_lbl.config(
             text=f"Today is {self.todays_date_var.get()}",
         )
-        # refresh data in treeview so that highlighting remains accurate
-        # refresh(self)
-
+    # Check every second.
     self.after(1000, date_check, self)
 
 
@@ -505,10 +503,14 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
     return True
 
 
-# function to delete user data from the user table
 def delete_user_data(self) -> Any:
     """
     Function to delete user data from the user table.
+
+    Args:
+        none
+    Returns:
+        None
     """
     try:
         with get_con() as con:

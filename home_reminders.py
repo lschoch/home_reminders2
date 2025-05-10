@@ -140,15 +140,16 @@ class App(tk.Tk):
         # add data to treeview
         insert_data(self, data)
         refresh(self)
-        # Periodically check whether notifications are due.
-        notifications_popup(self)
-        # Monitor for date change.
-        date_check(self)
 
         # on startup, select the last item in the treeview - to get focus
         # into the treeview without interfering with item highlighting.
         last_index = len(self.tree.get_children()) - 1
         self.tree.selection_set(self.tree.get_children()[last_index])
+
+        # Periodically check whether notifications are due.
+        notifications_popup(self)
+        # Monitor for date change.
+        date_check(self)
 
     # end init
     ###############################################################
@@ -156,4 +157,5 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     app = App()
+    app.focus_force()
     app.mainloop()
