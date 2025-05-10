@@ -137,19 +137,18 @@ class App(tk.Tk):
         create_legend(self)
         # create treeview to display data
         self.tree = create_tree_widget(self)
-        # add data to treeview
+        # add reminders to the treeview
         insert_data(self, data)
         refresh(self)
-
-        # on startup, select the last item in the treeview - to get focus
-        # into the treeview without interfering with item highlighting.
-        last_index = len(self.tree.get_children()) - 1
-        self.tree.selection_set(self.tree.get_children()[last_index])
-
         # Periodically check whether notifications are due.
         notifications_popup(self)
         # Monitor for date change.
         date_check(self)
+        # On startup, select the last item in the treeview - to get focus into
+        # the treeview without interfering with item highlighting at the top of
+        # the list.
+        last_index = len(self.tree.get_children()) - 1
+        self.tree.selection_set(self.tree.get_children()[last_index])
 
     # end init
     ###############################################################
