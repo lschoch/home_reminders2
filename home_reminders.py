@@ -54,16 +54,16 @@ class App(tk.Tk):
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=140)
 
-        # create database if it does not exist and retrieve data
-        create_database(self)
-        data = fetch_reminders(self)
-
         # create variable to prevent calling treeview_on_selection_changed
         # after refresh
         self.refreshed = False
 
         # flag to track whether coming from view_all or view_current
         self.view_current = False
+
+        # create database if it does not exist and retrieve data
+        create_database(self)
+        data = fetch_reminders(self)
 
         self.view_lbl_msg = tk.StringVar()
         self.view_lbl_color = tk.StringVar()

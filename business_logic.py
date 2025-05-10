@@ -128,7 +128,7 @@ def get_date(date_last_entry: date, top) -> Any:
 def refresh(self) -> Any:
     """Function to update treeview and labels after a change to the database"""
     # Fetch fresh set of reminders and insert into treeview.
-    refreshed_data = fetch_reminders_all_or_pending(self)
+    refreshed_data = fetch_reminders(self)
     for item in self.tree.get_children():
         self.tree.delete(item)
     insert_data(self, refreshed_data)
@@ -323,7 +323,16 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     # user_data[0] is phone number. If present, user has opted to receive
     # notifications.
     if user_data[0]:
-        reminders = fetch_reminders(self)
+        # Fetch all reminders. If view_current is set to True, temporarily
+        # reset it to False so that all reminders will be retrieved instead of
+        # just the pending reminders.
+        if self.view_current:
+            self.view_current = False
+            reminders = fetch_reminders(self)
+            # Reset view_current.
+            self.view_current = True
+        else:
+            reminders = fetch_reminders(self)
     else:
         reminders = None
     # Categorize reminders, if any, by due date.
@@ -404,23 +413,37 @@ def create_database(self) -> Any:
 
 def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
     """
-    Function to retrieve data from the database. Returns a cursor object
-    containing all the reminders in the reminders table.
+    Retrieves reminders from the database.
+
+    Fetches either the pending reminders or all reminders depending on the
+    value of the attribute view_current.
+    Args:
+        none
+    Returns:
+        Optional[sqlite3.Cursor]: Cursor object containging the retrieved
+        reminder items.
     """
+    # connect to database and create cursor
     try:
         with get_con() as con:
             cur = con.cursor()
-            # retrieve all reminders
-            data = cur.execute("""
-                SELECT * FROM reminders
-                ORDER BY date_next ASC, description ASC
-            """)
-        return data
+            # retrieve and return data depending on the current view
+            if self.view_current:
+                return cur.execute("""
+                    SELECT * FROM reminders
+                    WHERE date_next >= DATE('now', 'localtime')
+                                        OR date_next IS NULL
+                    ORDER BY date_next ASC, description ASC
+                """)
+            else:
+                return cur.execute("""
+                    SELECT * FROM reminders
+                    ORDER BY date_next ASC, description ASC
+                """)
     except sqlite3.Error as e:
         print(f"Database error: {e}")
-        InfoMsgBox(
-            self, "Error", "Failed to retrieve reminders from the database."
-        )
+        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    return None
 
 
 def validate_inputs(self, top, id: int | None = None) -> bool:
@@ -438,15 +461,17 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
         )
         description.focus_set()
         return False
-    # Get list of existing items from the database reminders table.
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            result = cur.execute("""SELECT * FROM reminders""")
-            items = result.fetchall()
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    # Fetch all reminders. If view_current is set to True, temporarily reset
+    # it to False so that all reminders will be retrieved instead of just the
+    # pending reminders.
+    if self.view_current:
+        self.view_current = False
+        data = fetch_reminders(self)
+        # Reset view_current.
+        self.view_current = True
+    else:
+        data = fetch_reminders(self)
+    items = data.fetchall()
     # If updating an existing item, get the pre-edit description. Item[0] is
     # the id in the database, item[1] is the description in the database.
     original_description = None
@@ -674,19 +699,7 @@ def view_pending(self) -> Any:
         None
     """
     self.view_current = True
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            data = cur.execute("""
-                SELECT * FROM reminders
-                WHERE date_next >= DATE('now', 'localtime')
-                ORDER BY date_next ASC, description ASC
-            """)
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    for item in self.tree.get_children():
-        self.tree.delete(item)
+    data = fetch_reminders(self)
     insert_data(self, data)
     refresh(self)
     module = importlib.import_module("ui_logic")
@@ -705,18 +718,7 @@ def view_all(self) -> Any:
         None
     """
     self.view_current = False
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            data = cur.execute("""
-                SELECT * FROM reminders
-                ORDER BY date_next ASC, description ASC
-            """)
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    for item in self.tree.get_children():
-        self.tree.delete(item)
+    data = fetch_reminders(self)
     insert_data(self, data)
     refresh(self)
     module = importlib.import_module("ui_logic")
@@ -864,41 +866,6 @@ def get_user_data(self) -> Any:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
-
-
-def fetch_reminders_all_or_pending(self) -> Optional[sqlite3.Cursor]:
-    """
-    Retrieves reminders from the database.
-
-    Fetches either the pending reminders or all reminders depending on the
-    value of the attribute view_current.
-    Args:
-        none
-    Returns:
-        Optional[sqlite3.Cursor]: Cursor object containging the retrieved
-        reminder items.
-    """
-    # connect to database and create cursor
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            # retrieve and return data depending on the current view
-            if self.view_current:
-                return cur.execute("""
-                    SELECT * FROM reminders
-                    WHERE date_next >= DATE('now', 'localtime')
-                                        OR date_next IS NULL
-                    ORDER BY date_next ASC, description ASC
-                """)
-            else:
-                return cur.execute("""
-                    SELECT * FROM reminders
-                    ORDER BY date_next ASC, description ASC
-                """)
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    return None
 
 
 def delete_item_from_database(self, id: int) -> Any:
