@@ -224,8 +224,12 @@ def appsupportdir() -> str | os.PathLike:
 
 def initialize_user(self) -> Any:
     """
-    Function to initialize the user table if it is empty. Does not return
-    anything.
+    Function to initialize the user table if it is empty.
+
+    Args:
+        none
+    Returns:
+        None
     """
     try:
         with get_con() as con:
@@ -251,9 +255,12 @@ def initialize_user(self) -> Any:
 
 def save_prefs(self, values) -> Any:
     """
-    Function to save user preferences to database. Called from the submit
-    button of the user preferences window. Takes values parameter which is a
-    5 tuple: phone number, 3 check box settings, and date_last. No return.
+    Saves user preferences to the database.
+
+    Args:
+        values (tuple): 5 tuple containing user preferences to be saved.
+    Returns:
+        None
     """
     try:
         with get_con() as con:
@@ -294,14 +301,17 @@ def save_prefs(self, values) -> Any:
 
 def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     """
-    Function to check for upcoming items and create a notifications popup if
-    there are any. It checks for items that are past due, due today, due
-    tomorrow, or due in 7 days, depending on user preferences. It runs every
-    4 hours to check for upcoming items. It also removes any existing
-    notifications popups to prevent multiple popups from accumulating. Does not
-    return anything.
-    """
+    Checks for reminder notifications. Creates a notifications popup if needed.
 
+    Checks every four hours for items that are past due, due today, due
+    tomorrow, or due in 7 days, depending on user preferences. Also removes any
+    pre-existing notifications popups to prevent multiple popups from
+    accumulating.
+    Args:
+        none.
+    Returns:
+        None
+    """
     # Initialize user table in case it's empty.
     initialize_user(self)
     # Remove any pre-existing notifications popups that havent' been closed by
@@ -309,17 +319,13 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     module = importlib.import_module("ui_logic")
     module.remove_notifications_popups(self)
     # Fetch reminders if user has opted to receive notifiications.
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            user_data = cur.execute("SELECT * FROM user").fetchone()
-            # user_data[0] is phone number. If present, user has opted to
-            # receive notifications.
-            if user_data[0]:
-                reminders = fetch_reminders(self)
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    user_data = get_user_data(self)
+    # user_data[0] is phone number. If present, user has opted to receive
+    # notifications.
+    if user_data[0]:
+        reminders = fetch_reminders(self)
+    else:
+        reminders = None
     # Categorize reminders, if any, by due date.
     if reminders:
         reminders_by_category = categorize_reminders(reminders)
@@ -336,11 +342,16 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
 
 def date_check(self) -> Any:
     """
-    Takes self as a parameter and checks if the current date has changed.
-    If it has, updates the today_is_lbl to the current date and refreshes
-    treeview so that highlighting remains accurate. This is done because the
-    app is meant to remain open for extended periods. This function calls
-    itself every second to monitor for date change. Does not return anything.
+    On date change, updates the today is label and refreshes treeview.
+
+    Calls itself every second to monitor for date change. On date change,
+    updates the today is label and refreshes the treeview to keep highlighting
+    accurate. This is needed because the app is meant to remain open for
+    extended periods.
+    Args:
+        none
+    Returns:
+        None
     """
     # check if the current date has changed
     if self.todays_date_var.get() != datetime.now().strftime("%Y-%m-%d"):
@@ -358,6 +369,11 @@ def date_check(self) -> Any:
 def create_database(self) -> Any:
     """
     Function to create database if it does not exist. Does not return anything.
+
+    Args:
+        none
+    Returns:
+        None
     """
     try:
         with get_con() as con:
