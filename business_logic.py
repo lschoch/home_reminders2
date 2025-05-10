@@ -525,21 +525,19 @@ def delete_user_data(self) -> Any:
 
 
 def opt_in(self) -> Any:
-    """Function to opt in to notifications and get user data"""
+    """
+    Creates dialog giving user the option to start receiving notifications.
+    Args:
+        none
+    Returns:
+        None
+    """
     # The following import was deferred to avoid circular imports.
     from ui_logic import create_preferences_window
 
     # initialize user table if empty
     initialize_user(self)
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            # check to see if user has a phone number; i.e., already
-            # receiving notifications
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    phone_number = get_user_data(self)[0]
     if not phone_number:
         response = YesNoMsgBox(
             self,
@@ -598,20 +596,16 @@ def opt_in(self) -> Any:
 
 def opt_out(self) -> Any:
     """
-    Function giving user the choice to opt out of notifications. Does not
-    return anything,
+    Creates dialog giving user the option to opt out of notifications.
+
+    Args:
+        none
+    Returns:
+        None
     """
     initialize_user(self)
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            # check to see if user has a phone number; i.e., already
-            # receiving notifications
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
-    if phone_number is not None:
+    phone_number = get_user_data(self)[0]
+    if phone_number:
         response = YesNoMsgBox(
             self,
             title="Notifications",
@@ -643,8 +637,12 @@ def opt_out(self) -> Any:
 
 def preferences(self) -> Any:
     """
-    Function giving user the option to modify their notification preferences.
-    Does not return anything.
+    Creates dialog giving user the option to modify notification preferences.
+
+    Args:
+        none
+    Returns:
+        None
     """
     # The following import was deferred to avoid circular imports.
     from ui_logic import create_preferences_window
@@ -652,13 +650,7 @@ def preferences(self) -> Any:
     initialize_user(self)
     # check to see if user has a phone number; i.e., already receiving
     # notifications
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            phone_number = cur.execute("SELECT * FROM user").fetchone()[0]
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+    phone_number = get_user_data(self)[0]
     if phone_number:
         create_preferences_window(self)
     else:
@@ -674,8 +666,12 @@ def preferences(self) -> Any:
 
 def view_pending(self) -> Any:
     """
-    Changes the treeview to include only items due today or in the future.
-    Does not return anything.
+    Changes the treeview to list only items due today or in the future.
+
+    Args:
+        none
+    Returns:
+        None
     """
     self.view_current = True
     try:
@@ -701,8 +697,12 @@ def view_pending(self) -> Any:
 
 def view_all(self) -> Any:
     """
-    Changes the treeview to include all items, including thise that are past
-    due. Does not return anything.
+    Changes the treeview to list all items, including thise that are past due.
+
+    Args:
+        none
+    Returns:
+        None
     """
     self.view_current = False
     try:
@@ -728,8 +728,13 @@ def view_all(self) -> Any:
 
 def get_db_paths() -> tuple[str | os.PathLike, str | os.PathLike]:
     """
-    Returns a two tuple: the first element is the path to the database and
-    the second element is the path to the database backup.
+    Gets paths to database and database backup.
+
+    Args:
+        none
+    Returns:
+        (tuple[str | os.PathLike, str | os.PathLike]):  A 2 tuple containing
+        the path to the database and the path to the database backup.
     """
     db_base_path = os.path.join(appsupportdir(), "Home Reminders")
     if not os.path.exists(db_base_path):
@@ -741,8 +746,12 @@ def get_db_paths() -> tuple[str | os.PathLike, str | os.PathLike]:
 
 def backup(self) -> Any:
     """
-    Gives user the option to create a new database backup by copying the
-    database file to a backup file. Does not return anything.
+    Creates dialog giving user the option to create a database backup.
+
+    Args:
+        none
+    Returns:
+        None
     """
     answer = YesNoMsgBox(
         self,
@@ -769,8 +778,12 @@ def backup(self) -> Any:
 
 def restore(self) -> Any:
     """
-    Gives user the option to restore the database file by copying the backup
-    file to the database file. Does not return anything.
+    Creates dialog giving user the option to restore the database.
+
+    Args:
+        none
+    Returns:
+        None
     """
     answer = YesNoMsgBox(
         self,
@@ -798,8 +811,12 @@ def restore(self) -> Any:
 
 def delete_all(self) -> Any:
     """
-    Gives user the option to delete the database file. Does not return
-    anything.
+    Creates dialog giving user the option to delete the database.
+
+    Args:
+        none
+    Returns:
+        None
     """
     answer = YesNoMsgBox(
         self,
@@ -833,8 +850,12 @@ def delete_all(self) -> Any:
 
 def get_user_data(self) -> Any:
     """
-    Function to get existing user preferences from the user table. Doesn't
-    return anything.
+    Gets user preferences from the user table.
+
+    Args:
+        none
+    Returns:
+        None
     """
     try:
         with get_con() as con:
@@ -847,9 +868,15 @@ def get_user_data(self) -> Any:
 
 def fetch_reminders_all_or_pending(self) -> Optional[sqlite3.Cursor]:
     """
-    Function to retrieve reminders from database. Fetches either the pending
-    reminders or all reminders depending on the value of the parameter
-    view_current. Returns cursor object containing the retrieved reminders.
+    Retrieves reminders from the database.
+
+    Fetches either the pending reminders or all reminders depending on the
+    value of the attribute view_current.
+    Args:
+        none
+    Returns:
+        Optional[sqlite3.Cursor]: Cursor object containging the retrieved
+        reminder items.
     """
     # connect to database and create cursor
     try:
@@ -874,10 +901,14 @@ def fetch_reminders_all_or_pending(self) -> Optional[sqlite3.Cursor]:
     return None
 
 
-def delete_item_from_database(self, id) -> Any:
+def delete_item_from_database(self, id: int) -> Any:
     """
-    Function to delete a reminder item from the database. Takes the id of the
-    item to delete as a parameter. Does not return anything.
+    Deletes a reminder item from the database.
+
+    Args:
+        id (int): The id of the item to be deleted.
+    Returns:
+        None
     """
     try:
         with get_con() as con:
@@ -972,10 +1003,15 @@ def categorize_reminders(
     reminders: Optional[sqlite3.Cursor],
 ) -> Tuple[list[str], list[str], list[str], list[str]]:
     """
-    Creates lists of notification reminders categorized by due date. Returns a
-    4 tuple containing notifications that are past due, notifications that are
-    due today, notifications that are due tomorrow, and notifications that are
-    due in one week.
+    Creates lists of notification reminders categorized by due date.
+
+    Args:
+        reminders (Optional[sqlite3.Cursor]): Cursor object containing the
+        remninder items to be categorized.
+    Returns:
+        Tuple[list[str], list[str], list[str], list[str]]: A tuple containing 4
+        lists: past due items, items due today, items due tomorrow and items
+        due in 7 days.
     """
     (
         past_due_reminders,
@@ -1003,7 +1039,24 @@ def categorize_reminders(
     )
 
 
-def create_message_string(user_data, reminders_by_category) -> str:
+def create_message_string(
+    user_data: Optional[sqlite3.Cursor],
+    reminders_by_category: Tuple[list[str], list[str], list[str], list[str]],
+) -> str:
+    """
+    Creates a string of reminders notifications for the notifications popup.
+
+    Args:
+        user_data (Optional[sqlite3.Cursor]): Cursor object containg user
+        preferences.
+        reminders_by_category
+        (Tuple[list[str], list[str], list[str], list[str]]): A tuple containing
+        the categorized reminders for notification.
+
+    Returns:
+        str: A string transfers the reminders to a bulleted list for display in
+        notifications popup.
+    """
     # Create a string to hold reminders for notification.
     messages = ""
     # Create the list of notification messages starting with past due.
