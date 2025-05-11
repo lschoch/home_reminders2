@@ -9,6 +9,7 @@ executing==2.2.0
 fonttools==4.56.0
 icecream==2.1.4
 kiwisolver==1.4.8
+loguru==0.7.3
 macholib==1.16.3
 matplotlib==3.10.0
 memory-profiler==0.61.0
