@@ -1021,8 +1021,8 @@ def create_message_string(
         the categorized reminders for notification.
 
     Returns:
-        str: A string transfers the reminders to a bulleted list for display in
-        notifications popup.
+        str: A string representation of a bulleted list of reminders for
+        display in the notifications popup.
     """
     # Create a string to hold reminders for notification.
     messages = ""
