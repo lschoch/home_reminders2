@@ -14,6 +14,7 @@ from business_logic import (
     notifications_popup,  # noqa: F401
     refresh,
 )
+from search_module import search_treeview
 from ui_logic import (
     create_left_side_buttons,
     create_legend,
@@ -109,20 +110,15 @@ class App(tk.Tk):
             row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
         )
 
-        def search_treeview():
-            query = search_var.get().lower()
-            for item in self.tree.get_children():
-                values = self.tree.item(item, "values")
-                if query in str(values).lower():
-                    self.tree.selection_set(item)
-                    # remove any existing toplevels
-                    remove_toplevels
-                    # scroll to the first matching item
-                    self.tree.see(item)
-                    self.tree.focus(item)
-                    break
+        def remove_toplevels_callback():
+            remove_toplevels(self)
 
-        search_entry.bind("<Return>", lambda e: search_treeview())
+        search_entry.bind(
+            "<Return>",
+            lambda e: search_treeview(
+                self.tree, search_var, remove_toplevels_callback
+            ),
+        )
 
         # insert image
         try:
