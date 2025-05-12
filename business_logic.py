@@ -562,14 +562,9 @@ def opt_in(self) -> Any:
     Returns:
         None
     """
-    # The following import was deferred to avoid circular imports.
-    from ui_logic import create_preferences_window
-
     # initialize user table if empty
     initialize_user(self)
-    user_data = get_user_data(self)
-    if user_data:
-        phone_number = user_data.fetchone()[0]
+    phone_number = get_phone_number(self)
     if not phone_number:
         response = YesNoMsgBox(
             self,
@@ -581,7 +576,8 @@ def opt_in(self) -> Any:
         )
         # if user opts to receive notifications, get user data
         if response.get_response():
-            create_preferences_window(self)
+            module = importlib.import_module("ui_logic")
+            module.create_preferences_window(self)
         else:
             InfoMsgBox(
                 self,
@@ -623,7 +619,8 @@ def opt_in(self) -> Any:
                 y_offset=5,
             )
             if response2.get_response():
-                create_preferences_window(self)
+                module = importlib.import_module("ui_logic")
+                module.create_preferences_window(self)
 
 
 def opt_out(self) -> Any:
@@ -636,9 +633,7 @@ def opt_out(self) -> Any:
         None
     """
     initialize_user(self)
-    user_data = get_user_data(self)
-    if user_data:
-        phone_number = user_data.fetchone()[0]
+    phone_number = get_phone_number(self)
     if phone_number:
         response = YesNoMsgBox(
             self,
@@ -678,17 +673,13 @@ def preferences(self) -> Any:
     Returns:
         None
     """
-    # The following import was deferred to avoid circular imports.
-    from ui_logic import create_preferences_window
-
     initialize_user(self)
     # check to see if user has a phone number; i.e., already receiving
     # notifications
-    user_data = get_user_data(self)
-    if user_data:
-        phone_number = user_data.fetchone()[0]
+    phone_number = get_phone_number(self)
     if phone_number:
-        create_preferences_window(self)
+        module = importlib.import_module("ui_logic")
+        module.create_preferences_window(self)
     else:
         InfoMsgBox(
             self,
@@ -1053,3 +1044,11 @@ def create_message_string(
             for r in reminders_by_category[3]:
                 messages += f"\u2022 Due in 7 days: {r[1]}\n"
     return messages
+
+
+def get_phone_number(self) -> str:
+    user_data = get_user_data(self)
+    if user_data:
+        return user_data.fetchone()[0]
+    else:
+        return ""

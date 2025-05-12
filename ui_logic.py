@@ -120,7 +120,7 @@ def create_legend(self):
 
 
 def create_left_side_buttons(self):
-    """create left side buttons for the main window"""
+    """Create left side buttons for the main window."""
     self.btn_new = ttk.Button(
         self, text="New Item", command=lambda: create_new(self)
     )
@@ -232,7 +232,6 @@ def create_preferences_window(self):
         background="#ececec",  # "#ececec",
     )
     c2.grid(row=3, column=0, columnspan=2, padx=(25, 0))
-
     c3 = tk.Checkbutton(
         preferences_window,
         text="Day of",
@@ -243,7 +242,6 @@ def create_preferences_window(self):
         background="#ececec",  # "#ececec",
     )
     c3.grid(row=3, column=0, columnspan=2, padx=(0, 25), sticky="e")
-
     ttk.Button(
         preferences_window,
         text="Submit",
@@ -256,16 +254,14 @@ def create_preferences_window(self):
         width=6,
         command=preferences_window.destroy,
     ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
-
     # Get existing preferences, if present, and insert into preferences window.
-    user_data = get_user_data(self)
-    if user_data[
-        0
-    ]:  # user_data[0] = phone number. Indicates that user exists.
-        entry.insert(0, user_data[0])
-        self.var1.set(user_data[1])  # week_before
-        self.var2.set(user_data[2])  # day_before
-        self.var3.set(user_data[3])  # day_of
+    user_data_tuple = get_user_data(self).fetchone()
+    # user_data.tuple[0] = phone number. Indicates that user exists.
+    if user_data_tuple[0]:
+        entry.insert(0, user_data_tuple[0])
+        self.var1.set(user_data_tuple[1])  # week_before
+        self.var2.set(user_data_tuple[2])  # day_before
+        self.var3.set(user_data_tuple[3])  # day_of
 
     entry.focus_set()
 
