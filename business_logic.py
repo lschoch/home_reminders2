@@ -372,6 +372,8 @@ def date_check(self) -> Any:
         self.today_is_lbl.config(
             text=f"Today is {self.todays_date_var.get()}",
         )
+        # Update highlighting after date change.
+        refresh(self)
     # Check every second.
     self.after(1000, date_check, self)
 
