@@ -3,7 +3,6 @@ from datetime import date, datetime
 from tkinter import END, Menu, ttk
 from typing import Any
 
-# from icecream import ic  # noqa: F401
 from business_logic import (
     backup,
     date_next_calc,

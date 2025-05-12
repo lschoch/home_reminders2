@@ -3,7 +3,6 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import ttk
 
-# from icecream import ic  # noqa: F401
 from PIL import Image, ImageTk
 
 from business_logic import (
