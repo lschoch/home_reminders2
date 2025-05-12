@@ -102,17 +102,17 @@ class App(tk.Tk):
         )
         self.search_lbl.grid(row=0, column=1, padx=315, pady=10, sticky="sw")
         search_var = tk.StringVar()
-        search_entry = ttk.Entry(
+        self.search_entry = ttk.Entry(
             self, textvariable=search_var, width=30, font=("Arial", 14)
         )
-        search_entry.grid(
+        self.search_entry.grid(
             row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
         )
 
         def remove_toplevels_callback():
             remove_toplevels(self)
 
-        search_entry.bind(
+        self.search_entry.bind(
             "<Return>",
             lambda e: search_treeview(
                 self.tree, search_var, remove_toplevels_callback
