@@ -2,6 +2,7 @@ import os
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk
+from typing import Any
 
 from PIL import Image, ImageTk
 
@@ -13,6 +14,7 @@ from business_logic import (
     notifications_popup,  # noqa: F401
     refresh,
 )
+from classes import InfoMsgBox
 from search_module import search_treeview
 from ui_logic import (
     create_left_side_buttons,
@@ -109,14 +111,29 @@ class App(tk.Tk):
             row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
         )
 
-        def remove_toplevels_callback():
-            remove_toplevels(self)
+        def on_search(self, search_var: tk.StringVar) -> Any:
+            """
+            Handles the search functionality for the Treeview.
+
+            Args:
+                search_var: The StringVar containing the search query.
+            """
+            search_query = search_var.get()
+            matching_item = search_treeview(self.tree, search_query)
+
+            if matching_item:
+                # Perform UI operations for the matching item
+                self.tree.selection_set(matching_item)
+                remove_toplevels(self)  # Remove any existing toplevel windows
+                self.tree.see(matching_item)
+                self.tree.focus(matching_item)
+            else:
+                # Optionally, show a message if no match is found
+                InfoMsgBox(self, "Search", "No matching item found.")
 
         self.search_entry.bind(
             "<Return>",
-            lambda e: search_treeview(
-                self.tree, search_var, remove_toplevels_callback
-            ),
+            lambda e: on_search(self, search_var),
         )
 
         # insert image
