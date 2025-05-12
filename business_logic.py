@@ -10,8 +10,6 @@ from tkinter import ttk
 from typing import Any, Optional, Tuple  # noqa: F401
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-
-# from icecream import ic  # noqa: F401
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
@@ -320,30 +318,35 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
     module.remove_notifications_popups(self)
     # Fetch reminders if user has opted to receive notifiications.
     user_data = get_user_data(self)
-    # user_data[0] is phone number. If present, user has opted to receive
-    # notifications.
-    if user_data[0]:
-        # Fetch all reminders. If view_current is set to True, temporarily
-        # reset it to False so that all reminders will be retrieved instead of
-        # just the pending reminders.
-        if self.view_current:
-            self.view_current = False
-            reminders = fetch_reminders(self)
-            # Reset view_current.
-            self.view_current = True
+    # user_data.fetchone()[0] is user phone number. If present, user has opted
+    # to receive notifications.
+    if user_data:
+        # Convert Cursor object to tuple
+        user_data_tuple = user_data.fetchone()
+        if user_data_tuple[0]:
+            # Fetch all reminders. If view_current is set to True, temporarily
+            # reset it to False so that all reminders will be retrieved instead
+            # of just the pending reminders.
+            if self.view_current:
+                self.view_current = False
+                reminders = fetch_reminders(self)
+                # Reset view_current.
+                self.view_current = True
+            else:
+                reminders = fetch_reminders(self)
         else:
-            reminders = fetch_reminders(self)
-    else:
-        reminders = None
-    # Categorize reminders, if any, by due date.
-    if reminders:
-        reminders_by_category = categorize_reminders(reminders)
-        # Create string of notifications messages.
-        messages = create_message_string(user_data, reminders_by_category)
-        # If there are any messages, create a notifications popup.
-        if messages:
-            module = importlib.import_module("ui_logic")
-            module.create_notifications_popup(self, messages)
+            reminders = None
+        # Categorize reminders, if any, by due date.
+        if reminders:
+            reminders_by_category = categorize_reminders(reminders)
+            # Create string of notifications messages.
+            messages = create_message_string(
+                user_data_tuple, reminders_by_category
+            )
+            # If there are any messages, create a notifications popup.
+            if messages:
+                module = importlib.import_module("ui_logic")
+                module.create_notifications_popup(self, messages)
 
     # Check for notifications every 4 hours.
     self.after(14400000, notifications_popup, self)
@@ -471,33 +474,35 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
         self.view_current = True
     else:
         data = fetch_reminders(self)
-    items = data.fetchall()
-    # If updating an existing item, get the pre-edit description. Item[0] is
-    # the id in the database, item[1] is the description in the database.
-    original_description = None
-    if id:
+    # Check for duplicates only if there are existing reminders.
+    if data:
+        items = data.fetchall()
+        # If updating an existing item, get the pre-edit description. Item[0]
+        # is the id in the database, item[1] is the description in the db.
+        original_description = None
+        if id:
+            for item in items:
+                if item[0] == id:
+                    original_description = item[1]
+        # Check for duplicate description.
         for item in items:
-            if item[0] == id:
-                original_description = item[1]
-    # Check for duplicate description.
-    for item in items:
-        if item[1] == description:
-            # It's not a duplicate if updating an existing item, and not
-            # changing the description.
-            if original_description:
-                break
-            InfoMsgBox(
-                self,
-                "Duplicate Description",
-                "There is already an entry with this description."
-                + " Try again.",
-            )
-            # if updating an existing item, reset original description
-            if id == item[0]:
-                description.delete(0, tk.END)
-                description.insert(0, original_description)
-                description.focus_set()
-            return False
+            if item[1] == description:
+                # It's not a duplicate if updating an existing item, and not
+                # changing the description.
+                if original_description:
+                    break
+                InfoMsgBox(
+                    self,
+                    "Duplicate Description",
+                    "There is already an entry with this description."
+                    + " Try again.",
+                )
+                # if updating an existing item, reset original description
+                if id == item[0]:
+                    description.delete(0, tk.END)
+                    description.insert(0, original_description)
+                    description.focus_set()
+                return False
     # frequency is required and must be an integer
     frequency = top.frequency_entry.get()
     if not frequency or not int(frequency):
@@ -562,7 +567,9 @@ def opt_in(self) -> Any:
 
     # initialize user table if empty
     initialize_user(self)
-    phone_number = get_user_data(self)[0]
+    user_data = get_user_data(self)
+    if user_data:
+        phone_number = user_data.fetchone()[0]
     if not phone_number:
         response = YesNoMsgBox(
             self,
@@ -629,7 +636,9 @@ def opt_out(self) -> Any:
         None
     """
     initialize_user(self)
-    phone_number = get_user_data(self)[0]
+    user_data = get_user_data(self)
+    if user_data:
+        phone_number = user_data.fetchone()[0]
     if phone_number:
         response = YesNoMsgBox(
             self,
@@ -675,7 +684,9 @@ def preferences(self) -> Any:
     initialize_user(self)
     # check to see if user has a phone number; i.e., already receiving
     # notifications
-    phone_number = get_user_data(self)[0]
+    user_data = get_user_data(self)
+    if user_data:
+        phone_number = user_data.fetchone()[0]
     if phone_number:
         create_preferences_window(self)
     else:
@@ -846,23 +857,22 @@ def delete_all(self) -> Any:
             x_offset=3,
             y_offset=5,
         )
-    else:
-        return
 
 
-def get_user_data(self) -> Any:
+def get_user_data(self) -> Optional[sqlite3.Cursor]:
     """
     Gets user preferences from the user table.
 
     Args:
         none
     Returns:
-        None
+        A cursor object containing user preferences: phone number, week_before,
+         day_ before, day_of, last_notification_date.
     """
     try:
         with get_con() as con:
             cur = con.cursor()
-            return cur.execute("SELECT * FROM user").fetchone()
+            return cur.execute("SELECT * FROM user")
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
@@ -1007,15 +1017,15 @@ def categorize_reminders(
 
 
 def create_message_string(
-    user_data: Optional[sqlite3.Cursor],
+    user_data_tuple: Tuple[str, int, int, int, str],
     reminders_by_category: Tuple[list[str], list[str], list[str], list[str]],
 ) -> str:
     """
     Creates a string of reminders notifications for the notifications popup.
 
     Args:
-        user_data (Optional[sqlite3.Cursor]): Cursor object containg user
-        preferences.
+        user_data_tuple (tuple[str, int, int, int, str]): 5 tuple containing
+         user preferences.
         reminders_by_category
         (Tuple[list[str], list[str], list[str], list[str]]): A tuple containing
         the categorized reminders for notification.
@@ -1030,15 +1040,16 @@ def create_message_string(
     for r in reminders_by_category[0]:
         messages += f"\u2022 Past due: {r[1]}\n"
     # Get 'day of' notificatons, if opted for.
-    if user_data[3]:
-        for r in reminders_by_category[1]:
-            messages += f"\u2022 Due today: {r[1]}\n"
-    # Get 'day before' notificatons, if opted for.
-    if user_data[2]:
-        for r in reminders_by_category[2]:
-            messages += f"\u2022 Due tomorrow: {r[1]}\n"
-    # Get 'week before' notificatons, if opted for.
-    if user_data[1]:
-        for r in reminders_by_category[3]:
-            messages += f"\u2022 Due in 7 days: {r[1]}\n"
+    if user_data_tuple:
+        if user_data_tuple[3]:
+            for r in reminders_by_category[1]:
+                messages += f"\u2022 Due today: {r[1]}\n"
+        # Get 'day before' notificatons, if opted for.
+        if user_data_tuple[2]:
+            for r in reminders_by_category[2]:
+                messages += f"\u2022 Due tomorrow: {r[1]}\n"
+        # Get 'week before' notificatons, if opted for.
+        if user_data_tuple[1]:
+            for r in reminders_by_category[3]:
+                messages += f"\u2022 Due in 7 days: {r[1]}\n"
     return messages
