@@ -124,9 +124,12 @@ def get_date(date_last_entry: date, top) -> Any:
 
 
 def refresh(self) -> Any:
-    """Function to update treeview and labels after a change to the database"""
+    """
+    Function to update treeview and labels after a change to the database
+    """
+
     # Fetch fresh set of reminders and insert into treeview.
-    refreshed_data = fetch_reminders(self)
+    refreshed_data = fetch_reminders(self, self.view_current)
     for item in self.tree.get_children():
         self.tree.delete(item)
     insert_data(self, refreshed_data)
@@ -329,11 +332,11 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
             # of just the pending reminders.
             if self.view_current:
                 self.view_current = False
-                reminders = fetch_reminders(self)
+                reminders = fetch_reminders(self, self.view_current)
                 # Reset view_current.
                 self.view_current = True
             else:
-                reminders = fetch_reminders(self)
+                reminders = fetch_reminders(self, self.view_current)
         else:
             reminders = None
         # Categorize reminders, if any, by due date.
@@ -416,14 +419,15 @@ def create_database(self) -> Any:
         InfoMsgBox(self, "Error", "Failed to create the database.")
 
 
-def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
+def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
     """
     Retrieves reminders from the database.
 
     Fetches either the pending reminders or all reminders depending on the
     value of the attribute view_current.
     Args:
-        none
+        view_current (bool): If True, fetch only items due today or in the
+        future, otherwise fetch all items, past and present.
     Returns:
         Optional[sqlite3.Cursor]: Cursor object containging the retrieved
         reminder items.
@@ -433,7 +437,7 @@ def fetch_reminders(self) -> Optional[sqlite3.Cursor]:
         with get_con() as con:
             cur = con.cursor()
             # retrieve and return data depending on the current view
-            if self.view_current:
+            if view_current:
                 return cur.execute("""
                     SELECT * FROM reminders
                     WHERE date_next >= DATE('now', 'localtime')
@@ -471,11 +475,11 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
     # pending reminders.
     if self.view_current:
         self.view_current = False
-        data = fetch_reminders(self)
+        data = fetch_reminders(self, self.view_current)
         # Reset view_current.
         self.view_current = True
     else:
-        data = fetch_reminders(self)
+        data = fetch_reminders(self, self.view_current)
     # Check for duplicates only if there are existing reminders.
     if data:
         items = data.fetchall()
@@ -703,7 +707,7 @@ def view_pending(self) -> Any:
         None
     """
     self.view_current = True
-    data = fetch_reminders(self)
+    data = fetch_reminders(self, self.view_current)
     insert_data(self, data)
     refresh(self)
     module = importlib.import_module("ui_logic")
@@ -722,7 +726,7 @@ def view_all(self) -> Any:
         None
     """
     self.view_current = False
-    data = fetch_reminders(self)
+    data = fetch_reminders(self, self.view_current)
     insert_data(self, data)
     refresh(self)
     module = importlib.import_module("ui_logic")
@@ -977,7 +981,7 @@ def categorize_reminders(
 
     Args:
         reminders (Optional[sqlite3.Cursor]): Cursor object containing the
-        remninder items to be categorized.
+        reminder items to be categorized.
     Returns:
         Tuple[list[str], list[str], list[str], list[str]]: A tuple containing 4
         lists: past due items, items due today, items due tomorrow and items

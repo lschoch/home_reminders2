@@ -7,23 +7,19 @@ from business_logic import (
     backup,
     date_next_calc,
     delete_all,
-    delete_item_from_database,
     get_date,
-    get_user_data,
     on_treeview_selection_changed,
     opt_in,
     opt_out,
     preferences,
     refresh,
     restore,
-    save_database_item,
-    save_prefs,
-    update_database_item,
     validate_inputs,
     view_all,
     view_pending,
 )
 from classes import InfoMsgBox, NofificationsPopup, TopLvl, YesNoMsgBox
+from services import ReminderService
 
 
 def create_menu_bar(self):
@@ -128,30 +124,30 @@ def create_left_side_buttons(self):
     self.btn_quit.grid(row=1, column=0, padx=20, pady=(60, 0), sticky="n")
 
 
-def create_preferences_window(self):
+def create_preferences_window(self):  # noqa: PLR0915
     """
     Create window for users to input/modify their notification preferences.
     """
 
     def submit():
+        """
+        Saves user preferences to the user table of the database.
+
+        Args:
+            none
+        Returns:
+            None
+        """
         week_before = self.var1.get()
         day_before = self.var2.get()
         day_of = self.var3.get()
         none_selected = not any([week_before, day_before, day_of])
         num = entry.get()
         # validate the entered phone number
-        if not num.isnumeric() or len(num) > 10 or len(num) < 10:
-            InfoMsgBox(
-                self,
-                "Notifications",
-                "Phone number must be a ten digit numeric.",
-                x_offset=100,
-                y_offset=15,
-            )
+        if not ReminderService.validate_phone_number(self, num):
             entry.focus_set()
-            return
-        # require at least one "when" option
-        elif none_selected:
+        # Require at least one "when" option.
+        if none_selected:
             txt = (
                 "Please select at least one option for when "
                 + "to be notified."
@@ -164,22 +160,21 @@ def create_preferences_window(self):
                 y_offset=15,
             )
             preferences_window.focus_set()
-            return
-        else:
-            values = (
-                num,  # phone number
-                week_before,  # week before
-                day_before,  # day before
-                day_of,  # day of
-                # last notification date:
-                datetime.strftime(date.today(), "%Y-%m-%d"),
-            )
-            save_prefs(self, values)
+        values = (
+            num,  # phone number
+            week_before,  # week before
+            day_before,  # day before
+            day_of,  # day of
+            # last notification date:
+            datetime.strftime(date.today(), "%Y-%m-%d"),
+        )
+        success = ReminderService.save_user_preferences(self, values)
+        if success:
             preferences_window.destroy()
 
     preferences_window = tk.Toplevel(self)
     preferences_window.title("Notifications")
-    preferences_window.configure(background="#ececec")  # "#ffc49c")
+    preferences_window.configure(background="#ececec")
     preferences_window.geometry("300x185+100+50")
     preferences_window.resizable(False, False)
     preferences_window.wm_transient(self)
@@ -254,7 +249,7 @@ def create_preferences_window(self):
         command=preferences_window.destroy,
     ).grid(row=4, column=1, padx=(15, 0), pady=15, sticky="w")
     # Get existing preferences, if present, and insert into preferences window.
-    user_data_tuple = get_user_data(self).fetchone()
+    user_data_tuple = ReminderService.get_user_preferences(self)
     # user_data.tuple[0] = phone number. Indicates that user exists.
     if user_data_tuple[0]:
         entry.insert(0, user_data_tuple[0])
@@ -288,8 +283,13 @@ def create_edit_window(self, selected_item):
 
     def update_item() -> Any:
         """
-        Function to validate the data after a reminder item has been edited
-        and send it for saving to the database. Does not return anything.
+        Sends edited data to be saved in the database.
+
+        Validates the data before sending.
+        Args:
+            none
+        Returns:
+            None
         """
         id = self.tree.item(selected_item)["values"][0]
         # validate inputs before saving, exit if validation fails
@@ -311,14 +311,19 @@ def create_edit_window(self, selected_item):
             top.note_entry.get(),
             self.tree.item(selected_item)["values"][0],
         )
-        update_database_item(self, values)
-        refresh(self)
-        remove_toplevels(self)
+        success = ReminderService.update_reminder(self, values)
+        if success:
+            refresh(self)
+            remove_toplevels(self)
 
     def delete_item() -> Any:
         """
-        Function to delete the selected reminder item from the database. Does
-        not return anything.
+        Function to delete the selected reminder item from the database.
+
+        Args:
+            none
+        Returns:
+            None
         """
         answer = YesNoMsgBox(
             self,
@@ -329,9 +334,10 @@ def create_edit_window(self, selected_item):
         if not answer.get_response():
             return
         id = self.tree.item(selected_item)["values"][0]
-        delete_item_from_database(self, id)
-        refresh(self)
-        remove_toplevels(self)
+        success = ReminderService.delete_reminder(self, id)
+        if success:
+            refresh(self)
+            remove_toplevels(self)
 
     ttk.Button(top, text="Update", command=update_item).grid(
         row=2, column=1, pady=(15, 0), sticky="w"
@@ -388,13 +394,12 @@ def create_new(self) -> Any:
             date_next,
             top.note_entry.get(),
         )
-        save_database_item(self, values)
-        save_btn.config(state="normal")
-        top.destroy()
-        self.tree.focus()
+        success = ReminderService.save_reminder(self, values)
+        if success:
+            save_btn.config(state="normal")
+            top.destroy()
 
     def cancel():
-        # remove_toplevels(self)
         top.destroy()
         self.tree.focus()
 

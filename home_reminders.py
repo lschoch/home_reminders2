@@ -9,13 +9,13 @@ from PIL import Image, ImageTk
 from business_logic import (
     create_database,
     date_check,
-    fetch_reminders,
     insert_data,
     notifications_popup,  # noqa: F401
     refresh,
 )
 from classes import InfoMsgBox
 from search_module import search_treeview
+from services import ReminderService
 from ui_logic import (
     create_left_side_buttons,
     create_legend,
@@ -65,7 +65,8 @@ class App(tk.Tk):
 
         # create database if it does not exist and retrieve data
         create_database(self)
-        data = fetch_reminders(self)
+        reminders = ReminderService.get_reminders(self, self.view_current)
+        data = reminders if reminders else None
 
         self.view_lbl_msg = tk.StringVar()
         self.view_lbl_color = tk.StringVar()
