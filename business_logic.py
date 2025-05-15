@@ -16,6 +16,9 @@ from classes import (
     InfoMsgBox,
     YesNoMsgBox,
 )
+from services2 import UIService
+
+NOTIFICATION_INTERVAL = 14400000  # 4 hours
 
 
 def on_treeview_selection_changed(self, event) -> Any:
@@ -313,46 +316,40 @@ def notifications_popup(self) -> Any:
     Returns:
         None
     """
-    # Initialize user table in case it's empty.
-    initialize_user(self)
+    # Fetch all reminders from the database and categorize them by due date.
+    try:
+        categorized_reminders = fetch_and_categorize_reminders(
+            self, view_current=self.view_current
+        )
+    except Exception as e:
+        print(f"Error fetching reminders: {e}")
+        InfoMsgBox(
+            self,
+            "Error",
+            "Failed to fetch reminders from the database.",
+        )
+        return
+    # If there are any reminders, generate messages for the notifications
+    # popup.
+    messages = None
+    if categorized_reminders:
+        messages = generate_notification_messages(self, categorized_reminders)
     # Remove any pre-existing notifications popups that havent' been closed by
     # the user.
-    module = importlib.import_module("ui_logic")
-    module.remove_notifications_popups(self)
-    # Fetch reminders if user has opted to receive notifiications.
-    user_data = get_user_data(self)
-    # user_data.fetchone()[0] is user phone number. If present, user has opted
-    # to receive notifications.
-    if user_data:
-        # Convert Cursor object to tuple
-        user_data_tuple = user_data.fetchone()
-        if user_data_tuple[0]:
-            # Fetch all reminders. If view_current is set to True, temporarily
-            # reset it to False so that all reminders will be retrieved instead
-            # of just the pending reminders.
-            if self.view_current:
-                self.view_current = False
-                reminders = fetch_reminders(self, self.view_current)
-                # Reset view_current.
-                self.view_current = True
-            else:
-                reminders = fetch_reminders(self, self.view_current)
-        else:
-            reminders = None
-        # Categorize reminders, if any, by due date.
-        if reminders:
-            reminders_by_category = categorize_reminders(reminders)
-            # Create string of notifications messages.
-            messages = create_message_string(
-                user_data_tuple, reminders_by_category
-            )
-            # If there are any messages, create a notifications popup.
-            if messages:
-                module = importlib.import_module("ui_logic")
-                module.create_notifications_popup(self, messages)
-
-    # Check for notifications every 4 hours.
-    self.after(14400000, notifications_popup, self)
+    UIService.remove_notifications_popups(self)
+    # If there are any messages, create a notifications popup.
+    try:
+        if messages:
+            UIService.create_notifications_popup(self, messages)
+    except Exception as e:
+        print(f"Error creating notifications popup: {e}")
+        InfoMsgBox(
+            self,
+            "Error",
+            "Failed to create notifications popup.",
+        )
+    # Check for notifications at the NOTIFICATION_INTERVAL.
+    self.after(NOTIFICATION_INTERVAL, notifications_popup, self)
 
 
 def date_check(self) -> Any:
@@ -1057,5 +1054,64 @@ def get_phone_number(self) -> str:
     user_data = get_user_data(self)
     if user_data:
         return user_data.fetchone()[0]
+    else:
+        return ""
+
+
+def fetch_and_categorize_reminders(
+    self,  # noqa: PLW0211
+    view_current: bool,
+) -> Optional[Tuple[list[str], list[str], list[str], list[str]]]:
+    # Initialize user table in case it's empty.
+    initialize_user(self)
+    # Fetch reminders if user has opted to receive notifiications.
+    user_data = get_user_data(self)
+    # user_data.fetchone()[0] is user phone number. If present, user has
+    # opted to receive notifications.
+    if user_data:
+        # Convert Cursor object to tuple
+        user_data_tuple = user_data.fetchone()
+        if user_data_tuple[0]:
+            # Fetch all reminders. If view_current is set to True,
+            # temporarily reset it to False so that all reminders will be
+            # retrieved instead of just the pending reminders.
+            if view_current:
+                view_current = False
+                reminders = fetch_reminders(self, view_current)
+                # Reset view_current.
+                view_current = True
+            else:
+                reminders = fetch_reminders(self, view_current)
+        else:
+            reminders = None
+        # Categorize reminders, if any, by due date.
+        if reminders:
+            return categorize_reminders(reminders)
+        else:
+            return None
+    else:
+        return None
+
+
+def generate_notification_messages(
+    self,
+    categorized_reminders: Tuple[list[str], list[str], list[str], list[str]],
+) -> str:
+    """
+    Generates a string of notification messages based on categorized reminders.
+
+    Args:
+        categorized_reminders
+        (Tuple[list[str], list[str], list[str], list[str]]):
+        A tuple containing the categorized reminders for notification.
+
+    Returns:
+        str: A string representation of a bulleted list of reminders for
+        display in the notifications popup.
+    """
+    user_data = get_user_data(self)
+    if user_data:
+        user_data_tuple = user_data.fetchone()
+        return create_message_string(user_data_tuple, categorized_reminders)
     else:
         return ""
