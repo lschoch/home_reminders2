@@ -300,7 +300,7 @@ def save_prefs(self, values) -> Any:
         )
 
 
-def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
+def notifications_popup(self) -> Any:
     """
     Checks for reminder notifications. Creates a notifications popup if needed.
 
@@ -357,10 +357,10 @@ def notifications_popup(self) -> Any:  # noqa: C901, PLR0912, PLR0915
 
 def date_check(self) -> Any:
     """
-    On date change, updates the today is label and refreshes treeview.
+    On date change, updates the 'today is' label and refreshes treeview.
 
     Calls itself every second to monitor for date change. On date change,
-    updates the today is label and refreshes the treeview to keep highlighting
+    updates the 'today is' label and refreshes treeview to keep highlighting
     accurate. This is needed because the app is meant to remain open for
     extended periods.
     Args:
@@ -873,6 +873,7 @@ def get_user_data(self) -> Optional[sqlite3.Cursor]:
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to get user_data from the database.")
+        return None
 
 
 def delete_item_from_database(self, id: int) -> Any:
