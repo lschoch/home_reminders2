@@ -318,9 +318,7 @@ def notifications_popup(self) -> Any:
     """
     # Fetch all reminders from the database and categorize them by due date.
     try:
-        categorized_reminders = fetch_and_categorize_reminders(
-            self, view_current=self.view_current
-        )
+        categorized_reminders = fetch_and_categorize_reminders(self)
     except Exception as e:
         print(f"Error fetching reminders: {e}")
         InfoMsgBox(
@@ -331,9 +329,7 @@ def notifications_popup(self) -> Any:
         return
     # If there are any reminders, generate messages for the notifications
     # popup.
-    messages = None
-    if categorized_reminders:
-        messages = generate_notification_messages(self, categorized_reminders)
+    messages = generate_notification_messages(self, categorized_reminders)
     # Remove any pre-existing notifications popups that havent' been closed by
     # the user.
     UIService.remove_notifications_popups(self)
@@ -1047,6 +1043,9 @@ def create_message_string(
         if user_data_tuple[1]:
             for r in reminders_by_category[3]:
                 messages += f"\u2022 Due in 7 days: {r[1]}\n"
+    # If there are no reminders, return a message indicating no notifications.
+    if not messages:
+        messages = "No notifications."
     return messages
 
 
@@ -1059,8 +1058,7 @@ def get_phone_number(self) -> str:
 
 
 def fetch_and_categorize_reminders(
-    self,  # noqa: PLW0211
-    view_current: bool,
+    self,
 ) -> Optional[Tuple[list[str], list[str], list[str], list[str]]]:
     # Initialize user table in case it's empty.
     initialize_user(self)
@@ -1072,16 +1070,7 @@ def fetch_and_categorize_reminders(
         # Convert Cursor object to tuple
         user_data_tuple = user_data.fetchone()
         if user_data_tuple[0]:
-            # Fetch all reminders. If view_current is set to True,
-            # temporarily reset it to False so that all reminders will be
-            # retrieved instead of just the pending reminders.
-            if view_current:
-                view_current = False
-                reminders = fetch_reminders(self, view_current)
-                # Reset view_current.
-                view_current = True
-            else:
-                reminders = fetch_reminders(self, view_current)
+            reminders = fetch_reminders(self, False)
         else:
             reminders = None
         # Categorize reminders, if any, by due date.
