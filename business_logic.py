@@ -350,7 +350,7 @@ def notifications_popup(self) -> Any:
 
 def date_check(self) -> Any:
     """
-    On date change, updates the 'today is' label and refreshes treeview.
+    Updates the 'today is' label and refreshes the treeview when date changes.
 
     Calls itself every second to monitor for date change. On date change,
     updates the 'today is' label and refreshes treeview to keep highlighting
