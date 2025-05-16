@@ -153,7 +153,7 @@ class App(tk.Tk):
         # add reminders to the treeview
         insert_data(self, data)
         refresh(self)
-        # Periodically check whether notifications are due.
+        # Periodically check for notifications.
         notifications_popup(self)
         # Monitor for date change.
         date_check(self)
