@@ -28,6 +28,9 @@ def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
     It takes a cursor object as a parameter and iterates through the data,
     inserting each item into the treeview. It uses the first item in each tuple
     as a tag to color (highlight) the row based on the date_next value.
+    Args:
+        data (Optional[sqlite3.Cursor]): Cursor object containing the data to
+        be inserted into the treeview.
     """
     if data:
         for item in data:
@@ -47,9 +50,16 @@ def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
 
 def get_date(date_last_entry: date, top) -> Any:
     """
-    Function to select a date from the calendar. Takes date_last_entry and top
-    as paramteters. Default selection is the date_last_entry provided as
-    parameter. Sets date_last_entry to the clicked date.
+    Function to select a date from the calendar.
+
+    Default selection is the date_last_entry provided as parameter. Sets
+    date_last_entry to the clicked date.
+    Args:
+        date_last_entry (date): The date to be set as the default selection in
+        the calendar.
+        top (tk.Toplevel): The parent window for the calendar.
+    Returns:
+        None
     """
     # destroy calendar if it already exists (prevents multiple overlying
     # calendars from repeatedly clicking the entry)
@@ -110,7 +120,15 @@ def get_date(date_last_entry: date, top) -> Any:
 
 def refresh(self) -> Any:
     """
-    Function to update treeview and labels after a change to the database
+    Function to update treeview and labels after a change to the database.
+
+    It fetches a fresh set of reminders from the database and updates the
+    treeview with the new data. It also updates the label messages to indicate
+    whether the user is viewing pending items only or all items.
+    Args:
+        none
+    Returns:
+        None
     """
 
     # Fetch fresh set of reminders and insert into treeview.
@@ -132,7 +150,13 @@ def refresh(self) -> Any:
 
 def date_next_calc(top) -> str:
     """
-    Function to calculate next date for an item based on frequency and period,
+    Function to calculate next date for an item.
+
+    Next date is based on frequency and period selected by the user.
+    Args:
+        top (tk.Toplevel): The parent window for the calendar.
+    Returns:
+        str: The next date as a string in the format YYYY-MM-DD.
     """
     date_last = top.date_last_entry.get()
     frequency = int(top.frequency_entry.get())
@@ -170,11 +194,16 @@ def date_next_calc(top) -> str:
 
 
 def get_con() -> sqlite3.Connection:
-    """Function to create a connection to the SQLite database. It checks if the
-    path to the database exists, and if not, creates the necessary directories.
-    It returns a connection object to the database file located in the "Home
-    Reminders" directory within the Application Support directory of the user's
-    home directory.
+    """Function to create a connection to the SQLite database.
+
+    It checks if the path to the database exists, and if not, creates the
+    necessary directories. It returns a connection object to the database file
+    located in the "Home Reminders" directory within the Application Support
+    directory of the user's home directory.
+    Args:
+        none
+    Returns:
+        sqlite3.Connection: A connection object to the SQLite database.
     """
     dir_path = os.path.join(appsupportdir(), "Home Reminders")
     if not os.path.exists(dir_path):
@@ -185,10 +214,16 @@ def get_con() -> sqlite3.Connection:
 
 def appsupportdir() -> str | os.PathLike:
     """
-    Function to get the Application Support directory based on the user's
-    operating system. It checks for the existence of the Application Support
-    directory in macOS and Linux, and the AppData directory in Windows. If
-    none of these directories exist, it returns the user's home directory.
+    Function to get the Application Support directory.
+
+    It checks for the existence of the Application Support directory in macOS
+    and Linux, and the AppData directory in Windows. If none of these
+    directories exist, it returns the user's home directory.
+    Args:
+        none
+    Returns:
+        str | os.PathLike: The path to the Application Support directory or
+        the user's home directory.
     """
     windows = r"%APPDATA%"
     windows = os.path.expandvars(windows)
@@ -433,7 +468,12 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
 def validate_inputs(self, top, id: int | None = None) -> bool:
     """
     Function to validate inputs for new and edited reminder items.
-    Returns True if inputs are valid, False otherwise.
+
+    Args:
+        top (tk.Toplevel): The parent window for the inputs.
+        id (int | None): The id of the reminder item being edited, if any.
+    Returns:
+        bool: True if inputs are valid, False otherwise.
     """
     # description is required
     description = top.description_entry.get()
