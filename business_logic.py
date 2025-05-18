@@ -21,31 +21,13 @@ from services2 import UIService
 NOTIFICATION_INTERVAL = 14400000  # 4 hours
 
 
-def on_treeview_selection_changed(self, event) -> Any:
-    """
-    Function to manage row selection in treeview. Creates window to edit/delete
-    the selected item. Populates the window with the selected item's data. Does
-    not return anything.
-    """
-    # abort if the selection change was after a refresh
-    if self.refreshed:
-        self.refreshed = False
-        return
-    selected_item = self.tree.focus()
-    # Import ui_logic using importlib.import_module(). This will avoid circular
-    # import conflict with business_logic.
-    module = importlib.import_module("ui_logic")
-    # Create window to edit the selected item. Populate with the selected item
-    # data.
-    module.create_edit_window(self, selected_item)
-
-
 def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
     """
-    Function to insert data into the treeview. It takes a cursor object
-    as a parameter and iterates through the data, inserting each item into
-    the treeview. It uses the first item in each tuple as a tag to color
-    (highlight) the row based on the date_next value.
+    Function to insert data into the treeview.
+
+    It takes a cursor object as a parameter and iterates through the data,
+    inserting each item into the treeview. It uses the first item in each tuple
+    as a tag to color (highlight) the row based on the date_next value.
     """
     if data:
         for item in data:
@@ -711,7 +693,7 @@ def view_pending(self) -> Any:
 
 def view_all(self) -> Any:
     """
-    Changes the treeview to list all items, including thise that are past due.
+    Changes the treeview to list all items, including those that are past due.
 
     Args:
         none
@@ -1009,7 +991,9 @@ def categorize_reminders(
 
 def create_message_string(
     user_data_tuple: Tuple[str, int, int, int, str],
-    reminders_by_category: Tuple[list[str], list[str], list[str], list[str]],
+    reminders_by_category: Optional[
+        Tuple[list[str], list[str], list[str], list[str]]
+    ],
 ) -> str:
     """
     Creates a string of reminders notifications for the notifications popup.
@@ -1018,8 +1002,8 @@ def create_message_string(
         user_data_tuple (tuple[str, int, int, int, str]): 5 tuple containing
          user preferences.
         reminders_by_category
-        (Tuple[list[str], list[str], list[str], list[str]]): A tuple containing
-        the categorized reminders for notification.
+        (Tuple[list[str], list[str], list[str], list[str] | None]): A tuple
+        containing the categorized reminders for notification.
 
     Returns:
         str: A string representation of a bulleted list of reminders for
@@ -1027,7 +1011,12 @@ def create_message_string(
     """
     # Create a string to hold reminders for notification.
     messages = ""
-    # Create the list of notification messages starting with past due.
+    # If there are no reminders, return a message indicating no notifications.
+    if not reminders_by_category:
+        messages += "No notifications.\n"
+        return messages
+    # Otherwise, create a string of reminders.
+    # Get the reminders categorized by due date starting with past due.
     for r in reminders_by_category[0]:
         messages += f"\u2022 Past due: {r[1]}\n"
     # Get 'day of' notificatons, if opted for.
@@ -1043,9 +1032,6 @@ def create_message_string(
         if user_data_tuple[1]:
             for r in reminders_by_category[3]:
                 messages += f"\u2022 Due in 7 days: {r[1]}\n"
-    # If there are no reminders, return a message indicating no notifications.
-    if not messages:
-        messages = "No notifications."
     return messages
 
 
@@ -1084,7 +1070,9 @@ def fetch_and_categorize_reminders(
 
 def generate_notification_messages(
     self,
-    categorized_reminders: Tuple[list[str], list[str], list[str], list[str]],
+    categorized_reminders: Optional[
+        Tuple[list[str], list[str], list[str], list[str]]
+    ],
 ) -> str:
     """
     Generates a string of notification messages based on categorized reminders.

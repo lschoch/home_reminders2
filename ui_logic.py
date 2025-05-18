@@ -8,7 +8,6 @@ from business_logic import (
     date_next_calc,
     delete_all,
     get_date,
-    on_treeview_selection_changed,
     opt_in,
     opt_out,
     preferences,
@@ -260,12 +259,25 @@ def create_preferences_window(self):  # noqa: PLR0915
     entry.focus_set()
 
 
-def create_edit_window(self, selected_item):
+def create_edit_window(self, event) -> Any:
+    """
+    Function to create a top level window for editing an existing reminder
+
+    Return:
+        None
+    """
+    # Abort if the selection change was after a refresh.
+    # This is to prevent the edit window from opening when the user
+    # clicks on the treeview after a refresh.
+    if self.refreshed:
+        self.refreshed = False
+        return
+    # Remove any existing toplevels
     remove_toplevels(self)
     # create toplevel
     top = TopLvl(self, "Edit Selection")
-
-    # populate entries with data from the selection
+    selected_item = self.tree.selection()[0]
+    # Populate entries with data from the selection
     top.description_entry.insert(0, self.tree.item(selected_item)["values"][1])
     top.frequency_entry.insert(0, self.tree.item(selected_item)["values"][2])
 
@@ -453,8 +465,7 @@ def create_tree_widget(self):
     tree["displaycolumns"] = displaycolumns
 
     tree.bind(
-        "<<TreeviewSelect>>",
-        lambda event: on_treeview_selection_changed(self, event),
+        "<<TreeviewSelect>>", lambda event: create_edit_window(self, event)
     )
     tree.grid(row=1, column=1)
 
