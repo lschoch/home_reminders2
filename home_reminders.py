@@ -6,7 +6,7 @@ from typing import Any
 
 from PIL import Image, ImageTk
 
-from business_logic import (
+from business import (
     create_database,
     date_check,
     insert_data,

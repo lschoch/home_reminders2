@@ -3,7 +3,7 @@ from datetime import date, datetime
 from tkinter import END, Menu, ttk
 from typing import Any
 
-from business_logic import (
+from business import (
     backup,
     date_next_calc,
     delete_all,

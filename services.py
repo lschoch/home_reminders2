@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from loguru import logger
 
-from business_logic import (
+from business import (
     categorize_reminders,
     create_message_string,
     delete_item_from_database,
