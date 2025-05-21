@@ -19,6 +19,10 @@ from classes import TopLvl
 def test_date_next_calc(
     mocker, date_last_entry, frequency_entry, period_combobox, expected
 ):
+    """
+    Test the date_next_calc function using parametrization.
+    """
+    # Mock the TopLvl class.
     mocker = tk.Tk()
     top = TopLvl(mocker, "Test")
     # Initialize widgets that are set up in the TopLvl class. Date_next_calc
@@ -27,6 +31,5 @@ def test_date_next_calc(
     top.frequency_entry.insert(0, frequency_entry)
     top.period_combobox.insert(0, period_combobox)
 
-    """Test the date_next_calc function."""
     result = date_next_calc(top)
     assert result == expected
