@@ -1,5 +1,5 @@
-from business import insert_data  # noqa: INP001
-from home_reminders import App  # noqa: INP001
+from business import insert_data
+from home_reminders import App
 
 
 def test_insert_data(mocker, get_cursor):
