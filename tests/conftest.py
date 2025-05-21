@@ -3,16 +3,6 @@ import sys
 
 import pytest
 
-from home_reminders import App
-
-
-@pytest.fixture
-def app():
-    """
-    Create a new instance of the App class for testing.
-    """
-    return App()
-
 
 @pytest.fixture
 def get_cursor():
