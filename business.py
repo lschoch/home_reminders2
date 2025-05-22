@@ -256,17 +256,18 @@ def initialize_user(self) -> Any:
     try:
         with get_con() as con:
             cur = con.cursor()
-            empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchall()
-            if empty_check[0][0] == 0:  # phone number is 0, initialize
-                values = (0, 0, 0, "1970-01-01")
+            empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchone()
+            if empty_check[0] == 0:  # user table is empty
+                values = ("", 0, 0, 0, "1970-01-01")
                 cur.execute(
                     """
                     INSERT INTO user (
+                        phone_number,
                         week_before,
                         day_before,
                         day_of,
                         last_notification_date)
-                        VALUES (?, ?, ?, ?)""",
+                        VALUES (?, ?, ?, ?, ?)""",
                     values,
                 )
                 con.commit()
