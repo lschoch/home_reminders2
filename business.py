@@ -32,7 +32,6 @@ def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
         be inserted into the treeview.
     """
     if data:
-        print(f"data: {data}")
         for item in data:
             self.tree.insert("", tk.END, values=item, tags=item[0])
             if item[5] is None:
