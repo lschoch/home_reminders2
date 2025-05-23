@@ -717,39 +717,16 @@ def view_pending(self) -> Any:
     """
     Changes the treeview to list only items due today or in the future.
 
-    Args:
-        none
-    Returns:
-        None
     """
-    self.view_current = True
-    data = fetch_reminders(self, self.view_current)
-    insert_data(self, data)
-    refresh(self)
-    module = importlib.import_module("ui_logic")
-    module.remove_toplevels(self)
-    self.refreshed = True
-    self.tree.focus()
+    update_treeview(self, view_current=True)
 
 
 def view_all(self) -> Any:
     """
     Changes the treeview to list all items, including those that are past due.
 
-    Args:
-        none
-    Returns:
-        None
     """
-    self.view_current = False
-    data = fetch_reminders(self, self.view_current)
-    insert_data(self, data)
-    refresh(self)
-    module = importlib.import_module("ui_logic")
-    module.remove_toplevels(self)
-    self.refreshed = True
-    self.focus_set()
-    self.tree.focus_set()
+    update_treeview(self, view_current=False)
 
 
 def get_db_paths() -> tuple[str | os.PathLike, str | os.PathLike]:
@@ -1133,3 +1110,17 @@ def generate_notification_messages(
         return create_message_string(user_data_tuple, categorized_reminders)
     else:
         return ""
+
+
+def update_treeview(self, view_current: bool):
+    """
+    Updates the treeview based on the view mode (pending or all).
+
+    """
+    self.view_current = view_current
+    data = fetch_reminders(self, self.view_current)
+    insert_data(self, data)
+    refresh(self)
+    self.refreshed = True
+    # Set focus in the treeview so that an item can be selected.
+    self.tree.focus(self.tree.get_children()[0])

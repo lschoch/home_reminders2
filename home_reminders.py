@@ -162,9 +162,10 @@ class App(tk.Tk):
         notifications_popup(self)
         # Monitor for date change.
         date_check(self)
-        # On startup, select the last item in the treeview. This will get focus
-        # into the treeview but not interfere with the highlighting at the top
-        # of the list.
+        # Select the last item in the treeview. This will get focus into the
+        # treeview but not interfere with the highlighting at the top of the
+        # tree. Note: treeview will not accept focus at this point because the
+        # notifications popup is open. This is a known issue with tkinter.
         if self.tree.get_children():
             last_index = len(self.tree.get_children()) - 1
             self.tree.selection_set(self.tree.get_children()[last_index])
