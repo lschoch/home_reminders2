@@ -4,13 +4,14 @@ from datetime import datetime
 from tkinter import ttk
 from typing import Any
 
+from loguru import logger
 from PIL import Image, ImageTk
 
 from business import (
     create_database,
     date_check,
     insert_data,
-    notifications_popup,  # noqa: F401
+    notifications_popup,
     refresh,
 )
 from classes import InfoMsgBox
@@ -33,9 +34,6 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
     print("Splash screen closed.") """
-
-""" # get paths to database files
-paths = get_db_paths() """
 
 
 def on_search(self, search_var: tk.StringVar) -> Any:
@@ -144,8 +142,8 @@ class App(tk.Tk):
             self.house_img_lbl.image = house_img
             self.house_img_lbl.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
-            print(
-                f"Warning: Image not found at {self.ico_path}. Skipping "
+            logger.warning(
+                f"Warning: Image not found at {self.ico_path}. Skipping "  # noqa: G004
                 "image display."
             )
 
@@ -154,8 +152,11 @@ class App(tk.Tk):
         # Create treeview to display data.
         self.tree = create_tree_widget(self)
         # Add reminders in the database to the treeview.
-        insert_data(self, data)
-        refresh(self)
+        if data:
+            insert_data(self, data)
+            refresh(self)
+        else:
+            logger.info("No reminders found to display.")
         # Periodically check for notifications.
         notifications_popup(self)
         # Monitor for date change.
@@ -163,8 +164,9 @@ class App(tk.Tk):
         # On startup, select the last item in the treeview. This will get focus
         # into the treeview but not interfere with the highlighting at the top
         # of the list.
-        last_index = len(self.tree.get_children()) - 1
-        self.tree.selection_set(self.tree.get_children()[last_index])
+        if self.tree.get_children():
+            last_index = len(self.tree.get_children()) - 1
+            self.tree.selection_set(self.tree.get_children()[last_index])
 
     # end init
     ###############################################################
