@@ -7,7 +7,7 @@ import sqlite3
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
-from typing import Any, Optional, Tuple  # noqa: F401
+from typing import Any, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta  # type: ignore
 from tkcalendar import Calendar  # type: ignore
@@ -16,9 +16,8 @@ from classes import (
     InfoMsgBox,
     YesNoMsgBox,
 )
+from constants import NOTIFICATION_INTERVAL_MS
 from services2 import UIService
-
-NOTIFICATION_INTERVAL = 14400000  # 4 hours
 
 
 def insert_data(self, data: Optional[sqlite3.Cursor]) -> Any:
@@ -364,7 +363,7 @@ def notifications_popup(self) -> Any:
             "Failed to create notifications popup.",
         )
     # Check for notifications at the NOTIFICATION_INTERVAL.
-    self.after(NOTIFICATION_INTERVAL, notifications_popup, self)
+    self.after(NOTIFICATION_INTERVAL_MS, notifications_popup, self)
 
 
 def date_check(self) -> Any:

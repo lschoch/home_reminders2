@@ -15,6 +15,7 @@ from business import (
     refresh,
 )
 from classes import InfoMsgBox
+from constants import WINDOW_GEOMETRY
 from search_module import search_treeview
 from services import ReminderService
 from ui_logic import (
@@ -70,7 +71,7 @@ class App(tk.Tk):
         ico = Image.open(self.ico_path)
         photo = ImageTk.PhotoImage(ico)
         self.wm_iconphoto(True, photo)
-        self.geometry("1140x393+3+3")
+        self.geometry(WINDOW_GEOMETRY)
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.rowconfigure(0, minsize=140)
