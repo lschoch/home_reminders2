@@ -23,7 +23,6 @@ from ui_logic import (
     create_legend,
     create_menu_bar,
     create_tree_widget,
-    remove_toplevels,
 )
 
 # tracemalloc.start()
@@ -37,6 +36,21 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     print("Splash screen closed.") """
 
 
+def iter_next(self, matching_items: list) -> None:
+    # Perform UI operations for the matching items
+    iterator_next = iter(matching_items)
+    try:
+        matching_item = next(iterator_next)
+    except StopIteration:
+        # If we reach the end of the iterator, start over
+        iterator_next = iter(matching_items)
+        matching_item = next(iterator_next)
+        self.tree.selection_set(matching_item)
+        self.tree.see(matching_items)
+    # remove_toplevels(self)  # Remove any existing toplevel windows
+    # self.tree.focus(matching_item)
+
+
 def on_search(self, search_var: tk.StringVar) -> Any:
     """
     Handles the search functionality for the Treeview.
@@ -45,14 +59,17 @@ def on_search(self, search_var: tk.StringVar) -> Any:
         search_var: The StringVar containing the search query.
     """
     search_query = search_var.get()
-    matching_item = search_treeview(self.tree, search_query)
-
-    if matching_item:
-        # Perform UI operations for the matching item
-        self.tree.selection_set(matching_item)
-        remove_toplevels(self)  # Remove any existing toplevel windows
-        self.tree.see(matching_item)
-        self.tree.focus(matching_item)
+    matching_items = search_treeview(self.tree, search_query)
+    if matching_items:
+        self.search_entry.bind(
+            "<Return>", lambda e: iter_next(self, matching_items)
+        )
+        self.tree.selection_set(matching_items[0])
+        self.tree.see(matching_items[0])
+        """ for matching_item in matching_items:
+            logger.info(
+                f"Matching item: {self.tree.item(matching_item, 'values')}"
+            ) """
     else:
         # Optionally, show a message if no match is found
         InfoMsgBox(self, "Search", "No matching item found.")
