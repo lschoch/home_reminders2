@@ -38,6 +38,27 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
 paths = get_db_paths() """
 
 
+def on_search(self, search_var: tk.StringVar) -> Any:
+    """
+    Handles the search functionality for the Treeview.
+
+    Args:
+        search_var: The StringVar containing the search query.
+    """
+    search_query = search_var.get()
+    matching_item = search_treeview(self.tree, search_query)
+
+    if matching_item:
+        # Perform UI operations for the matching item
+        self.tree.selection_set(matching_item)
+        remove_toplevels(self)  # Remove any existing toplevel windows
+        self.tree.see(matching_item)
+        self.tree.focus(matching_item)
+    else:
+        # Optionally, show a message if no match is found
+        InfoMsgBox(self, "Search", "No matching item found.")
+
+
 # create the main window
 class App(tk.Tk):
     def __init__(self, **kw):  # noqa: C901, PLR0915
@@ -111,27 +132,6 @@ class App(tk.Tk):
         self.search_entry.grid(
             row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
         )
-
-        def on_search(self, search_var: tk.StringVar) -> Any:
-            """
-            Handles the search functionality for the Treeview.
-
-            Args:
-                search_var: The StringVar containing the search query.
-            """
-            search_query = search_var.get()
-            matching_item = search_treeview(self.tree, search_query)
-
-            if matching_item:
-                # Perform UI operations for the matching item
-                self.tree.selection_set(matching_item)
-                remove_toplevels(self)  # Remove any existing toplevel windows
-                self.tree.see(matching_item)
-                self.tree.focus(matching_item)
-            else:
-                # Optionally, show a message if no match is found
-                InfoMsgBox(self, "Search", "No matching item found.")
-
         self.search_entry.bind(
             "<Return>",
             lambda e: on_search(self, search_var),
@@ -144,22 +144,25 @@ class App(tk.Tk):
             self.house_img_lbl.image = house_img
             self.house_img_lbl.grid(row=0, column=0, sticky="ns")
         except FileNotFoundError:
-            pass
+            print(
+                f"Warning: Image not found at {self.ico_path}. Skipping "
+                "image display."
+            )
 
-        # create legend for colors in treeview
+        # Create legend for colors in treeview.
         create_legend(self)
-        # create treeview to display data
+        # Create treeview to display data.
         self.tree = create_tree_widget(self)
-        # add reminders to the treeview
+        # Add reminders in the database to the treeview.
         insert_data(self, data)
         refresh(self)
         # Periodically check for notifications.
         notifications_popup(self)
         # Monitor for date change.
         date_check(self)
-        # On startup, select the last item in the treeview - to get focus into
-        # the treeview without interfering with item highlighting at the top of
-        # the list.
+        # On startup, select the last item in the treeview. This will get focus
+        # into the treeview but not interfere with the highlighting at the top
+        # of the list.
         last_index = len(self.tree.get_children()) - 1
         self.tree.selection_set(self.tree.get_children()[last_index])
 
@@ -169,5 +172,5 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     app = App()
-    app.focus_force()
+    app.focus_force()  # So that the app is on top at startup.
     app.mainloop()
