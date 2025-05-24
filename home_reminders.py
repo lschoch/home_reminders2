@@ -36,43 +36,36 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     print("Splash screen closed.") """
 
 
-def iter_next(self, matching_items: list) -> None:
-    # Perform UI operations for the matching items
-    iterator_next = iter(matching_items)
-    try:
-        matching_item = next(iterator_next)
-    except StopIteration:
-        # If we reach the end of the iterator, start over
-        iterator_next = iter(matching_items)
-        matching_item = next(iterator_next)
-        self.tree.selection_set(matching_item)
-        self.tree.see(matching_items)
-    # remove_toplevels(self)  # Remove any existing toplevel windows
-    # self.tree.focus(matching_item)
-
-
-def on_search(self, search_var: tk.StringVar) -> Any:
-    """
-    Handles the search functionality for the Treeview.
-
-    Args:
-        search_var: The StringVar containing the search query.
-    """
+def get_matching_items(tree, search_var):
     search_query = search_var.get()
-    matching_items = search_treeview(self.tree, search_query)
+    return search_treeview(tree, search_query)
+
+
+def next_found(self, search_var: tk.StringVar) -> Any:
+    next_found.counter += 1
+    matching_items = get_matching_items(self.tree, search_var)
     if matching_items:
-        self.search_entry.bind(
-            "<Return>", lambda e: iter_next(self, matching_items)
-        )
-        self.tree.selection_set(matching_items[0])
-        self.tree.see(matching_items[0])
-        """ for matching_item in matching_items:
-            logger.info(
-                f"Matching item: {self.tree.item(matching_item, 'values')}"
-            ) """
+        # Perform UI operations for the matching items
+        iterator_next = iter(matching_items)
+        if next_found.counter > len(matching_items):
+            self.tree.selection_set(matching_items[0])
+            self.tree.see(matching_items[0])
+            next_found.counter = 1
+        try:
+            for _ in range(next_found.counter):
+                matching_item = next(iterator_next)
+            self.tree.selection_set(matching_item)
+            self.tree.see(matching_item)
+            return
+        except StopIteration:
+            logger.info("No more items to iterate over.")
+            return
     else:
         # Optionally, show a message if no match is found
         InfoMsgBox(self, "Search", "No matching item found.")
+
+
+next_found.counter = 0
 
 
 # create the main window
@@ -133,26 +126,6 @@ class App(tk.Tk):
         )
         self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
-        # add search bar
-        self.search_lbl = ttk.Label(
-            self,
-            text="Search:",
-            font=("Arial", 14),
-            background="#ececec",  # self.view_lbl_color.get(),
-        )
-        self.search_lbl.grid(row=0, column=1, padx=315, pady=10, sticky="sw")
-        search_var = tk.StringVar()
-        self.search_entry = ttk.Entry(
-            self, textvariable=search_var, width=30, font=("Arial", 14)
-        )
-        self.search_entry.grid(
-            row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
-        )
-        self.search_entry.bind(
-            "<Return>",
-            lambda e: on_search(self, search_var),
-        )
-
         # insert image
         try:
             house_img = ImageTk.PhotoImage(Image.open(self.ico_path))
@@ -175,6 +148,46 @@ class App(tk.Tk):
             refresh(self)
         else:
             logger.info("No reminders found to display.")
+            InfoMsgBox(self, "Notice", "No reminders found.")
+
+        # Add search bar
+        self.search_lbl = ttk.Label(
+            self,
+            text="Search:",
+            font=("Arial", 14),
+            background="#ececec",  # self.view_lbl_color.get(),
+        )
+        self.search_lbl.grid(row=0, column=1, padx=275, pady=10, sticky="sw")
+        search_var = tk.StringVar()
+        self.search_entry = ttk.Entry(
+            self, textvariable=search_var, width=30, font=("Arial", 14)
+        )
+        self.search_entry.grid(
+            row=0, column=1, ipadx=4, padx=(0, 350), pady=10, sticky="se"
+        )
+        self.search_next_btn = tk.Button(
+            self,
+            text="find next",
+            width=5,
+            command=lambda: next_found(self, search_var),
+        )
+        self.search_next_btn.grid(
+            row=0, column=1, padx=(0, 260), pady=10, sticky="se"
+        )
+
+        def reset():
+            self.search_entry.delete(0, tk.END)
+
+        self.search_reset_btn = tk.Button(
+            self,
+            text="reset",
+            width=5,
+            command=reset,
+        )
+        self.search_reset_btn.grid(
+            row=0, column=1, padx=(0, 175), pady=10, sticky="se"
+        )
+
         # Periodically check for notifications.
         notifications_popup(self)
         # Monitor for date change.
