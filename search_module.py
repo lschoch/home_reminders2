@@ -40,23 +40,33 @@ def get_matching_items(tree, search_var):
 
 
 def next_found(self, search_var: tk.StringVar) -> Any:
-    next_found.counter += 1
+    # Abort search and display message if search field is empty.
+    if not search_var.get():
+        InfoMsgBox(self, "Search", "Please enter a search term.")
+        return
     matching_items = get_matching_items(self.tree, search_var)
     if matching_items:
-        # Perform UI operations for the matching items
-        iterator_next = iter(matching_items)
-        if next_found.counter > len(matching_items):
-            self.tree.selection_set(matching_items[0])
-            self.tree.see(matching_items[0])
-            next_found.counter = 1
+        # Sequential selection of found items using the find_next button.
         try:
-            for _ in range(next_found.counter):
-                matching_item = next(iterator_next)
+            matching_item = matching_items[next_found.counter]
             self.tree.selection_set(matching_item)
             self.tree.see(matching_item)
-            return
-        except StopIteration:
-            logger.info("No more items to iterate over.")
+            # Increment counter by one to move to next reminder. Reset counter
+            # to start over after the last reminder is selected.
+            next_found.counter = (
+                0
+                if next_found.counter == len(matching_items) - 1
+                else next_found.counter + 1
+            )
+        except Exception as e:
+            logger.error(
+                f"An error occurred while selecting matching items: {e}."
+            )
+            InfoMsgBox(
+                self,
+                "Error",
+                "An error occurred while selecting matching items.",
+            )
             return
     else:
         # Optionally, show a message if no match is found
