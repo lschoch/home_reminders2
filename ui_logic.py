@@ -18,6 +18,7 @@ from business import (
     view_pending,
 )
 from classes import InfoMsgBox, TopLvl, YesNoMsgBox
+from search_module import next_found
 from services import ReminderService
 
 
@@ -483,3 +484,46 @@ def remove_toplevels(self) -> Any:
     for widget in self.winfo_children():
         if isinstance(widget, tk.Toplevel):
             widget.destroy()
+
+
+def create_searchbar(self):
+    """
+    Function to create a search bar.
+
+    """
+    self.search_lbl = ttk.Label(
+        self,
+        text="Search:",
+        font=("Arial", 14),
+        background="#ececec",  # self.view_lbl_color.get(),
+    )
+    self.search_lbl.grid(row=0, column=1, padx=275, pady=10, sticky="sw")
+    search_var = tk.StringVar()
+    self.search_entry = ttk.Entry(
+        self, textvariable=search_var, width=30, font=("Arial", 14)
+    )
+    self.search_entry.grid(
+        row=0, column=1, ipadx=4, padx=(0, 350), pady=10, sticky="se"
+    )
+    self.search_next_btn = tk.Button(
+        self,
+        text="find next",
+        width=5,
+        command=lambda: next_found(self, search_var),
+    )
+    self.search_next_btn.grid(
+        row=0, column=1, padx=(0, 260), pady=10, sticky="se"
+    )
+
+    def reset():
+        self.search_entry.delete(0, tk.END)
+
+    self.search_reset_btn = tk.Button(
+        self,
+        text="reset",
+        width=5,
+        command=reset,
+    )
+    self.search_reset_btn.grid(
+        row=0, column=1, padx=(0, 175), pady=10, sticky="se"
+    )

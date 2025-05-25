@@ -2,7 +2,6 @@ import os
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk
-from typing import Any
 
 from loguru import logger
 from PIL import Image, ImageTk
@@ -16,12 +15,12 @@ from business import (
 )
 from classes import InfoMsgBox
 from constants import WINDOW_GEOMETRY
-from search_module import search_treeview
 from services import ReminderService
 from ui_logic import (
     create_left_side_buttons,
     create_legend,
     create_menu_bar,
+    create_searchbar,
     create_tree_widget,
 )
 
@@ -34,38 +33,6 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
     print("Splash screen closed.") """
-
-
-def get_matching_items(tree, search_var):
-    search_query = search_var.get()
-    return search_treeview(tree, search_query)
-
-
-def next_found(self, search_var: tk.StringVar) -> Any:
-    next_found.counter += 1
-    matching_items = get_matching_items(self.tree, search_var)
-    if matching_items:
-        # Perform UI operations for the matching items
-        iterator_next = iter(matching_items)
-        if next_found.counter > len(matching_items):
-            self.tree.selection_set(matching_items[0])
-            self.tree.see(matching_items[0])
-            next_found.counter = 1
-        try:
-            for _ in range(next_found.counter):
-                matching_item = next(iterator_next)
-            self.tree.selection_set(matching_item)
-            self.tree.see(matching_item)
-            return
-        except StopIteration:
-            logger.info("No more items to iterate over.")
-            return
-    else:
-        # Optionally, show a message if no match is found
-        InfoMsgBox(self, "Search", "No matching item found.")
-
-
-next_found.counter = 0
 
 
 # create the main window
@@ -151,42 +118,7 @@ class App(tk.Tk):
             InfoMsgBox(self, "Notice", "No reminders found.")
 
         # Add search bar
-        self.search_lbl = ttk.Label(
-            self,
-            text="Search:",
-            font=("Arial", 14),
-            background="#ececec",  # self.view_lbl_color.get(),
-        )
-        self.search_lbl.grid(row=0, column=1, padx=275, pady=10, sticky="sw")
-        search_var = tk.StringVar()
-        self.search_entry = ttk.Entry(
-            self, textvariable=search_var, width=30, font=("Arial", 14)
-        )
-        self.search_entry.grid(
-            row=0, column=1, ipadx=4, padx=(0, 350), pady=10, sticky="se"
-        )
-        self.search_next_btn = tk.Button(
-            self,
-            text="find next",
-            width=5,
-            command=lambda: next_found(self, search_var),
-        )
-        self.search_next_btn.grid(
-            row=0, column=1, padx=(0, 260), pady=10, sticky="se"
-        )
-
-        def reset():
-            self.search_entry.delete(0, tk.END)
-
-        self.search_reset_btn = tk.Button(
-            self,
-            text="reset",
-            width=5,
-            command=reset,
-        )
-        self.search_reset_btn.grid(
-            row=0, column=1, padx=(0, 175), pady=10, sticky="se"
-        )
+        create_searchbar(self)
 
         # Periodically check for notifications.
         notifications_popup(self)
