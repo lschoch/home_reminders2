@@ -48,15 +48,15 @@ def next_found(self, search_var: tk.StringVar) -> Any:
     if matching_items:
         # Sequential selection of found items using the find_next button.
         try:
-            matching_item = matching_items[next_found.counter]
+            matching_item = matching_items[next_found.counter]  # type:ignore
             self.tree.selection_set(matching_item)
             self.tree.see(matching_item)
             # Increment counter by one to move to next reminder. Reset counter
             # to start over after the last reminder is selected.
-            next_found.counter = (
+            next_found.counter = (  # type:ignore
                 0
-                if next_found.counter == len(matching_items) - 1
-                else next_found.counter + 1
+                if next_found.counter == len(matching_items) - 1  # type:ignore
+                else next_found.counter + 1  # type:ignore
             )
         except Exception as e:
             logger.error(
@@ -73,4 +73,4 @@ def next_found(self, search_var: tk.StringVar) -> Any:
         InfoMsgBox(self, "Search", "No matching item found.")
 
 
-next_found.counter = 0
+next_found.counter = 0  # type:ignore

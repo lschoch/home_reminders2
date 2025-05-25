@@ -3,6 +3,8 @@ from datetime import date, datetime
 from tkinter import END, Menu, ttk
 from typing import Any
 
+from tkmacosx import Button
+
 from business import (
     backup,
     date_next_calc,
@@ -505,10 +507,13 @@ def create_searchbar(self):
     self.search_entry.grid(
         row=0, column=1, ipadx=4, padx=(0, 350), pady=10, sticky="se"
     )
-    self.search_next_btn = tk.Button(
+    self.search_next_btn = Button(
         self,
         text="find next",
-        width=5,
+        borderless=1,
+        background="#dcdad6",
+        width=85,
+        height=23,
         command=lambda: next_found(self, search_var),
     )
     self.search_next_btn.grid(
@@ -518,12 +523,15 @@ def create_searchbar(self):
     def reset():
         self.search_entry.delete(0, tk.END)
 
-    self.search_reset_btn = tk.Button(
+    self.search_reset_btn = Button(
         self,
         text="reset",
-        width=5,
+        borderless=1,
+        background="#dcdad6",
+        width=60,
+        height=23,
         command=reset,
     )
     self.search_reset_btn.grid(
-        row=0, column=1, padx=(0, 175), pady=10, sticky="se"
+        row=0, column=1, padx=(0, 197), pady=10, sticky="se"
     )
