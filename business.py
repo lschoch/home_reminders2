@@ -4,12 +4,14 @@ import importlib
 import os
 import shutil
 import sqlite3
+import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
 from typing import Any, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta  # type: ignore
+from loguru import logger
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
@@ -192,7 +194,7 @@ def date_next_calc(top) -> str:
     return date_next
 
 
-def get_con() -> sqlite3.Connection:
+def get_con(db="production") -> sqlite3.Connection:
     """Function to create a connection to the SQLite database.
 
     It checks if the path to the database exists, and if not, creates the
@@ -200,15 +202,28 @@ def get_con() -> sqlite3.Connection:
     located in the "Home Reminders" directory within the Application Support
     directory of the user's home directory.
     Args:
-        none
+        db (str): The name of the database to connect to. Default is
+        "production".
     Returns:
         sqlite3.Connection: A connection object to the SQLite database.
     """
-    dir_path = os.path.join(appsupportdir(), "Home Reminders")
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    file_path = os.path.join(dir_path, "home_reminders.db")
-    return sqlite3.connect(file_path)
+    # If not in production, use the test database.
+    if db != "production":
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "./tests/", db)
+            return sqlite3.connect(db_path)
+        except sqlite3.Error as e:
+            logger.error(f"Error connecting to test database: {e}, exiting.")
+            sys.exit()
+    try:
+        dir_path = os.path.join(appsupportdir(), "Home Reminders")
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = os.path.join(dir_path, "home_reminders.db")
+        return sqlite3.connect(file_path)
+    except sqlite3.Error as e:
+        logger.error(f"Error connecting to production database: {e}, exiting.")
+        sys.exit()
 
 
 def appsupportdir() -> str | os.PathLike:
