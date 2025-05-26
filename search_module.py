@@ -34,13 +34,34 @@ def search_treeview(tree: ttk.Treeview, search_query: str) -> Optional[list]:
     return None  # Return None if no matches are found
 
 
-def get_matching_items(tree, search_var):
+def get_matching_items(
+    tree: ttk.Treeview, search_var: tk.StringVar
+) -> Optional[list]:
+    """
+    Gets the list of items in a tree matching a search term.
+
+    Args:
+        tree (ttk.Treeview): The tree to be searched.
+        search_var (tk.StringVar): The search term.
+    Returns:
+        Optional[list]: The list of items in the tree matching the search term.
+    """
     search_query = search_var.get()
     return search_treeview(tree, search_query)
 
 
 def next_found(self, search_var: tk.StringVar) -> Any:
-    # Abort search and display message if search field is empty.
+    """
+    Selects the next item in a list of items from a tree matching a search term
+
+    Args:
+        search_var (tk.StringVar): The search term used to select the list of
+        matching items.
+    Returns:
+        None
+
+    """
+    # If search field is empty, abort search and display message .
     if not search_var.get():
         InfoMsgBox(self, "Search", "Please enter a search term.")
         return

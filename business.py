@@ -439,7 +439,7 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
         view_current (bool): If True, fetch only items due today or in the
         future, otherwise fetch all items, past and present.
     Returns:
-        Optional[sqlite3.Cursor]: Cursor object containging the retrieved
+        Optional[sqlite3.Cursor]: Cursor object containing the retrieved
         reminder items.
     """
     # connect to database and create cursor
