@@ -8,7 +8,7 @@ def test_get_con():
     Test the get_con function from the business module.
     """
     # Call the function
-    connection = get_con(db="test.db")
+    connection = get_con()
 
     # Check if the connection is established and not None.
     # This assumes that get_con returns a valid sqlite3.Connection object.

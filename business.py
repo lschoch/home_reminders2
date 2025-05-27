@@ -18,7 +18,7 @@ from classes import (
     InfoMsgBox,
     YesNoMsgBox,
 )
-from constants import NOTIFICATION_INTERVAL_MS
+from constants import DB, NOTIFICATION_INTERVAL_MS
 from services2 import UIService
 
 
@@ -194,7 +194,7 @@ def date_next_calc(top) -> str:
     return date_next
 
 
-def get_con(db="production") -> sqlite3.Connection:
+def get_con(db=DB) -> sqlite3.Connection:
     """Function to create a connection to the SQLite database.
 
     It checks if the path to the database exists, and if not, creates the
@@ -208,9 +208,11 @@ def get_con(db="production") -> sqlite3.Connection:
         sqlite3.Connection: A connection object to the SQLite database.
     """
     # If not in production, use the test database.
-    if db != "production":
+    if DB != "production environment":
         try:
-            db_path = os.path.join(os.path.dirname(__file__), "./tests/", db)
+            db_path = os.path.join(
+                os.path.dirname(__file__), "./tests/test.db"
+            )
             return sqlite3.connect(db_path)
         except sqlite3.Error as e:
             logger.error(f"Error connecting to test database: {e}, exiting.")
