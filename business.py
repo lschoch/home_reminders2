@@ -271,8 +271,8 @@ def initialize_user(self) -> Any:
     try:
         with get_con() as con:
             cur = con.cursor()
-            empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchone()
-            if empty_check[0] == 0:  # user table is empty
+            user = cur.execute("SELECT * FROM user").fetchone()
+            if user is None:  # user table is empty
                 values = ("", 0, 0, 0, "1970-01-01")
                 cur.execute(
                     """
