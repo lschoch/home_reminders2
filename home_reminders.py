@@ -9,6 +9,7 @@ from PIL import Image, ImageTk
 from business import (
     create_database,
     date_check,
+    get_user_data,
     insert_data,
     notifications_popup,
     refresh,
@@ -120,8 +121,15 @@ class App(tk.Tk):
         # Add search bar
         create_searchbar(self)
 
-        # Periodically check for notifications.
-        notifications_popup(self)
+        # Periodically check for notifications, if user has opted in to receive
+        # them.
+        user_data = get_user_data(self).fetchone()
+        # user_data.fetchone()[0] = phone number. If present, user has opted to
+        # receive notifications.
+        if user_data:
+            if user_data[0]:
+                notifications_popup(self)
+
         # Monitor for date change.
         date_check(self)
         # Select the last item in the treeview. This will get focus into the
