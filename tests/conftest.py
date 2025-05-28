@@ -1,4 +1,4 @@
-import sqlite3  # noqa: INP001
+import sqlite3
 import sys
 
 import pytest

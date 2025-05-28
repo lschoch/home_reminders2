@@ -2,7 +2,6 @@ import os
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk
-from typing import Any
 
 from loguru import logger
 from PIL import Image, ImageTk
@@ -16,14 +15,13 @@ from business import (
 )
 from classes import InfoMsgBox
 from constants import WINDOW_GEOMETRY
-from search_module import search_treeview
 from services import ReminderService
 from ui_logic import (
     create_left_side_buttons,
     create_legend,
     create_menu_bar,
+    create_searchbar,
     create_tree_widget,
-    remove_toplevels,
 )
 
 # tracemalloc.start()
@@ -35,27 +33,6 @@ if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
     print("Splash screen closed.") """
-
-
-def on_search(self, search_var: tk.StringVar) -> Any:
-    """
-    Handles the search functionality for the Treeview.
-
-    Args:
-        search_var: The StringVar containing the search query.
-    """
-    search_query = search_var.get()
-    matching_item = search_treeview(self.tree, search_query)
-
-    if matching_item:
-        # Perform UI operations for the matching item
-        self.tree.selection_set(matching_item)
-        remove_toplevels(self)  # Remove any existing toplevel windows
-        self.tree.see(matching_item)
-        self.tree.focus(matching_item)
-    else:
-        # Optionally, show a message if no match is found
-        InfoMsgBox(self, "Search", "No matching item found.")
 
 
 # create the main window
@@ -116,26 +93,6 @@ class App(tk.Tk):
         )
         self.view_lbl.grid(row=0, column=1, pady=(0, 45), sticky="s")
 
-        # add search bar
-        self.search_lbl = ttk.Label(
-            self,
-            text="Search:",
-            font=("Arial", 14),
-            background="#ececec",  # self.view_lbl_color.get(),
-        )
-        self.search_lbl.grid(row=0, column=1, padx=315, pady=10, sticky="sw")
-        search_var = tk.StringVar()
-        self.search_entry = ttk.Entry(
-            self, textvariable=search_var, width=30, font=("Arial", 14)
-        )
-        self.search_entry.grid(
-            row=0, column=1, ipadx=4, padx=(0, 315), pady=10, sticky="se"
-        )
-        self.search_entry.bind(
-            "<Return>",
-            lambda e: on_search(self, search_var),
-        )
-
         # insert image
         try:
             house_img = ImageTk.PhotoImage(Image.open(self.ico_path))
@@ -158,6 +115,11 @@ class App(tk.Tk):
             refresh(self)
         else:
             logger.info("No reminders found to display.")
+            InfoMsgBox(self, "Notice", "No reminders found.")
+
+        # Add search bar
+        create_searchbar(self)
+
         # Periodically check for notifications.
         notifications_popup(self)
         # Monitor for date change.

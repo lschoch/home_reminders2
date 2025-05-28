@@ -1,2 +1,4 @@
 WINDOW_GEOMETRY = "1140x393+3+3"
 NOTIFICATION_INTERVAL_MS = 14400000  # 4 hours
+# DB_ENVIRONMENT: if not 'production' => 'test'
+DB_ENVIRONMENT = "production"

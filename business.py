@@ -4,19 +4,21 @@ import importlib
 import os
 import shutil
 import sqlite3
+import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
 from typing import Any, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta  # type: ignore
+from loguru import logger
 from tkcalendar import Calendar  # type: ignore
 
 from classes import (
     InfoMsgBox,
     YesNoMsgBox,
 )
-from constants import NOTIFICATION_INTERVAL_MS
+from constants import DB_ENVIRONMENT, NOTIFICATION_INTERVAL_MS
 from services2 import UIService
 
 
@@ -192,7 +194,7 @@ def date_next_calc(top) -> str:
     return date_next
 
 
-def get_con() -> sqlite3.Connection:
+def get_con(db=DB_ENVIRONMENT) -> sqlite3.Connection:
     """Function to create a connection to the SQLite database.
 
     It checks if the path to the database exists, and if not, creates the
@@ -200,15 +202,35 @@ def get_con() -> sqlite3.Connection:
     located in the "Home Reminders" directory within the Application Support
     directory of the user's home directory.
     Args:
-        none
+        db (str): The name of the database to connect to. Default is
+        "production".
     Returns:
         sqlite3.Connection: A connection object to the SQLite database.
     """
-    dir_path = os.path.join(appsupportdir(), "Home Reminders")
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    file_path = os.path.join(dir_path, "home_reminders.db")
-    return sqlite3.connect(file_path)
+    # Check that DB_ENVIRONMENT is valid.
+    if DB_ENVIRONMENT not in ["production", "test"]:
+        logger.warning("Invalid DB_ENVIRONMENT, exiting.")
+        sys.exit()
+    # If not in production, use the test database.
+    if DB_ENVIRONMENT != "production":
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "tests/test.db")
+            return sqlite3.connect(db_path)
+        except sqlite3.Error as e:
+            logger.error(f"Error connecting to test database: {e}, exiting.")
+            sys.exit()
+    else:
+        try:
+            dir_path = os.path.join(appsupportdir(), "Home Reminders")
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            file_path = os.path.join(dir_path, "home_reminders.db")
+            return sqlite3.connect(file_path)
+        except sqlite3.Error as e:
+            logger.error(
+                f"Error connecting to production database: {e}, exiting."
+            )
+            sys.exit()
 
 
 def appsupportdir() -> str | os.PathLike:
@@ -254,8 +276,8 @@ def initialize_user(self) -> Any:
     try:
         with get_con() as con:
             cur = con.cursor()
-            empty_check = cur.execute("SELECT COUNT(*) FROM user").fetchone()
-            if empty_check[0] == 0:  # user table is empty
+            user = cur.execute("SELECT * FROM user").fetchone()
+            if user is None:  # user table is empty
                 values = ("", 0, 0, 0, "1970-01-01")
                 cur.execute(
                     """
@@ -439,7 +461,7 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
         view_current (bool): If True, fetch only items due today or in the
         future, otherwise fetch all items, past and present.
     Returns:
-        Optional[sqlite3.Cursor]: Cursor object containging the retrieved
+        Optional[sqlite3.Cursor]: Cursor object containing the retrieved
         reminder items.
     """
     # connect to database and create cursor
