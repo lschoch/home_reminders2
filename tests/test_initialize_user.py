@@ -7,48 +7,15 @@ import tkinter as tk
 
 from loguru import logger
 
-from business import appsupportdir, get_con, initialize_user
-from constants import DB_ENVIRONMENT
-
-
-def get_db_paths() -> tuple[os.PathLike]:
-    """
-    Function to get paths to db and temporary database backup.
-
-    Returns tuple[os.PathLike]: A 2 tuple containing the path to the database
-    and the path to the database backup.
-    """
-    # Check that DB_ENVIRONMENT is valid.
-    if DB_ENVIRONMENT not in ["production", "test"]:
-        logger.warning("Invalid DB_ENVIRONMENT, exiting.")
-        sys.exit()
-    # Get the database path depending on the database environment.
-    if DB_ENVIRONMENT != "production":
-        try:
-            db_path = os.path.join(os.path.dirname(__file__), "test.db")
-        except FileNotFoundError as e:
-            logger.error(f"Test database not found: {e}, exiting.")
-            sys.exit()
-    else:
-        try:
-            dir_path = os.path.join(appsupportdir(), "Home Reminders")
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
-            db_path = os.path.join(dir_path, "home_reminders.db")
-        except FileNotFoundError as e:
-            logger.error(f"Production database not found: {e}, exiting.")
-            sys.exit()
-    # Create a path to temporarily backup the database.
-    db_bak_path = os.path.join(os.path.dirname(__file__), "db_backup.tmp")
-    return (db_path, db_bak_path)
+from business import get_con, get_db_path, initialize_user
 
 
 def test_initialize_user():
     """
     Test the initialize_user function.
     """
-    db_path = get_db_paths()[0]
-    db_bak_path = get_db_paths()[1]
+    db_path = get_db_path()
+    db_bak_path = os.path.join(os.path.dirname(__file__), "db_backup.tmp")
     logger.info(f"db_bak_path: {db_bak_path}")
     # Create a temporary database backup.
     shutil.copy2(db_path, db_bak_path)

@@ -750,22 +750,36 @@ def view_all(self) -> Any:
     update_treeview(self, view_current=False)
 
 
-def get_db_paths() -> tuple[str | os.PathLike, str | os.PathLike]:
+def get_db_path() -> os.PathLike:
     """
-    Gets paths to database and database backup.
+    Function to get path to db depending on database environment.
 
-    Args:
-        none
-    Returns:
-        (tuple[str | os.PathLike, str | os.PathLike]):  A 2 tuple containing
-        the path to the database and the path to the database backup.
+    Returns os.PathLike: The path to the database.
     """
-    db_base_path = os.path.join(appsupportdir(), "Home Reminders")
-    if not os.path.exists(db_base_path):
-        os.makedirs(db_base_path)
-    db_path = os.path.join(db_base_path, "home_reminders.db")
-    db_bak_path = os.path.join(db_base_path, "home_reminders.bak")
-    return (db_path, db_bak_path)
+    # Check that DB_ENVIRONMENT is valid.
+    if DB_ENVIRONMENT not in ["production", "test"]:
+        logger.warning("Invalid DB_ENVIRONMENT, exiting.")
+        sys.exit()
+    # Get the database path depending on the database environment.
+    if DB_ENVIRONMENT != "production":
+        try:
+            db_path = os.path.join(
+                os.path.dirname(__file__), "tests", "test.db"
+            )
+        except FileNotFoundError as e:
+            logger.error(f"Test database not found: {e}, exiting.")
+            sys.exit()
+    else:
+        try:
+            dir_path = os.path.join(appsupportdir(), "Home Reminders")
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            db_path = os.path.join(dir_path, "home_reminders.db")
+        except FileNotFoundError as e:
+            logger.error(f"Production database not found: {e}, exiting.")
+            sys.exit()
+    # Create a path to temporarily backup the database.
+    return db_path
 
 
 def backup(self) -> Any:
@@ -785,9 +799,9 @@ def backup(self) -> Any:
         y_offset=5,
     )
     if answer.get_response():
-        paths = get_db_paths()
-        db_path = paths[0]
-        db_bak_path = paths[1]
+        db_path = get_db_path()
+        # Locate backup file in the same directory as the database.
+        db_bak_path = os.path.join(os.path.dirname(db_path), "db_backup.bak")
         shutil.copy2(db_path, db_bak_path)
         InfoMsgBox(
             self,
@@ -817,10 +831,21 @@ def restore(self) -> Any:
         y_offset=5,
     )
     if answer.get_response():
-        paths = get_db_paths()
-        db_path = paths[0]
-        db_bak_path = paths[1]
-        shutil.copy2(db_bak_path, db_path)
+        db_path = get_db_path()
+        # Locate backup file in the same directory as the database.
+        db_bak_path = os.path.join(os.path.dirname(db_path), "db_backup.bak")
+        try:
+            shutil.copy2(db_bak_path, db_path)
+        except FileNotFoundError as e:
+            logger.error(f"Restore error: {e}. Restore aborted.")
+            InfoMsgBox(
+                self,
+                "Restore",
+                "Unable to restore data:\nbackup file not found.\n",
+                x_offset=3,
+                y_offset=5,
+            )
+            return
         refresh(self)
         InfoMsgBox(
             self,
