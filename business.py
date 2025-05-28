@@ -18,7 +18,7 @@ from classes import (
     InfoMsgBox,
     YesNoMsgBox,
 )
-from constants import DB, NOTIFICATION_INTERVAL_MS
+from constants import DB_ENVIRONMENT, NOTIFICATION_INTERVAL_MS
 from services2 import UIService
 
 
@@ -194,7 +194,7 @@ def date_next_calc(top) -> str:
     return date_next
 
 
-def get_con(db=DB) -> sqlite3.Connection:
+def get_con(db=DB_ENVIRONMENT) -> sqlite3.Connection:
     """Function to create a connection to the SQLite database.
 
     It checks if the path to the database exists, and if not, creates the
@@ -207,25 +207,30 @@ def get_con(db=DB) -> sqlite3.Connection:
     Returns:
         sqlite3.Connection: A connection object to the SQLite database.
     """
+    # Check that DB_ENVIRONMENT is valid.
+    if DB_ENVIRONMENT not in ["production", "test"]:
+        logger.warning("Invalid DB_ENVIRONMENT, exiting.")
+        sys.exit()
     # If not in production, use the test database.
-    if DB != "production environment":
+    if DB_ENVIRONMENT != "production":
         try:
-            db_path = os.path.join(
-                os.path.dirname(__file__), "./tests/test.db"
-            )
+            db_path = os.path.join(os.path.dirname(__file__), "tests/test.db")
             return sqlite3.connect(db_path)
         except sqlite3.Error as e:
             logger.error(f"Error connecting to test database: {e}, exiting.")
             sys.exit()
-    try:
-        dir_path = os.path.join(appsupportdir(), "Home Reminders")
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-        file_path = os.path.join(dir_path, "home_reminders.db")
-        return sqlite3.connect(file_path)
-    except sqlite3.Error as e:
-        logger.error(f"Error connecting to production database: {e}, exiting.")
-        sys.exit()
+    else:
+        try:
+            dir_path = os.path.join(appsupportdir(), "Home Reminders")
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            file_path = os.path.join(dir_path, "home_reminders.db")
+            return sqlite3.connect(file_path)
+        except sqlite3.Error as e:
+            logger.error(
+                f"Error connecting to production database: {e}, exiting."
+            )
+            sys.exit()
 
 
 def appsupportdir() -> str | os.PathLike:
