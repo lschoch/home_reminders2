@@ -63,8 +63,7 @@ def test_save_prefs():
         except Exception as e:
             logger.error(
                 f"An error occurred while restoring the original values: {e}. "
-                "User table may be corrupted. Please restore the database "
-                "from a backup."
+                "User table may be corrupted."
             )
         finally:
             app.destroy()
