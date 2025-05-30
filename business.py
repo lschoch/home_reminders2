@@ -342,6 +342,16 @@ def save_prefs(self, values) -> Any:
         )
 
 
+def error_handler(self, msg2, e):
+    msg1 = "Notifications popup aborted,"
+    logger.error(f"{msg1} {msg2}: {e}.")
+    InfoMsgBox(
+        self,
+        "Abort",
+        f"{msg1} {msg2}.",
+    )
+
+
 def notifications_popup(self) -> Any:
     """
     Checks for reminder notifications. Creates a notifications popup if needed.
@@ -355,35 +365,38 @@ def notifications_popup(self) -> Any:
     Returns:
         None
     """
+    # Remove any pre-existing notifications popups that havent' been closed by
+    # the user.
+    try:
+        UIService.remove_notifications_popups(self)
+    except Exception as e:
+        error_handler(self, "error removing existing notifications popups", e)
+        return
     # Fetch all reminders from the database and categorize them by due date.
     try:
         categorized_reminders = fetch_and_categorize_reminders(self)
     except Exception as e:
-        print(f"Error fetching reminders: {e}")
-        InfoMsgBox(
-            self,
-            "Error",
-            "Failed to fetch reminders from the database.",
-        )
+        error_handler(self, "error fetching and categorizing reminders", e)
         return
     # If there are any reminders, generate messages for the notifications
     # popup.
-    messages = generate_notification_messages(self, categorized_reminders)
-    # Remove any pre-existing notifications popups that havent' been closed by
-    # the user.
-    UIService.remove_notifications_popups(self)
+    if categorize_reminders:
+        try:
+            messages = generate_notification_messages(
+                self, categorized_reminders
+            )
+        except Exception as e:
+            error_handler(self, "error generating notificaton messages", e)
+            return
     # If there are any messages, create a notifications popup.
-    try:
-        if messages:
+    if messages:
+        try:
             UIService.create_notifications_popup(self, messages)
-    except Exception as e:
-        print(f"Error creating notifications popup: {e}")
-        InfoMsgBox(
-            self,
-            "Error",
-            "Failed to create notifications popup.",
-        )
-    # Check for notifications at the NOTIFICATION_INTERVAL.
+        except Exception as e:
+            error_handler(self, "error creating notifications popup", e)
+            return
+
+    # Check for notifications every NOTIFICATION_INTERVAL.
     self.after(NOTIFICATION_INTERVAL_MS, notifications_popup, self)
 
 
