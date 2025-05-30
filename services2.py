@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from typing import TYPE_CHECKING, Any, Optional, Tuple  # noqa: F401
 
-from classes import NofificationsPopup
+from classes import NotificationsPopup
 
 
 class UIService:
@@ -37,7 +37,7 @@ class UIService:
             None.
         """
         if messages == "No notifications.":
-            notifications_win = NofificationsPopup(
+            notifications_win = NotificationsPopup(
                 self,
                 title="Notifications",
                 message="No notifications at this time.",
@@ -48,7 +48,7 @@ class UIService:
             # Remove the trailing \n from messages.
             messages = messages[:-1]
             # Create the window.
-            notifications_win = NofificationsPopup(
+            notifications_win = NotificationsPopup(
                 self,
                 title="Notifications",
                 message="",
