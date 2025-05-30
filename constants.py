@@ -1,4 +1,4 @@
 WINDOW_GEOMETRY = "1140x393+3+3"
 NOTIFICATION_INTERVAL_MS = 14400000  # 4 hours
 # DB_ENVIRONMENT: must be 'production' or 'test'
-DB_ENVIRONMENT = "test"
+DB_ENVIRONMENT = "production"
