@@ -374,13 +374,14 @@ def notifications_popup(self) -> Any:
         return
     # Fetch all reminders from the database and categorize them by due date.
     try:
-        categorized_reminders = fetch_and_categorize_reminders(self)
+        reminders = fetch_reminders(self, False)
+        categorized_reminders = categorize_reminders(reminders)
     except Exception as e:
         error_handler(self, "error fetching and categorizing reminders", e)
         return
     # If there are any reminders, generate messages for the notifications
     # popup.
-    if categorize_reminders:
+    if categorized_reminders:
         try:
             messages = generate_notification_messages(
                 self, categorized_reminders
@@ -1120,7 +1121,7 @@ def get_phone_number(self) -> str:
         return ""
 
 
-def fetch_and_categorize_reminders(
+""" def fetch_and_categorize_reminders(
     self,
 ) -> Optional[Tuple[list[str], list[str], list[str], list[str]]]:
     # Initialize user table in case it's empty.
@@ -1142,7 +1143,7 @@ def fetch_and_categorize_reminders(
         else:
             return None
     else:
-        return None
+        return None """
 
 
 def generate_notification_messages(
