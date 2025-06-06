@@ -1070,7 +1070,7 @@ def categorize_reminders(
 
 
 def create_message_string(
-    user_data_tuple: Tuple[str, int, int, int, str],
+    app,
     reminders_by_category: Optional[
         Tuple[list[str], list[str], list[str], list[str]]
     ],
@@ -1079,8 +1079,6 @@ def create_message_string(
     Creates a string of reminders notifications for the notifications popup.
 
     Args:
-        user_data_tuple (tuple[str, int, int, int, str]): 5 tuple containing
-         user preferences.
         reminders_by_category
         (Tuple[list[str], list[str], list[str], list[str] | None]): A tuple
         containing the categorized reminders for notification.
@@ -1089,6 +1087,9 @@ def create_message_string(
         str: A string representation of a bulleted list of reminders for
         display in the notifications popup.
     """
+    user_data = get_user_data(app)
+    user_data_tuple = user_data.fetchone() if user_data else None
+
     # Create a string to hold reminders for notification.
     messages = ""
     # If there are no reminders, return a message indicating no notifications.
@@ -1096,11 +1097,13 @@ def create_message_string(
         messages += "No notifications.\n"
         return messages
     # Otherwise, create a string of reminders.
-    # Get the reminders categorized by due date starting with past due.
-    for r in reminders_by_category[0]:
-        messages += f"\u2022 Past due: {r[1]}\n"
-    # Get 'day of' notificatons, if opted for.
+    # Get the reminders categorized by due date starting with past due. Include
+    # only the categories selected by user preference.
     if user_data_tuple:
+        # Past due always included.
+        for r in reminders_by_category[0]:
+            messages += f"\u2022 Past due: {r[1]}\n"
+        # Get 'day of' notificatons, if opted for.
         if user_data_tuple[3]:
             for r in reminders_by_category[1]:
                 messages += f"\u2022 Due today: {r[1]}\n"
@@ -1155,7 +1158,7 @@ def generate_notification_messages(
     ],
 ) -> str:
     """
-    Generates a string of notification messages based on categorized reminders.
+    Generates a string of notification messages from the categorized reminders.
 
     Args:
         categorized_reminders
@@ -1167,11 +1170,34 @@ def generate_notification_messages(
         display in the notifications popup.
     """
     user_data = get_user_data(self)
-    if user_data:
-        user_data_tuple = user_data.fetchone()
-        return create_message_string(user_data_tuple, categorized_reminders)
-    else:
-        return ""
+    user_data_tuple = user_data.fetchone() if user_data else None
+
+    # Create a string to hold reminders for notification.
+    messages = ""
+    # If there are no reminders, return a message indicating no notifications.
+    if not categorized_reminders:
+        messages += "No notifications.\n"
+        return messages
+    # Otherwise, create a string of reminders.
+    # Get the reminders categorized by due date starting with past due. Include
+    # only the categories selected by user preference.
+    if user_data_tuple:
+        # Past due always included.
+        for reminder in categorized_reminders[0]:
+            messages += f"\u2022 Past due: {reminder[1]}\n"
+        # Get 'day of' notificatons, if opted for.
+        if user_data_tuple[3]:
+            for reminder in categorized_reminders[1]:
+                messages += f"\u2022 Due today: {reminder[1]}\n"
+        # Get 'day before' notificatons, if opted for.
+        if user_data_tuple[2]:
+            for reminder in categorized_reminders[2]:
+                messages += f"\u2022 Due tomorrow: {reminder[1]}\n"
+        # Get 'week before' notificatons, if opted for.
+        if user_data_tuple[1]:
+            for reminder in categorized_reminders[3]:
+                messages += f"\u2022 Due in 7 days: {reminder[1]}\n"
+    return messages
 
 
 def update_treeview(self, view_current: bool):

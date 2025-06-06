@@ -8,12 +8,9 @@ if TYPE_CHECKING:
 from loguru import logger
 
 from business import (
-    categorize_reminders,
-    create_message_string,
     delete_item_from_database,
     fetch_reminders,
     get_user_data,
-    initialize_user,
     save_database_item,
     save_prefs,
     update_database_item,
@@ -145,6 +142,7 @@ class ReminderService:
             )
             return False
 
+    '''
     @staticmethod
     def get_notifications(self) -> str:  # noqa: PLW0211
         """
@@ -165,6 +163,7 @@ class ReminderService:
 
         categorized_reminders = categorize_reminders(reminders)
         return create_message_string(user_data, categorized_reminders)
+    '''
 
     @staticmethod
     def validate_phone_number(self, num: str) -> bool:  # noqa: PLW0211

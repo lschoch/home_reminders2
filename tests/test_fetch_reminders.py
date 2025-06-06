@@ -11,7 +11,7 @@ from constants import DB_ENVIRONMENT
 
 
 def test_fetch_reminders():
-    # Skip this test if not in tesst environment.
+    # Skip this test if not in test environment.
     if DB_ENVIRONMENT != "test":
         pytest.skip("Skipping this test - not in test environment.")
 
