@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import random
 import shutil
 import sqlite3
 import sys
@@ -10,6 +11,7 @@ from datetime import date, datetime, timedelta
 from tkinter import ttk
 from typing import Any, Optional, Tuple
 
+import pytest
 from dateutil.relativedelta import relativedelta  # type: ignore
 from loguru import logger
 from tkcalendar import Calendar  # type: ignore
@@ -764,7 +766,7 @@ def view_all(self) -> Any:
     update_treeview(self, view_current=False)
 
 
-def get_db_path() -> os.PathLike:
+def get_db_path() -> str:
     """
     Function to get path to db depending on database environment.
 
@@ -1184,3 +1186,176 @@ def update_treeview(self, view_current: bool):
     self.refreshed = True
     # Set focus in the treeview so that an item can be selected.
     self.tree.focus(self.tree.get_children()[0])
+
+
+def get_days():
+    # Set variables representing days relative to current date.
+    today_str = date.today().strftime("%Y-%m-%d")
+    yesterday_datetime = datetime.now() - timedelta(days=1)
+    yesterday_str = yesterday_datetime.strftime("%Y-%m-%d")
+    two_weeks_ago_datetime = datetime.now() - timedelta(weeks=2)
+    tomorrow_datetime = datetime.now() + timedelta(days=1)
+    tomorrow_str = tomorrow_datetime.strftime("%Y-%m-%d")
+    two_weeks_ago_str = two_weeks_ago_datetime.strftime("%Y-%m-%d")
+    week_from_today_datetime = datetime.now() + timedelta(days=7)
+    week_from_today_str = week_from_today_datetime.strftime("%Y-%m-%d")
+
+    # Any day within a year after current date, not day after or 7 days after.
+    days_list = [d for d in range(1, 365) if d not in [1, 7]]
+    non_category_datetime = datetime.now() + timedelta(
+        days=random.choice(days_list)
+    )
+    non_category_str = non_category_datetime.strftime("%Y-%m-%d")
+
+    return (
+        today_str,
+        yesterday_str,
+        tomorrow_str,
+        two_weeks_ago_str,
+        week_from_today_str,
+        non_category_str,
+    )
+
+
+def get_test_reminders():
+    days = get_days()
+
+    # Specify test reminders with known due dates. Note: the id fields are only
+    # placeholders since they are not used by the function but they must match
+    # the expected ids.
+    reminders = [
+        # Past due:
+        (
+            0,  # Placeholder for 'id'
+            "test1",
+            "0",  # Frequency irrelevant since date_last and date_next are
+            # pre-determined.
+            "days",
+            days[3],
+            days[1],
+            "test1 note",
+        ),
+        # Due today:
+        (
+            0,
+            "test2",
+            "0",
+            "days",
+            days[1],
+            days[0],
+            "test2 note",
+        ),
+        # Due tomorrow:
+        (
+            0,
+            "test3",
+            "0",
+            "days",
+            days[0],
+            days[2],
+            "test3 note",
+        ),
+        # Due in one week:
+        (
+            0,
+            "test4",
+            "0",
+            "weeks",
+            days[0],
+            days[4],
+            "test4 note",
+        ),
+        # Due any random day within the year after current date except the day
+        # after and the week after current date.
+        (
+            0,
+            "test5",
+            "0",
+            "days",
+            days[0],
+            days[5],
+            "test5 note",
+        ),
+    ]
+    return reminders
+
+
+def get_expected():
+    days = get_days()
+    expected = (
+        # Past due:
+        [
+            (
+                0,  # Placeholder for id.
+                "test1",
+                "0",  # Frequency irrelevant since date_last and date_next are
+                # pre-determined.
+                "days",
+                days[3],
+                days[1],
+                "test1 note",
+            )
+        ],
+        # Due today:
+        [
+            (
+                0,
+                "test2",
+                "0",
+                "days",
+                days[1],
+                days[0],
+                "test2 note",
+            )
+        ],
+        # Due tomorrow:
+        [
+            (
+                0,
+                "test3",
+                "0",
+                "days",
+                days[0],
+                days[2],
+                "test3 note",
+            )
+        ],
+        # Due in one week:
+        [
+            (
+                0,
+                "test4",
+                "0",
+                "weeks",
+                days[0],
+                days[4],
+                "test4 note",
+            )
+        ],
+    )
+    return expected
+
+
+def copy_test_db():
+    # Make a temporary copy of the test database so that it can be restored
+    # later.
+    db_path = os.path.join(os.path.dirname(__file__), "tests", "test.db")
+    db_bak_path = os.path.join(
+        os.path.dirname(__file__), "tests", "test_bak.db"
+    )
+    shutil.copy2(db_path, db_bak_path)
+    return (db_path, db_bak_path)
+
+
+def cleanup(app, db_path, db_bak_path):
+    # Restore the test database.
+    shutil.copy2(db_bak_path, db_path)
+    # Delete the temporary copy of the test database.
+    os.remove(db_bak_path)
+    app.destroy()
+
+
+def error_cleanup(app, db_path, db_bak_path, e, msg):
+    logger.error(msg + f": {e}," + " skipping this test.")
+    cleanup(app, db_path, db_bak_path)
+    pytest.skip(msg + ".")
