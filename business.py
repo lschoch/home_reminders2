@@ -1381,12 +1381,11 @@ def copy_test_db() -> Tuple[str, str]:
 
 def cleanup(app, db_path, db_bak_path) -> Any:
     """
-    Restores the test database to its pre-test state and destroys the app.
+    Restores the test database to its pre-test state.
     """
     shutil.copy2(db_bak_path, db_path)
     # Delete the temporary copy of the test database.
     os.remove(db_bak_path)
-    app.destroy()
 
 
 def error_cleanup(app, db_path, db_bak_path, e, msg) -> Any:
@@ -1396,4 +1395,5 @@ def error_cleanup(app, db_path, db_bak_path, e, msg) -> Any:
     """
     logger.error(msg + f": {e}," + " skipping this test.")
     cleanup(app, db_path, db_bak_path)
+    app.destroy()
     pytest.skip(msg + ".")

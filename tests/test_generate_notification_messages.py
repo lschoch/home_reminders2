@@ -96,6 +96,7 @@ def test_generate_notification_messages(user_preferences, expected):
 
     # Restore test database now in case there is an assertion error.
     cleanup(app, db_path, db_bak_path)
+    app.destroy()
 
     # Check the message if there are no categorized reminders.
     assert message_no_reminders == "No notifications.\n"
