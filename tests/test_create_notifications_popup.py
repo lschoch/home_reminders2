@@ -77,6 +77,7 @@ def test_create_notifications_popup():
             # Check the popup's class name.
             popup_type = type(popup)
             assert popup_type.__name__ == "NotificationsPopup"
+            # Check content of the popup's text box.
             assert popup.txt.get("1.0", "end-1c") == msg
             if isinstance(popup, tk.Toplevel):
                 count += 1
