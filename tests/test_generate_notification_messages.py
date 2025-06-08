@@ -89,7 +89,9 @@ def test_generate_notification_messages(user_preferences, expected):
             e,
             "Database error setting user preferences",
         )
+    # Get message if there are no reminders.
     message_no_reminders = generate_notification_messages(app, None)
+    # Get messages provided by get_reminders function.
     message = generate_notification_messages(app, categorized_reminders)
 
     # Restore test database now in case there is an assertion error.

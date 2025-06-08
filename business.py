@@ -9,7 +9,7 @@ import sys
 import tkinter as tk
 from datetime import date, datetime, timedelta
 from tkinter import ttk
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pytest
 from dateutil.relativedelta import relativedelta  # type: ignore
@@ -1126,31 +1126,6 @@ def get_phone_number(self) -> str:
         return ""
 
 
-""" def fetch_and_categorize_reminders(
-    self,
-) -> Optional[Tuple[list[str], list[str], list[str], list[str]]]:
-    # Initialize user table in case it's empty.
-    initialize_user(self)
-    # Fetch reminders if user has opted to receive notifiications.
-    user_data = get_user_data(self)
-    # user_data.fetchone()[0] is user phone number. If present, user has
-    # opted to receive notifications.
-    if user_data:
-        # Convert Cursor object to tuple
-        user_data_tuple = user_data.fetchone()
-        if user_data_tuple[0]:
-            reminders = fetch_reminders(self, False)
-        else:
-            reminders = None
-        # Categorize reminders, if any, by due date.
-        if reminders:
-            return categorize_reminders(reminders)
-        else:
-            return None
-    else:
-        return None """
-
-
 def generate_notification_messages(
     self,
     categorized_reminders: Optional[
@@ -1163,11 +1138,11 @@ def generate_notification_messages(
     Args:
         categorized_reminders
         (Tuple[list[str], list[str], list[str], list[str]]):
-        A tuple containing the categorized reminders for notification.
+        A tuple containing the reminders categorized by due date.
 
     Returns:
-        str: A string representation of a bulleted list of reminders for
-        display in the notifications popup.
+        str: A string listing reminders bulleted by due date for display in the
+          notifications popup.
     """
     user_data = get_user_data(self)
     user_data_tuple = user_data.fetchone() if user_data else None
@@ -1214,8 +1189,13 @@ def update_treeview(self, view_current: bool):
     self.tree.focus(self.tree.get_children()[0])
 
 
-def get_days():
-    # Set variables representing days relative to current date.
+def get_days() -> Tuple[str, str, str, str, str, str]:
+    """
+    Initializes variables representing days relative to current date.
+    Returns:
+        Tuple[str, str, str, str, str, str]: A tuple containing the six
+        variables.
+    """
     today_str = date.today().strftime("%Y-%m-%d")
     yesterday_datetime = datetime.now() - timedelta(days=1)
     yesterday_str = yesterday_datetime.strftime("%Y-%m-%d")
@@ -1243,7 +1223,13 @@ def get_days():
     )
 
 
-def get_test_reminders():
+def get_test_reminders() -> List[Tuple[int, str, str, str, str, str, str]]:
+    """
+    Initializes a list of reminders for testing.
+    Returns:
+        List[Tuple[int, str, str, str, str, str, str]]: The list of reminders
+        to be used testing.
+    """
     days = get_days()
 
     # Specify test reminders with known due dates. Note: the id fields are only
@@ -1306,7 +1292,22 @@ def get_test_reminders():
     return reminders
 
 
-def get_expected():
+def get_expected() -> tuple[
+    list[tuple[int, str, str, str, str, str, str]],
+    list[tuple[int, str, str, str, str, str, str]],
+    list[tuple[int, str, str, str, str, str, str]],
+    list[tuple[int, str, str, str, str, str, str]],
+]:
+    """
+    Provides an expected list of reminders categorized by due date.
+    Returns:
+        tuple[
+        list[tuple[int, str, str, str, str, str, str]],
+        list[tuple[int, str, str, str, str, str, str]],
+        list[tuple[int, str, str, str, str, str, str]],
+        list[tuple[int, str, str, str, str, str, str]]]:
+        The expected list of reminders categorized by due date.
+    """
     days = get_days()
     expected = (
         # Past due:
@@ -1362,9 +1363,14 @@ def get_expected():
     return expected
 
 
-def copy_test_db():
-    # Make a temporary copy of the test database so that it can be restored
-    # later.
+def copy_test_db() -> Tuple[str, str]:
+    """
+    Makes a temporary copy of the test database so that it can be restored
+    later.
+    Returns:
+        Tuple[str, str]: A tuple containing the paths to the database and the
+        temporary copy of that database.
+    """
     db_path = os.path.join(os.path.dirname(__file__), "tests", "test.db")
     db_bak_path = os.path.join(
         os.path.dirname(__file__), "tests", "test_bak.db"
@@ -1373,15 +1379,21 @@ def copy_test_db():
     return (db_path, db_bak_path)
 
 
-def cleanup(app, db_path, db_bak_path):
-    # Restore the test database.
+def cleanup(app, db_path, db_bak_path) -> Any:
+    """
+    Restores the test database to its pre-test state and destroys the app.
+    """
     shutil.copy2(db_bak_path, db_path)
     # Delete the temporary copy of the test database.
     os.remove(db_bak_path)
     app.destroy()
 
 
-def error_cleanup(app, db_path, db_bak_path, e, msg):
+def error_cleanup(app, db_path, db_bak_path, e, msg) -> Any:
+    """
+
+    Restores the test database to its pre-test state with error handling.
+    """
     logger.error(msg + f": {e}," + " skipping this test.")
     cleanup(app, db_path, db_bak_path)
     pytest.skip(msg + ".")
