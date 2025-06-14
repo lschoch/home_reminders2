@@ -133,7 +133,6 @@ def refresh(self) -> Any:
     Returns:
         None
     """
-
     # Fetch fresh set of reminders and insert into treeview.
     refreshed_data = fetch_reminders(self, self.view_current)
     for item in self.tree.get_children():
@@ -344,13 +343,12 @@ def save_prefs(self, values) -> Any:
         )
 
 
-def error_handler(self, msg2, e):
-    msg1 = "Notifications popup aborted,"
-    logger.error(f"{msg1} {msg2}: {e}.")
+def error_handler(self, msg):
+    logger.error(f"{msg}.")
     InfoMsgBox(
         self,
         "Abort",
-        f"{msg1} {msg2}.",
+        f"{msg}.",
     )
 
 
@@ -371,15 +369,23 @@ def notifications_popup(self) -> Any:
     # the user.
     try:
         UIService.remove_notifications_popups(self)
-    except Exception as e:
-        error_handler(self, "error removing existing notifications popups", e)
+    except Exception:
+        error_handler(
+            self,
+            "Notifications popup aborted, error removing existing "
+            "notifications popups",
+        )
         return
     # Fetch all reminders from the database and categorize them by due date.
     try:
         reminders = fetch_reminders(self, False)
         categorized_reminders = categorize_reminders(reminders)
-    except Exception as e:
-        error_handler(self, "error fetching and categorizing reminders", e)
+    except Exception:
+        error_handler(
+            self,
+            "Notifications popup aborted, error fetching and "
+            "categorizing reminders",
+        )
         return
     # If there are any reminders, generate messages for the notifications
     # popup.
@@ -388,15 +394,23 @@ def notifications_popup(self) -> Any:
             messages = generate_notification_messages(
                 self, categorized_reminders
             )
-        except Exception as e:
-            error_handler(self, "error generating notificaton messages", e)
+        except Exception:
+            error_handler(
+                self,
+                "Notifications popup aborted, error "
+                "generating notificaton messages",
+            )
             return
     # If there are any messages, create a notifications popup.
     if messages:
         try:
             UIService.create_notifications_popup(self, messages)
-        except Exception as e:
-            error_handler(self, "error creating notifications popup", e)
+        except Exception:
+            error_handler(
+                self,
+                "Notifications popup aborted, error creating "
+                "notifications popup",
+            )
             return
 
     # Check for notifications every NOTIFICATION_INTERVAL.
