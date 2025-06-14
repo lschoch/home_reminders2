@@ -3,22 +3,11 @@ import tkinter as tk
 from loguru import logger
 
 from business import error_handler
-from classes import InfoMsgBox
+from classes import InfoMsgBox, TestError
 
 
 def test_error_handler(caplog, reportlog):
     app = tk.Tk()
-
-    class TestError(Exception):
-        """Custom error class for testing purposes."""
-
-        def __init__(self, message):
-            super().__init__(message)
-            self.message = message
-
-        def __str__(self):
-            return f"TestError: {self.message}"
-
     msg = "This is the TestError message."
 
     # generate an error so that the error handler can be tested

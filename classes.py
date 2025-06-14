@@ -343,3 +343,14 @@ class YesNoMsgBox(tk.Toplevel):
         self.response = 0
         self.destroy()
         self.var.set(1)
+
+
+class TestError(Exception):
+    """Custom error class for testing purposes."""
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"TestError: {self.message}"
