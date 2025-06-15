@@ -297,57 +297,70 @@ def initialize_user(self) -> Any:
         InfoMsgBox(self, "Error", "Failed to update the database.")
 
 
-def save_prefs(self, values) -> Any:
+def save_prefs(self, values: Tuple[str, int, int, int, str]) -> None:
     """
     Saves user preferences to the database.
 
     Args:
-        values (tuple): 5 tuple containing user preferences to be saved.
+        values (tuple): A 5-tuple containing user preferences to be saved.
     Returns:
         None
     """
     try:
+        # Validate input data
+        if not isinstance(values, tuple) or len(values) != 5:
+            raise ValueError("Invalid input: 'values' must be a 5-tuple.")
+
         with get_con() as con:
             cur = con.cursor()
-            cur.execute("DELETE FROM user")
-            # Write new user data to user table.
+            cur.execute("DELETE FROM user")  # Clear existing preferences
             cur.execute(
                 """INSERT INTO user (
-                phone_number,
-                week_before,
-                day_before,
-                day_of,
-                last_notification_date) VALUES(?, ?, ?, ?, ?)""",
+                    phone_number,
+                    week_before,
+                    day_before,
+                    day_of,
+                    last_notification_date
+                ) VALUES (?, ?, ?, ?, ?)""",
                 values,
             )
             con.commit()
     except sqlite3.Error as e:
-        print(f"Database error: {e}")
+        logger.error(f"Database error while saving preferences: {e}")
         InfoMsgBox(self, "Error", "Failed to update the database.")
-    # If there was a pre-existing phone number, there was a pre-existing user.
-    if values[0]:
-        InfoMsgBox(
-            self,
-            "Notifications",
-            "Your data has been saved.",
-            x_offset=100,
-            y_offset=15,
-        )
+    except ValueError as ve:
+        logger.error(f"Validation error: {ve}")
+        InfoMsgBox(self, "Error", str(ve))
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        InfoMsgBox(self, "Error", "An unexpected error occurred.")
     else:
-        InfoMsgBox(
-            self,
-            "Notifications",
-            "You will now start receiving text notifications.",
-            x_offset=100,
-            y_offset=15,
-        )
+        # Notify the user based on whether a phone number was provided
+        if values[0]:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "Your data has been saved.",
+                x_offset=100,
+                y_offset=15,
+            )
+        else:
+            InfoMsgBox(
+                self,
+                "Notifications",
+                "You will now start receiving text notifications.",
+                x_offset=100,
+                y_offset=15,
+            )
+    finally:
+        logger.info("save_prefs operation completed.")
 
 
 def error_handler(self, msg):
     logger.error(f"{msg}.")
     InfoMsgBox(
         self,
-        "Abort",
+        "Error",
         f"{msg}.",
     )
 
@@ -512,7 +525,7 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
                     ORDER BY date_next ASC, description ASC
                 """)
     except sqlite3.Error as e:
-        print(f"Database error: {e}")
+        logger.info(f"Database error: {e}")
         InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
     return None
 
