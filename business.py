@@ -500,33 +500,44 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
 
     Fetches either the pending reminders or all reminders depending on the
     value of the attribute view_current.
+
     Args:
         view_current (bool): If True, fetch only items due today or in the
         future, otherwise fetch all items, past and present.
+
     Returns:
         Optional[sqlite3.Cursor]: Cursor object containing the retrieved
-        reminder items.
+        reminder items, or None if an error occurs.
     """
-    # connect to database and create cursor
     try:
         with get_con() as con:
             cur = con.cursor()
-            # retrieve and return data depending on the current view
             if view_current:
-                return cur.execute("""
+                query = """
                     SELECT * FROM reminders
-                    WHERE date_next >= DATE('now', 'localtime')
-                                        OR date_next IS NULL
-                    ORDER BY date_next ASC, description ASC
-                """)
+                    WHERE date_next >= DATE('now')
+                    ORDER BY date_next ASC
+                """
             else:
-                return cur.execute("""
+                query = """
                     SELECT * FROM reminders
-                    ORDER BY date_next ASC, description ASC
-                """)
+                    ORDER BY date_next ASC
+                """
+            return cur.execute(query)
     except sqlite3.Error as e:
-        logger.info(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to retrieve data from the database.")
+        logger.error(f"Database error while fetching reminders: {e}")
+        InfoMsgBox(
+            self, "Error", "Failed to fetch reminders from the database."
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while fetching reminders: {e}")
+        InfoMsgBox(
+            self,
+            "Error",
+            "An unexpected error occurred while fetching reminders.",
+        )
+    finally:
+        logger.info("fetch_reminders operation completed.")
     return None
 
 
