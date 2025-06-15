@@ -354,3 +354,5 @@ class TestError(Exception):
 
     def __str__(self):
         return f"TestError: {self.message}"
+
+    __test__ = False  # Prevent pytest from treating this as a test case
