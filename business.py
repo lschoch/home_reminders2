@@ -559,7 +559,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
             "Invalid Input",
             "Description cannot be blank.",
         )
-        description.focus_set()
+        top.description_entry.focus_set()
         return False
     # Fetch all reminders. If view_current is set to True, temporarily reset
     # it to False so that all reminders will be retrieved instead of just the
@@ -602,7 +602,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
                 return False
     # frequency is required and must be an integer
     frequency = top.frequency_entry.get()
-    if not frequency or not int(frequency):
+    if not frequency.isdigit():
         InfoMsgBox(
             self,
             "Invalid Input",
