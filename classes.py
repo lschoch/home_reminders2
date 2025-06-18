@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import ttk
 
@@ -221,7 +222,10 @@ class InfoMsgBox(tk.Toplevel):
         # self.wm_attributes("-type", "splash")
         # self.wm_overrideredirect(True)
         self.wait_visibility()
-        self.grab_set()
+        if "pytest" not in sys.modules:
+            # Only grab the focus if not running in pytest
+            # This prevents pytest from hanging on the grab_set call
+            self.grab_set()
         self.txt = tk.Text(
             self,
             bg="#ececec",
@@ -268,7 +272,10 @@ class YesNoMsgBox(tk.Toplevel):
         # self.wm_overrideredirect(True)
 
         self.wait_visibility()
-        self.grab_set()
+        if "pytest" not in sys.modules:
+            # Only grab the focus if not running in pytest
+            # This prevents pytest from hanging on the grab_set call
+            self.grab_set()
         self.response = 0
         self.var = tk.IntVar()
         self.txt = tk.Text(

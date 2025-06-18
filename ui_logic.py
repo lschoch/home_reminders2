@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from datetime import date, datetime
 from tkinter import END, Menu, ttk
@@ -181,7 +182,10 @@ def create_preferences_window(self):  # noqa: PLR0915
     preferences_window.resizable(False, False)
     preferences_window.wm_transient(self)
     preferences_window.wait_visibility()
-    preferences_window.grab_set()
+    if "pytest" not in sys.modules:
+        # Only grab the focus if not running in pytest
+        # This prevents pytest from hanging on the grab_set call
+        preferences_window.grab_set()
     preferences_window.grid_columnconfigure(0, weight=1)
     preferences_window.grid_columnconfigure(1, weight=1)
 
