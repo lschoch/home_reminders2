@@ -75,7 +75,7 @@ from classes import TopLvl
         ),
     ],
 )
-def test_validate_inputs(inputs, expected, mocker):
+def test_validate_inputs(inputs, expected):
     app = tk.Tk()
     top = TopLvl(app, "Title")
     app.view_current = True

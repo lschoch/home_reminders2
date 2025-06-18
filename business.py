@@ -12,6 +12,7 @@ from tkinter import ttk
 from typing import Any, List, Optional, Tuple
 
 import pytest
+from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta  # type: ignore
 from loguru import logger
 from tkcalendar import Calendar  # type: ignore
@@ -551,6 +552,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
     Returns:
         bool: True if inputs are valid, False otherwise.
     """
+    return_value = True
     # description is required
     description = top.description_entry.get()
     if not description:
@@ -560,7 +562,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
             "Description cannot be blank.",
         )
         top.description_entry.focus_set()
-        return False
+        return_value = False
     # Fetch all reminders. If view_current is set to True, temporarily reset
     # it to False so that all reminders will be retrieved instead of just the
     # pending reminders.
@@ -599,7 +601,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
                     description.delete(0, tk.END)
                     description.insert(0, original_description)
                     description.focus_set()
-                return False
+                return_value = False
     # frequency is required and must be an integer
     frequency = top.frequency_entry.get()
     if not frequency.isdigit():
@@ -609,7 +611,7 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
             "Please enter frequency as integer.",
         )
         top.frequency_entry.focus_set()
-        return False
+        return_value = False
     # period and date_last_entry are required
     if not top.period_combobox.get():
         InfoMsgBox(
@@ -618,16 +620,27 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
             "Please select the period.",
         )
         top.period_combobox.focus_set()
-        return False
+        return_value = False
     if not top.date_last_entry.get():
         InfoMsgBox(
             self,
             "Invalid Input",
-            "Please select the last date.",
+            "Please enter a valid last date.",
         )
         top.date_last_entry.focus_set()
-        return False
-    return True
+        return_value = False
+    # date_last_entry must be a valid date
+    try:
+        parse(top.date_last_entry.get())
+    except ValueError:
+        InfoMsgBox(
+            self,
+            "Invalid Input",
+            "Please enter a valid last date.",
+        )
+        top.date_last_entry.focus_set()
+        return_value = False
+    return return_value
 
 
 def delete_user_data(self) -> Any:
