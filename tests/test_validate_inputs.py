@@ -1,4 +1,4 @@
-import tkinter as tk
+import tkinter as tk  # noqa: F401
 
 import pytest
 from loguru import logger  # noqa: F401
@@ -10,6 +10,7 @@ from classes import TopLvl
 @pytest.mark.parametrize(
     "inputs, expected",
     [
+        # Valid input
         (
             {
                 "description": "test",
@@ -19,9 +20,19 @@ from classes import TopLvl
             },
             True,
         ),
+        # Invalid inputs
         (
             {
-                "description": "",
+                "description": "",  # Empty description
+                "frequency": "2",
+                "date_last": "2025-01-01",
+                "period": "weeks",
+            },
+            False,
+        ),
+        (
+            {
+                "description": "test1",  # Duplicate description
                 "frequency": "2",
                 "date_last": "2025-01-01",
                 "period": "weeks",
@@ -31,7 +42,7 @@ from classes import TopLvl
         (
             {
                 "description": "test",
-                "frequency": "",
+                "frequency": "",  # Empty frequency
                 "date_last": "2025-01-01",
                 "period": "weeks",
             },
@@ -41,7 +52,7 @@ from classes import TopLvl
             {
                 "description": "test",
                 "frequency": "2",
-                "date_last": "",
+                "date_last": "",  # Empty date_last
                 "period": "weeks",
             },
             False,
@@ -49,7 +60,7 @@ from classes import TopLvl
         (
             {
                 "description": "test",
-                "frequency": "-1",
+                "frequency": "-1",  # Negative frequency
                 "date_last": "2025-01-01",
                 "period": "weeks",
             },
@@ -59,14 +70,14 @@ from classes import TopLvl
             {
                 "description": "test",
                 "frequency": "2",
-                "date_last": "invalid-date",
+                "date_last": "invalid-date",  # Invalid date format
                 "period": "weeks",
             },
             False,
         ),
         (
             {
-                "description": "",
+                "description": "",  # All fields empty
                 "frequency": "",
                 "date_last": "",
                 "period": "",
@@ -75,15 +86,19 @@ from classes import TopLvl
         ),
     ],
 )
-def test_validate_inputs(inputs, expected):
+def test_validate_inputs(inputs, expected, mocker):
     app = tk.Tk()
-    top = TopLvl(app, "Title")
     app.view_current = True
-    top.description_entry.insert(0, inputs["description"])
-    top.frequency_entry.insert(0, inputs["frequency"])
-    top.date_last_entry.insert(0, inputs["date_last"])
-    top.period_combobox.set(inputs["period"])
-    logger.info(f"inputs: {inputs}; expected: {expected}")
+    top = mocker.Mock(spec=TopLvl)
+    top.description_entry = mocker.Mock()
+    top.description_entry.get.return_value = inputs["description"]
+    top.frequency_entry = mocker.Mock()
+    top.frequency_entry.get.return_value = inputs["frequency"]
+    top.date_last_entry = mocker.Mock()
+    top.date_last_entry.get.return_value = inputs["date_last"]
+    top.period_combobox = mocker.Mock()
+    top.period_combobox.get.return_value = inputs["period"]
+    # logger.info(f"inputs: {inputs}; expected: {expected}")
 
     if expected:
         assert validate_inputs(app, top, 0)
