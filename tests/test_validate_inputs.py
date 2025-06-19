@@ -3,7 +3,7 @@ import tkinter as tk  # noqa: F401
 import pytest
 from loguru import logger  # noqa: F401
 
-from business import validate_inputs
+from business import fetch_reminders, validate_inputs
 from classes import TopLvl
 
 
@@ -88,7 +88,7 @@ from classes import TopLvl
 )
 def test_validate_inputs(inputs, expected, mocker):
     app = tk.Tk()
-    app.view_current = True
+    app.view_current = False
     top = mocker.Mock(spec=TopLvl)
     top.description_entry = mocker.Mock()
     top.description_entry.get.return_value = inputs["description"]
@@ -104,3 +104,26 @@ def test_validate_inputs(inputs, expected, mocker):
         assert validate_inputs(app, top, 0)
     else:
         assert not validate_inputs(app, top, 0)
+
+    # Get a reminder from the database to test this function.
+    reminder = fetch_reminders(app, app.view_current).fetchone()
+    # logger.info(f"reminders: {reminder}")
+    id = reminder[0]
+    description = reminder[1]
+
+    # Simulate updating the reminder with valid inputs.
+    top.description_entry.get.return_value = description
+    top.frequency_entry.get.return_value = "2"
+    top.date_last_entry.get.return_value = "2025-01-01"
+    top.period_combobox.get.return_value = "weeks"
+    assert validate_inputs(app, top, id)
+
+    # Simulate updating the reminder with an invalid input.
+    top.frequency_entry.get.return_value = ""
+    top.date_last_entry.get.return_value = "2025-01-01"
+    top.period_combobox.get.return_value = "weeks"
+    assert not validate_inputs(app, top, id)
+
+    # TODOS:
+    # 1. Determine how a new reminder is saved (vis a vis id) and test
+    #    appropriately.
