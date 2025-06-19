@@ -113,14 +113,9 @@ def test_validate_inputs(inputs, expected, mocker):
     reminder = fetch_reminders(app, app.view_current).fetchone()
     logger.info(f"reminder: {reminder}")
     id = reminder[0]
-    # description = reminder[1]
 
     # Simulate updating this existing reminder.
     if expected:
         assert validate_inputs(app, top, id)
     else:
         assert not validate_inputs(app, top, id)
-
-    # TODOS:
-    # 1. Determine how a new reminder is saved (vis a vis id) and test
-    #    appropriately.
