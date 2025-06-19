@@ -12,7 +12,6 @@ from tkinter import ttk
 from typing import Any, List, Optional, Tuple
 
 import pytest
-from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta  # type: ignore
 from loguru import logger
 from tkcalendar import Calendar  # type: ignore
@@ -613,7 +612,14 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
         top.frequency_entry.focus_set()
         return_value = False
     # period and date_last_entry are required
-    if not top.period_combobox.get():
+    if not top.period_combobox.get() or top.period_combobox.get() not in [
+        "one-time",
+        "days",
+        "weeks",
+        "months",
+        "years",
+    ]:
+        # period_combobox must be one of the valid options
         InfoMsgBox(
             self,
             "Invalid Input",
@@ -631,12 +637,13 @@ def validate_inputs(self, top, id: int | None = None) -> bool:
         return_value = False
     # date_last_entry must be a valid date
     try:
-        parse(top.date_last_entry.get())
+        datetime.strptime(top.date_last_entry.get(), "%Y-%m-%d").date()
+    # If the date is not valid, an exception will be raised.
     except ValueError:
         InfoMsgBox(
             self,
             "Invalid Input",
-            "Please enter a valid last date.",
+            "Invalid last date format, please enter a valid last date.",
         )
         top.date_last_entry.focus_set()
         return_value = False
