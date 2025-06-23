@@ -1,4 +1,5 @@
 __pycache__
+.python-version
 build/
 dist/
 venv/
@@ -15,5 +16,8 @@ home_reminders2.code-workspace
 *.dat
 *.txt
 snippets*.*
+token.pickle
+token.json
+credentials.json
 
 !requirements.txt

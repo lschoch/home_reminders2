@@ -536,8 +536,6 @@ def fetch_reminders(self, view_current: bool) -> Optional[sqlite3.Cursor]:
             "Error",
             "An unexpected error occurred while fetching reminders.",
         )
-    finally:
-        logger.info("fetch_reminders operation completed.")
     return None
 
 

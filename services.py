@@ -5,17 +5,26 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple  # noqa: F401
 if TYPE_CHECKING:
     import sqlite3
 
+import os.path
+import pickle
+
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 from loguru import logger
 
 from business import (
     delete_item_from_database,
     fetch_reminders,
+    get_con,
     get_user_data,
     save_database_item,
     save_prefs,
     update_database_item,
 )
 from classes import InfoMsgBox
+
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
 class ReminderService:
@@ -142,29 +151,6 @@ class ReminderService:
             )
             return False
 
-    '''
-    @staticmethod
-    def get_notifications(self) -> str:  # noqa: PLW0211
-        """
-        Generate a string of notifications based on reminders and user
-        preferences.
-
-        Returns:
-            str: Notifications message.
-        """
-        initialize_user(self)
-        user_data = ReminderService.get_user_preferences(self)
-        if not user_data:
-            return ""
-
-        reminders = ReminderService.get_reminders(self, view_current=False)
-        if not reminders:
-            return ""
-
-        categorized_reminders = categorize_reminders(reminders)
-        return create_message_string(user_data, categorized_reminders)
-    '''
-
     @staticmethod
     def validate_phone_number(self, num: str) -> bool:  # noqa: PLW0211
         """
@@ -185,3 +171,107 @@ class ReminderService:
             )
             return False
         return True
+
+    @staticmethod
+    def create_calendar_event(self, reminder_id: int) -> bool:  # noqa: PLW0211
+        """
+        Record a reminder as an event on the calendar.
+
+        Args:
+            reminder_id (int): ID of the reminder to schedule.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        # Load credentials.
+        try:
+            creds = None
+
+            if os.path.exists("token.pickle"):
+                with open("token.pickle", "rb") as token:
+                    creds = pickle.load(token)
+
+            if not creds or not creds.valid:
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        "../credentials.json", SCOPES
+                    )
+                    creds = flow.run_local_server(port=0)
+
+                with open("token.pickle", "wb") as token:
+                    pickle.dump(creds, token)
+        except Exception as e:
+            logger.error(f"Error loading credentials: {e}")
+            InfoMsgBox(self, "Credentials Error", "Error loading credentials.")
+            return False
+        # Create the calendar service.
+        try:
+            service = build("calendar", "v3", credentials=creds)
+        except Exception as e:
+            logger.error(f"Error creating calendar service: {e}")
+            InfoMsgBox(
+                self,
+                "Calendar Service Error",
+                "Error creating calendar service.",
+            )
+            return False
+        # Fetch the reminder details from the database.
+        with get_con() as con:
+            cur = con.cursor()
+            cur.execute(
+                """
+                SELECT *
+                FROM reminders
+                WHERE id = ?
+                """,
+                (reminder_id,),
+            )
+            reminder = cur.fetchone()
+
+        if not reminder:
+            logger.error("Reminder not found.")
+            InfoMsgBox(self, "Reminder Error", "Reminder not found.")
+            return False
+
+        # Create the event.
+        event = {
+            "summary": f"HR: {reminder[1]}",  # Description
+            "description": reminder[6],  # Note
+            "start": {
+                "date": reminder[5],  # Date last
+                "timeZone": "America/New_York",
+            },
+            "end": {
+                "date": reminder[5],  # Date last
+                "timeZone": "America/New_York",
+            },
+        }
+        # Insert the event into the calendar.
+        try:
+            created_event = (
+                service.events()
+                .insert(calendarId="primary", body=event)
+                .execute()
+            )
+            logger.info(f"Event created: {created_event['id']}")
+            return True
+        except Exception as e:
+            logger.error(f"Error creating event: {e}")
+            InfoMsgBox(self, "Event Creation Error", "Error creating event.")
+            return False
+        # If the event is created successfully, return True.
+        # If there is an error, return False.
+        # Note: The function currently does not handle the case where the event
+        # already exists. You may want to add logic to check for existing
+        # events and update them if necessary.
+        # This can be done by checking the calendar for existing events with
+        # the same summary and date.
+        # If an event with the same summary and date already exists, you can
+        # either skip creating the new event or update the existing event with
+        # the new details.
+        # This can be done by using the event ID to update the existing event.
+        # You can also add logic to handle conflicts, such as asking the user
+        # if they want to overwrite the existing event or create a new one with
+        # a different summary or date.

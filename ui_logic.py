@@ -339,20 +339,38 @@ def create_edit_window(self, event) -> Any:
         """
         Function to delete the selected reminder item from the database.
 
+        With option to create a calendar event from the reminder.
+        If the user opts to create a calendar event, the reminder is not
+        deleted until the event is created successfully.
         Args:
             none
         Returns:
             None
         """
+        id = self.tree.item(selected_item)["values"][0]
         answer = YesNoMsgBox(
             self,
             "Delete Reminder",
-            "Are you sure you want to delete  \
-                this reminder?",
+            "Are you sure you want to delete this reminder?",
         )
         if not answer.get_response():
             return
-        id = self.tree.item(selected_item)["values"][0]
+        answer = YesNoMsgBox(
+            self,
+            "Create Calendar Event",
+            "Do you want to save this reminder as a calendar event?",
+        )
+        if answer.get_response():
+            # create calendar event
+            event_success = ReminderService.create_calendar_event(self, id)
+            if not event_success:
+                InfoMsgBox(
+                    self,
+                    "Calendar Event",
+                    "Error creating calendar event.",
+                )
+                return
+        # delete reminder
         success = ReminderService.delete_reminder(self, id)
         if success:
             refresh(self)
