@@ -22,7 +22,7 @@ from business import (
     save_prefs,
     update_database_item,
 )
-from classes import InfoMsgBox
+from classes import InfoMsgBox, OkMsgBox
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -212,19 +212,26 @@ class ReminderService:
                     pickle.dump(creds, token)
         except Exception as e:
             logger.error(f"Error loading credentials: {e}")
-            InfoMsgBox(self, "Credentials Error", "Error loading credentials.")
-            return False
+            answer = OkMsgBox(
+                self,
+                "Credentials Error",
+                "Error loading credentials.",
+            )
+            if answer.get_response():
+                return False
         # Create the calendar service.
         try:
             service = build("calendar", "v3", credentials=creds)
         except Exception as e:
             logger.error(f"Error creating calendar service: {e}")
-            InfoMsgBox(
+            answer = OkMsgBox(
                 self,
                 "Calendar Service Error",
                 "Error creating calendar service.",
             )
-            return False
+            if answer.get_response():
+                return False
+
         # Fetch the reminder details from the database.
         with get_con() as con:
             cur = con.cursor()
@@ -240,8 +247,13 @@ class ReminderService:
 
         if not reminder:
             logger.error("Reminder not found.")
-            InfoMsgBox(self, "Reminder Error", "Reminder not found.")
-            return False
+            answer = OkMsgBox(
+                self,
+                "Reminder Error",
+                "Reminder not found.",
+            )
+            if answer.get_response():
+                return False
 
         # Check if the reminder is already scheduled.
         start_date = reminder[4]  # reminder[4] is the date last.
@@ -270,12 +282,13 @@ class ReminderService:
                     reminder[1] in event["summary"]
                 ):  # reminder[1] is the description.
                     logger.info("Event already exists.")
-                    InfoMsgBox(
+                    answer = OkMsgBox(
                         self,
                         "Create Event",
                         "Event already exists in the calendar.",
                     )
-                    return False
+                    if answer.get_response():
+                        return False
 
         # Create the event.
         event = {
@@ -298,18 +311,25 @@ class ReminderService:
                 .execute()
             )
             logger.info(f"Event created: {created_event['id']}")
-            return True
+            answer = OkMsgBox(
+                self,
+                "Create Event",
+                "Calendar event successfully created.",
+            )
+            if answer.get_response():
+                return True
         except Exception as e:
             logger.error(f"Error creating event: {e}")
-            InfoMsgBox(self, "Event Creation Error", "Error creating event.")
-            return False
+            answer = OkMsgBox(
+                self,
+                "Event Creation Error",
+                "Error creating event.",
+            )
+            if answer.get_response():
+                return False
+
         # If the event is created successfully, return True.
         # If there is an error, return False.
-        # Note: The function currently does not handle the case where the event
-        # already exists. You may want to add logic to check for existing
-        # events and update them if necessary.
-        # This can be done by checking the calendar for existing events with
-        # the same summary and date.
         # If an event with the same summary and date already exists, you can
         # either skip creating the new event or update the existing event with
         # the new details.

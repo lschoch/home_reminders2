@@ -352,6 +352,70 @@ class YesNoMsgBox(tk.Toplevel):
         self.var.set(1)
 
 
+# custom okmessagebox class
+class OkMsgBox(tk.Toplevel):
+    def __init__(
+        self,
+        master,
+        title="",
+        message="",
+        height=2,
+        width=30,
+        x_offset=405,
+        y_offset=300,
+    ):
+        super().__init__(master)
+        self.title(title)
+        # self.config(background="#ececec")
+        self.resizable(False, False)
+        self.wm_transient(master)
+        # self.wm_overrideredirect(True)
+
+        self.wait_visibility()
+        if "pytest" not in sys.modules:
+            # Only grab the focus if not running in pytest
+            # This prevents pytest from hanging on the grab_set call
+            self.grab_set()
+        self.response = 0
+        self.var = tk.IntVar()
+        self.txt = tk.Text(
+            self,
+            bg="#ececec",  # house color = "#ffc49c",
+            font=("Helvetica, 13"),
+            height=height,
+            width=width,
+            wrap="word",
+            highlightthickness=0,
+        )
+        self.button1 = ttk.Button(
+            self,
+            text="Ok",
+            width=3,
+            # height=3,
+            # background="#dbdad6",
+            command=self.ok,
+        )
+
+        self.txt.grid(row=0, column=0, padx=10, pady=(15, 0), sticky="nsew")
+        self.button1.grid(row=1, column=0, pady=(0, 15))
+        self.txt.tag_configure("tag-center", justify="center")
+        self.txt.insert(tk.END, message, "tag-center")
+        x = master.winfo_x()
+        y = master.winfo_y()
+        self.geometry("+%d+%d" % (x + x_offset, y + y_offset))
+
+        # use wait_variable method to force user reponse before closing window
+        self.button1.wait_variable(self.var)
+
+    def get_response(self):
+        return self.response
+
+    def ok(self):
+        self.response = 1
+        self.destroy()
+        self.var.set(1)
+
+
 class TestError(Exception):
     """Custom error class for testing purposes."""
 
