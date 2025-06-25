@@ -350,29 +350,22 @@ def create_edit_window(self, event) -> Any:
         id = self.tree.item(selected_item)["values"][0]
         answer = YesNoMsgBox(
             self,
-            "Create Calendar Event?",
-            "Do you want to save this reminder as a calendar event?",
+            "Calendar Event",
+            "Do you want to record this reminder as a calendar event?",
         )
         if answer.get_response():
             # create calendar event
-            event_success = ReminderService.create_calendar_event(self, id)
-            if not event_success:
-                InfoMsgBox(
-                    self,
-                    "Calendar Event",
-                    "Error creating calendar event.",
-                )
-                return
+            ReminderService.create_calendar_event(self, id)
         answer = YesNoMsgBox(
             self,
-            "Delete Reminder?",
+            "Delete Reminder",
             "Are you sure you want to delete this reminder?",
         )
         if not answer.get_response():
             return
         # delete reminder
-        success = ReminderService.delete_reminder(self, id)
-        if success:
+        delete_reminder_success = ReminderService.delete_reminder(self, id)
+        if delete_reminder_success:
             refresh(self)
             remove_toplevels(self)
 

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple  # noqa: F401
 if TYPE_CHECKING:
     import sqlite3
 
+import datetime
 import os.path
 import pickle
 
@@ -14,7 +15,6 @@ from googleapiclient.discovery import build
 from loguru import logger
 
 from business import (
-    delete_item_from_database,
     fetch_reminders,
     get_con,
     get_user_data,
@@ -105,11 +105,19 @@ class ReminderService:
             bool: True if successful, False otherwise.
         """
         try:
-            delete_item_from_database(self, reminder_id)
+            with get_con() as con:
+                cur = con.cursor()
+                cur.execute(
+                    """
+                    DELETE FROM reminders
+                    WHERE id = ?""",
+                    (reminder_id,),
+                )
+                con.commit()
             return True
-        except Exception:
-            logger.error("Error deleting reminders.")
-            InfoMsgBox(self, "Database Error", "Error deleting reminders.")
+        except Exception as e:
+            logger.error(f"Error deleting reminder: {e}")
+            InfoMsgBox(self, "Database Error", "Error deleting reminder.")
             return False
 
     @staticmethod
@@ -235,16 +243,50 @@ class ReminderService:
             InfoMsgBox(self, "Reminder Error", "Reminder not found.")
             return False
 
+        # Check if the reminder is already scheduled.
+        start_date = reminder[4]  # reminder[4] is the date last.
+        end_datetime = datetime.datetime.strptime(
+            start_date, "%Y-%m-%d"
+        ) + datetime.timedelta(days=1)
+        end_date = end_datetime.strftime("%Y-%m-%d")
+        logger.info(f"Getting events for {start_date}")
+        events_result = (
+            service.events()
+            .list(
+                calendarId="primary",
+                timeMin=f"{start_date}T00:00:00Z",
+                timeMax=f"{end_date}T00:00:00Z",
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+        )
+        events = events_result.get("items", [])
+
+        # Check if the event already exists.
+        if events:
+            for event in events:
+                if (
+                    reminder[1] in event["summary"]
+                ):  # reminder[1] is the description.
+                    logger.info("Event already exists.")
+                    InfoMsgBox(
+                        self,
+                        "Create Event",
+                        "Event already exists in the calendar.",
+                    )
+                    return False
+
         # Create the event.
         event = {
-            "summary": f"HR: {reminder[1]}",  # Description
-            "description": reminder[6],  # Note
+            "summary": f"HR: {reminder[1]}",  # reminder[1] is the description.
+            "description": reminder[6],  # reminder[6] is the note
             "start": {
-                "date": reminder[5],  # Date last
+                "date": reminder[4],  # reminder[4] is the date last.
                 "timeZone": "America/New_York",
             },
             "end": {
-                "date": reminder[5],  # Date last
+                "date": reminder[4],  # reminder[4] is the date last.
                 "timeZone": "America/New_York",
             },
         }

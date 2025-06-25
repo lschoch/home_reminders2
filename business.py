@@ -987,30 +987,6 @@ def get_user_data(self) -> Optional[sqlite3.Cursor]:
         return None
 
 
-def delete_item_from_database(self, id: int) -> Any:
-    """
-    Deletes a reminder item from the database.
-
-    Args:
-        id (int): The id of the item to be deleted.
-    Returns:
-        None
-    """
-    try:
-        with get_con() as con:
-            cur = con.cursor()
-            cur.execute(
-                """
-                DELETE FROM reminders
-                WHERE id = ?""",
-                (id,),
-            )
-            con.commit()
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        InfoMsgBox(self, "Error", "Failed to update the database.")
-
-
 def save_database_item(
     self, values: Tuple[str, str, str, str, str, str]
 ) -> Any:
